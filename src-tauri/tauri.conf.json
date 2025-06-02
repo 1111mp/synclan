@@ -1,0 +1,40 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "synclan",
+  "version": "0.1.0",
+  "identifier": "io.github.1111mp.synclan",
+  "build": {
+    "beforeDevCommand": "pnpm app:dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "pnpm app:build",
+    "frontendDist": "../dist/ui",
+    "removeUnusedCommands": true
+  },
+  "app": {
+    "macOSPrivateApi": true,
+    "windows": [],
+    "security": {
+      "csp": {
+        "default-src": "blob: data: filesystem: ws: wss: http: https: tauri: asset: 'unsafe-eval' 'unsafe-inline' 'self'",
+        "connect-src": "ipc: http://ipc.localhost"
+      },
+      "assetProtocol": {
+        "enable": true,
+        "scope": ["$APPDATA/**", "$RESOURCE/../**", "**"]
+      }
+    }
+  },
+  "bundle": {
+    "active": true,
+    "longDescription": "SyncLan",
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "resources": ["resources", "resources/web/*"]
+  }
+}
