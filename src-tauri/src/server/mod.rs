@@ -1,45 +1,20 @@
 use crate::{
-    logging,
-    utils::{dirs, logging::Type},
+    logging, logging_error,
+    process::AsyncHandler,
+    utils::{db, dirs, logging::Type},
 };
 
 use anyhow::Result;
 use axum::Router;
 use socketioxide::{handler::ConnectHandler, SocketIo};
-use sqlx::{
-    sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, SqliteSynchronous},
-    Pool, Sqlite,
-};
-use std::{net::SocketAddr, str::FromStr, sync::Arc};
+use sqlx::{Pool, Sqlite};
+use std::{net::SocketAddr, sync::Arc};
 use tower_http::services::ServeDir;
 
 mod events;
 mod routes;
 
-pub async fn start_http_server() -> Result<()> {
-    // sqlite db
-    let db_dir = dirs::app_db_dir()?;
-    let db_path = db_dir.join("server.db");
-    let db_url = format!("sqlite://{}", db_path.to_string_lossy());
-    let opts = SqliteConnectOptions::from_str(&db_url)?
-        .journal_mode(SqliteJournalMode::Wal)
-        .synchronous(SqliteSynchronous::Full)
-        .pragma("cipher", "sqlcipher")
-        .pragma("legacy", "4")
-        .pragma("key", whoami::username())
-        .create_if_missing(true);
-    let db_pool = SqlitePoolOptions::new()
-        .max_connections(5)
-        .connect_with(opts)
-        .await?;
-
-    logging!(
-        info,
-        Type::Server,
-        true,
-        "Successfully connected to the database"
-    );
-
+async fn bootstrap(db_pool: Pool<Sqlite>) -> Result<()> {
     let app_state = Arc::new(AppState { db_pool });
 
     let (layer, io) = SocketIo::builder()
@@ -53,7 +28,7 @@ pub async fn start_http_server() -> Result<()> {
     let resources = dirs::app_resources_dir()?;
     let web_static_dir = resources.join("web");
     let app = Router::new()
-        .nest("api", routes::router())
+        .nest("/api", routes::router())
         // web static server
         .fallback_service(ServeDir::new(web_static_dir))
         .layer(layer)
@@ -75,6 +50,24 @@ pub async fn start_http_server() -> Result<()> {
     axum::serve(listener, app).await?;
 
     Ok(())
+}
+
+/// Start the web http server
+pub fn start_http_server() {
+    logging!(info, Type::Server, true, "Start the Web http server");
+    if let Some(db_pool) = db::DBManager::global().db_pool() {
+        AsyncHandler::spawn(move || async {
+            logging_error!(Type::Server, true, bootstrap(db_pool).await);
+        });
+    } else {
+        logging_error!(
+            Type::Server,
+            true,
+            "{}",
+            "SQLite connection pool has not been initialized"
+        );
+        logging_error!(Type::Server, true, "{}", "Web http server failed to start");
+    }
 }
 
 #[derive(Clone)]

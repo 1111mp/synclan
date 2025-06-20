@@ -1,13 +1,23 @@
 use anyhow::Result;
 use tauri::{AppHandle, Manager};
 
-use crate::{core::handle, logging, utils::logging::Type};
+use crate::{
+    core::handle,
+    logging, logging_error, server,
+    utils::{db, help, logging::Type},
+};
 
 pub async fn resolve_setup_async(app_handle: &AppHandle) {
     logging!(info, Type::Setup, true, "执行异步设置任务...");
 
     #[cfg(target_os = "macos")]
     let _ = app_handle.set_activation_policy(tauri::ActivationPolicy::Regular);
+
+    // Database initialization
+    logging_error!(Type::Setup, true, db::DBManager::global().init());
+
+    // Start the web http server
+    server::start_http_server();
 
     let _ = create_window();
 }
@@ -20,21 +30,20 @@ pub fn create_window() -> Result<()> {
             return Ok(());
         }
     }
-
     let app_handle = handle::Handle::global().app_handle().unwrap();
+    let background_color = help::get_app_background_color();
     let builder = tauri::WebviewWindowBuilder::new(
         &app_handle,
         "main",
         tauri::WebviewUrl::App("index.html".into()),
     )
     .title("SyncLan")
+    .decorations(true)
     .inner_size(1024.0, 728.0)
     .min_inner_size(1024.0, 728.0)
-    .visible(false)
+    .background_color(background_color)
+    .visible(true)
     .center();
-
-    #[cfg(target_os = "windows")]
-    let builder = builder.transparent(true);
 
     match builder.build() {
         Ok(window) => {

@@ -1,37 +1,38 @@
 {
-  "name": "synclan",
-  "private": true,
-  "version": "0.1.0",
-  "type": "module",
-  "license": "MIT",
-  "scripts": {
-    "dev": "tauri dev",
-    "build": "tauri build",
-    "build:verbose": "tauri build --verbose",
-    "tauri": "tauri",
-    "app:dev": "pnpm web:build && pnpm ui:dev",
-    "app:build": "pnpm web:build && pnpm ui:build",
-    "app:preview": "pnpm web:preview && pnpm ui:preview",
-    "ui:dev": "vite --config vite.config.main.ts",
-    "ui:build": "tsc && vite build --config vite.config.main.ts",
-    "ui:preview": "vite preview --config vite.config.main.ts",
-    "web:dev": "vite --config vite.config.web.ts",
-    "web:build": "tsc && vite build --config vite.config.web.ts",
-    "web:preview": "vite preview --config vite.config.web.ts"
-  },
-  "dependencies": {
-    "@tauri-apps/api": "^2",
-    "@tauri-apps/plugin-opener": "^2",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
-  },
-  "devDependencies": {
-    "@tauri-apps/cli": "^2",
-    "@types/node": "^22.15.29",
-    "@types/react": "^18.3.1",
-    "@types/react-dom": "^18.3.1",
-    "@vitejs/plugin-react": "^4.3.4",
-    "typescript": "~5.6.2",
-    "vite": "^6.0.3"
-  }
+	"name": "synclan",
+	"private": true,
+	"version": "0.1.0",
+	"type": "module",
+	"license": "MIT",
+	"scripts": {
+		"dev": "tauri dev",
+		"build": "tauri build",
+		"build:verbose": "tauri build --verbose",
+		"tauri": "tauri",
+		"app:dev": "pnpm web:build && pnpm ui:dev",
+		"app:build": "pnpm web:build && pnpm ui:build",
+		"app:preview": "pnpm web:preview && pnpm ui:preview",
+		"ui:dev": "vite --config vite.config.main.ts",
+		"ui:build": "tsc && vite build --config vite.config.main.ts",
+		"ui:preview": "vite preview --config vite.config.main.ts",
+		"web:dev": "vite --config vite.config.web.ts",
+		"web:build": "tsc && vite build --config vite.config.web.ts",
+		"web:preview": "vite preview --config vite.config.web.ts"
+	},
+	"dependencies": {
+		"@tauri-apps/api": "^2",
+		"@tauri-apps/plugin-opener": "^2",
+		"react": "^18.3.1",
+		"react-dom": "^18.3.1"
+	},
+	"devDependencies": {
+		"@tauri-apps/cli": "^2",
+		"@types/node": "^22.15.29",
+		"@types/react": "^18.3.1",
+		"@types/react-dom": "^18.3.1",
+		"@vitejs/plugin-react": "^4.3.4",
+		"typescript": "~5.6.2",
+		"vite": "^6.0.3"
+	},
+	"packageManager": "pnpm@9.15.4+sha512.b2dc20e2fc72b3e18848459b37359a32064663e5627a51e4c74b2c29dd8e8e0491483c3abb40789cfd578bf362fb6ba8261b05f0387d76792ed6e23ea3b1b6a0"
 }

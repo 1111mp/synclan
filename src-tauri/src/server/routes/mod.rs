@@ -31,5 +31,5 @@ use std::sync::Arc;
 pub fn router() -> Router<Arc<AppState>> {
     let api_v1_router = Router::new();
 
-    Router::new().nest("v1", api_v1_router)
+    Router::new().nest("/v1", api_v1_router)
 }

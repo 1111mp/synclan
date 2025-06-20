@@ -21,9 +21,13 @@ tauri-build = { version = "2", features = [] }
 anyhow = "1"
 axum = "0.8"
 chrono = "0.4"
-libsqlite3-sys = { version = "0.30", features = ["bundled-sqlcipher"] }
+dark-light = "2"
+libsqlite3-sys = { version = "0.30", features = [
+	"bundled-sqlcipher-vendored-openssl",
+] }
 log = "0.4"
 log4rs = "1"
+open = "5"
 once_cell = "1"
 parking_lot = "0.12"
 tauri = { version = "2", features = ["macos-private-api", "protocol-asset"] }
@@ -33,16 +37,18 @@ tokio = { version = "1", features = ["full"] }
 tower-http = { version = "0.6", features = ["fs", "trace"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+serde_yaml = "0.9.34-deprecated"
 socketioxide = { version = "0.16", features = [
-  "v4",
-  "extensions",
-  "state",
-  "tracing",
+	"v4",
+	"extensions",
+	"state",
+	"tracing",
 ] }
 sqlx = { version = "0.8", features = [
-  "sqlite",
-  "runtime-tokio",
-  "migrate",
-  "json",
+	"sqlite",
+	"runtime-tokio",
+	"migrate",
+	"json",
 ] }
+sys-locale = "0.3"
 whoami = "1.6"

@@ -1,4 +1,7 @@
-use crate::utils::dirs;
+use crate::{
+    config::{Config, ISynclan},
+    utils::{dirs, help},
+};
 
 use anyhow::Result;
 use chrono::{Local, TimeZone};
@@ -21,7 +24,7 @@ fn init_logger() -> Result<()> {
     }
 
     // read from config
-    let log_level = LevelFilter::Info;
+    let log_level = Config::synclan().data().get_log_level();
     if log_level == LevelFilter::Off {
         return Ok(());
     }
@@ -68,12 +71,11 @@ pub fn delete_log_file() -> Result<()> {
         return Ok(());
     }
 
-    // let auto_log_clean = {
-    //     let verge = Config::verge();
-    //     let verge = verge.data();
-    //     verge.auto_log_clean.unwrap_or(0)
-    // };
-    let auto_log_clean = 1; // for test
+    let auto_log_clean = {
+        let synclan = Config::synclan();
+        let synclan = synclan.data();
+        synclan.auto_log_clean.unwrap_or(0)
+    };
 
     let day = match auto_log_clean {
         1 => 7,
@@ -144,6 +146,13 @@ pub fn init_config() -> Result<()> {
         if !app_dir.exists() {
             let _ = fs::create_dir_all(&app_dir);
         }
+    }));
+
+    crate::log_err!(dirs::synclan_path().map(|path| {
+        if !path.exists() {
+            help::save_yaml(&path, &ISynclan::template(), Some("# Synclan Config File"))?;
+        }
+        <Result<()>>::Ok(())
     }));
 
     Ok(())

@@ -1,12 +1,14 @@
-use core::handle;
-use process::AsyncHandler;
-use tokio::time::{timeout, Duration};
-use utils::{logging::Type, resolve};
-
+mod cmd;
+mod config;
 mod core;
 mod process;
 mod server;
 mod utils;
+
+use core::handle;
+use process::AsyncHandler;
+use tokio::time::{timeout, Duration};
+use utils::{logging::Type, resolve};
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
@@ -48,11 +50,6 @@ pub fn run() {
                         );
                     }
                 }
-            });
-
-            // Start the web server
-            AsyncHandler::spawn(|| async {
-                logging_error!(Type::Server, true, server::start_http_server().await);
             });
 
             logging!(info, Type::Setup, true, "初始化核心句柄...");

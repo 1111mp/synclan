@@ -6,6 +6,8 @@ use tauri::Manager;
 
 pub static APP_ID: &str = "io.github.1111mp.synclan";
 
+pub static SYNCLAN_CONFIG: &str = "synclan.yaml";
+
 /// get the syncio app home dir
 pub fn app_home_dir() -> Result<PathBuf> {
     // 避免在Handle未初始化时崩溃
@@ -99,4 +101,8 @@ pub fn app_logs_dir() -> Result<PathBuf> {
 /// sqlite db dir
 pub fn app_db_dir() -> Result<PathBuf> {
     Ok(app_home_dir()?.join("db"))
+}
+
+pub fn synclan_path() -> Result<PathBuf> {
+    Ok(app_home_dir()?.join(SYNCLAN_CONFIG))
 }
