@@ -2,8 +2,11 @@
 CREATE TABLE
 	IF NOT EXISTS messages (
 		id TEXT NOT NULL PRIMARY KEY,
+		-- message sender
 		sender TEXT NOT NULL,
+		-- message receiver
 		receiver TEXT NOT NULL,
+		-- message type
 		type TEXT NOT NULL,
 		content TEXT,
 		extra TEXT,
