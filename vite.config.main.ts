@@ -1,15 +1,31 @@
 import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
+import { createHtmlPlugin } from 'vite-plugin-html';
 
 const host = process.env.TAURI_DEV_HOST;
 
 // https://vitejs.dev/config/
-export default defineConfig(async () => ({
+export default defineConfig(async ({ mode }) => ({
   root: 'src',
   publicDir: '../public',
 
-  plugins: [react()],
+  plugins: [
+    react({
+      babel: {
+        plugins: [['babel-plugin-react-compiler', { target: '19' }]],
+      },
+    }),
+    createHtmlPlugin({
+      inject: {
+        data: {
+          NODE_ENV: mode,
+        },
+      },
+    }),
+    tailwindcss(),
+  ],
 
   build: {
     emptyOutDir: true,

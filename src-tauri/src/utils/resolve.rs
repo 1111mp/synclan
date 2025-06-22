@@ -32,18 +32,23 @@ pub fn create_window() -> Result<()> {
     }
     let app_handle = handle::Handle::global().app_handle().unwrap();
     let background_color = help::get_app_background_color();
-    let builder = tauri::WebviewWindowBuilder::new(
+    let mut builder = tauri::WebviewWindowBuilder::new(
         &app_handle,
         "main",
         tauri::WebviewUrl::App("index.html".into()),
     )
     .title("SyncLan")
     .decorations(true)
-    .inner_size(1024.0, 728.0)
-    .min_inner_size(1024.0, 728.0)
+    .inner_size(1080.0, 800.0)
+    .min_inner_size(750.0, 500.0)
     .background_color(background_color)
     .visible(true)
     .center();
+
+    #[cfg(target_os = "macos")]
+    {
+        builder = builder.title_bar_style(tauri::TitleBarStyle::Overlay);
+    }
 
     match builder.build() {
         Ok(window) => {
