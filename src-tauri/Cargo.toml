@@ -19,7 +19,10 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 anyhow = "1"
-axum = "0.8"
+axum = { version = "0.8", features = ["multipart"] }
+axum-extra = { version = "0.10", features = ["typed-header"] }
+axum-macros = "0.5"
+axum_typed_multipart = "0.16"
 chrono = "0.4"
 dark-light = "2"
 libsqlite3-sys = { version = "0.30", features = [
@@ -51,4 +54,8 @@ sqlx = { version = "0.8", features = [
 	"json",
 ] }
 sys-locale = "0.3"
+utoipa = { version = "5", features = ["axum_extras"] }
+utoipa-swagger-ui = { version = "9", features = ["axum", "reqwest"] }
+utoipa-axum = "0.2"
+validator = { version = "0.20", features = ["derive"] }
 whoami = "1.6"

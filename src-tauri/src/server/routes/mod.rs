@@ -1,6 +1,8 @@
+mod user;
+
 use super::AppState;
-use axum::Router;
 use std::sync::Arc;
+use utoipa_axum::router::OpenApiRouter;
 
 /**
  *  https://docs.rs/axum/latest/axum/middleware/index.html#ordering
@@ -28,8 +30,8 @@ use std::sync::Arc;
  *             responses
  */
 
-pub fn router() -> Router<Arc<AppState>> {
-    let api_v1_router = Router::new();
+pub fn router() -> OpenApiRouter<Arc<AppState>> {
+    let api_v1_router = OpenApiRouter::new().merge(user::public_route());
 
-    Router::new().nest("/v1", api_v1_router)
+    OpenApiRouter::new().nest("/v1", api_v1_router)
 }

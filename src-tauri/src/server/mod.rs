@@ -3,19 +3,27 @@ use crate::{
     process::AsyncHandler,
     utils::{db, dirs, logging::Type},
 };
-
 use anyhow::Result;
-use axum::Router;
+use api_doc::ApiDoc;
 use socketioxide::{handler::ConnectHandler, SocketIo};
 use sqlx::{Pool, Sqlite};
 use std::{net::SocketAddr, sync::Arc};
 use tower_http::services::ServeDir;
+use utoipa::OpenApi;
+use utoipa_axum::router::OpenApiRouter;
+use utoipa_swagger_ui::SwaggerUi;
 
+mod api_doc;
 mod events;
 mod routes;
 
 async fn bootstrap(db_pool: Pool<Sqlite>) -> Result<()> {
     let app_state = Arc::new(AppState { db_pool });
+
+    // build our application with a single route
+    let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
+        .nest("/api", routes::router())
+        .split_for_parts();
 
     let (layer, io) = SocketIo::builder()
         .with_state(events::store::Clients::default())
@@ -27,8 +35,10 @@ async fn bootstrap(db_pool: Pool<Sqlite>) -> Result<()> {
 
     let resources = dirs::app_resources_dir()?;
     let web_static_dir = resources.join("web");
-    let app = Router::new()
-        .nest("/api", routes::router())
+
+    let app = router
+        // swagger ui
+        .merge(SwaggerUi::new("/api/docs").url("/api/docs/openapi.json", api))
         // web static server
         .fallback_service(ServeDir::new(web_static_dir))
         .layer(layer)
