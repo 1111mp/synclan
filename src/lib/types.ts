@@ -49,6 +49,23 @@ export enum HttpStatus {
   HTTP_VERSION_NOT_SUPPORTED = 505,
 }
 
+export enum MessageType {
+  TEXT = 'text',
+  IMAGE = 'image',
+  VIDEO = 'video',
+  FILE = 'file',
+  AUDIO = 'audio',
+  LOCATION = 'location',
+  STICKER = 'sticker',
+}
+
 export type IMessage = {
   id: string;
+  type: MessageType;
+  content: string;
+  sender: string;
+  receiver: string;
+  extra: string;
+  updatedAt: number;
+  createdAt: number;
 };
