@@ -31,38 +31,39 @@ type EmitEvents = Record<
   (message: IMessage, cb: (resp: AckResponse) => void) => void
 >;
 
-type Options = Partial<
+export type UseSocketOptions = Partial<
   ManagerOptions &
     SocketOptions & {
       onMessage: (message: IMessage) => void;
     }
 >;
 
-export type UseSocketOptions = Options & {
-  url: string;
-};
+export type SendMessage = (
+  message: IMessage,
+  timeout: number,
+) => Promise<AckResponse>;
 
-export function useSocketIO({ url, ...options }: UseSocketOptions) {
-  const [readyState, setReadyState] = useState<ReadyState>(
+export function useSocketIO(url: string, options: UseSocketOptions = {}) {
+  const [state, setState] = useState<ReadyState>(
     () => ReadyState.UNINSTANTIATED,
   );
 
   const socketRef = useRef<Socket<ListenEvents, EmitEvents>>(null);
-  const optionsRef = useRef<Options>(options);
+  const optionsRef = useRef<UseSocketOptions>(options);
   optionsRef.current = options;
 
   useEffect(() => {
     if (url) {
       const socket = SocketIO(url, optionsRef.current);
-      setReadyState(ReadyState.CONNECTING);
+      setState(ReadyState.CONNECTING);
       socketRef.current = socket;
 
       function onConnect() {
-        setReadyState(ReadyState.CONNECTED);
+        setState(ReadyState.CONNECTED);
       }
 
       function onDisconnect() {
-        setReadyState(ReadyState.DISCONNECT);
+        setState(ReadyState.DISCONNECT);
       }
 
       socket.on('connect', onConnect);
@@ -87,11 +88,13 @@ export function useSocketIO({ url, ...options }: UseSocketOptions) {
         if (optionsRef.current?.onMessage && onMessage) {
           socket.off('on-message', onMessage);
         }
+
+        socket.close();
       };
     }
   }, [url]);
 
-  const sendMessage = useCallback(
+  const sendMessage = useCallback<SendMessage>(
     (
       message: IMessage,
       timeout: number = 10000, // Message sending timeout (millisecond)
@@ -118,7 +121,7 @@ export function useSocketIO({ url, ...options }: UseSocketOptions) {
   );
 
   return {
-    readyState,
+    state,
     sendMessage,
   };
 }
