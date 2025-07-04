@@ -28,6 +28,7 @@ dark-light = "2"
 libsqlite3-sys = { version = "0.30", features = [
 	"bundled-sqlcipher-vendored-openssl",
 ] }
+local-ip-address = "0.6"
 log = "0.4"
 log4rs = "1"
 open = "5"

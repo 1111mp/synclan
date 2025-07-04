@@ -63,7 +63,11 @@ pub fn run() {
             logging!(info, Type::Setup, true, "初始化完成，继续执行");
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet]);
+        .invoke_handler(tauri::generate_handler![
+            greet,
+            // system
+            cmd::get_local_ip
+        ]);
 
     #[cfg(debug_assertions)]
     {
