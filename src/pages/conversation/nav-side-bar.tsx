@@ -1,4 +1,6 @@
 import { startTransition, useEffect, useState } from 'react';
+import { QRCodeDialog } from '@/components';
+import { Menu, SquarePen } from 'lucide-react';
 import { useMove } from 'react-aria';
 import {
   cn,
@@ -10,10 +12,8 @@ import {
   WidthBreakpoint,
 } from '@/lib/utils';
 
-import type { ReactNode } from 'react';
-
 export type NavSidebarProps = Readonly<{
-  children: ReactNode;
+  children: React.ReactNode;
   preferredLeftPaneWidth?: number;
   requiresFullWidth?: boolean;
   savePreferredLeftPaneWidth?: (width: number) => void;
@@ -117,16 +117,21 @@ export function NavSidebar({
     >
       <div
         data-tauri-drag-region
-        className='pt-7 pb-1.5 select-none cursor-default'
+        className='pt-10 pb-1.5 select-none cursor-default'
       >
-        <header className='px-6'>
+        <header className='flex px-6 items-center'>
+          <Menu className='mr-6' size={20} />
           <h1
             data-tauri-drag-region
             aria-live='assertive'
-            className='flex-[1 1 0%] m-0 leading-5 font-semibold text-lg tracking-tight select-none'
+            className='flex-1 m-0 leading-5 font-medium text-xl tracking-tight select-none'
           >
-            Chat
+            Chats
           </h1>
+          <p className='flex items-center space-x-4'>
+            <SquarePen size={20} strokeWidth={1.5} />
+            <QRCodeDialog url='https://192.168.8.248:53317' />
+          </p>
         </header>
       </div>
 

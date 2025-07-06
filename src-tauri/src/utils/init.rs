@@ -150,7 +150,7 @@ pub fn init_config() -> Result<()> {
 
     crate::log_err!(dirs::synclan_path().map(|path| {
         if !path.exists() {
-            help::save_yaml(&path, &ISynclan::template(), Some("# Synclan Config File"))?;
+            help::save_yaml(&path, &ISynclan::template(), Some("# SyncLan Config File"))?;
         }
         <Result<()>>::Ok(())
     }));
