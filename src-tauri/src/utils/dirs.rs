@@ -1,7 +1,7 @@
 use crate::core::handle;
 
 use anyhow::Result;
-use std::path::PathBuf;
+use std::{fs, path::PathBuf};
 use tauri::Manager;
 
 pub static APP_ID: &str = "io.github.1111mp.synclan";
@@ -105,4 +105,28 @@ pub fn app_db_dir() -> Result<PathBuf> {
 
 pub fn synclan_path() -> Result<PathBuf> {
     Ok(app_home_dir()?.join(SYNCLAN_CONFIG))
+}
+
+pub fn get_encryption_key() -> Result<Vec<u8>> {
+    let app_dir = app_home_dir()?;
+    let key_path = app_dir.join(".encryption_key");
+
+    if key_path.exists() {
+        // Read existing key
+        fs::read(&key_path).map_err(|e| anyhow::anyhow!("Failed to read encryption key: {}", e))
+    } else {
+        // Generate and save new key
+        let mut key = vec![0u8; 32];
+        getrandom::fill(&mut key)?;
+
+        // Ensure directory exists
+        if let Some(parent) = key_path.parent() {
+            fs::create_dir_all(parent)
+                .map_err(|e| anyhow::anyhow!("Failed to create key directory: {}", e))?;
+        }
+        // Save key
+        fs::write(&key_path, &key)
+            .map_err(|e| anyhow::anyhow!("Failed to save encryption key: {}", e))?;
+        Ok(key)
+    }
 }

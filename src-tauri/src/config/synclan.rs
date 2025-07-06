@@ -1,4 +1,8 @@
-use crate::utils::{dirs, help, i18n};
+use crate::{
+    config::{deserialize_encrypted, serialize_encrypted},
+    utils::{dirs, help, i18n},
+};
+use anyhow::Result;
 use log::LevelFilter;
 use serde::{Deserialize, Serialize};
 
@@ -23,15 +27,36 @@ pub struct ISynclan {
     /// not show the window on launch
     pub enable_silent_start: Option<bool>,
 
-    /// 是否自动检查更新
+    /// Automatically check for updates
     pub auto_check_update: Option<bool>,
 
     /// 日志清理
     /// 0: 不清理; 1: 1天；2: 7天; 3: 30天; 4: 90天
     pub auto_log_clean: Option<i32>,
 
-    /// 是否启用随机端口
+    /// Whether to enable random port
     pub enable_random_port: Option<bool>,
+
+    /// Whether to enable encryption for local https server
+    pub enable_encryption: Option<bool>,
+
+    /// Self-signed certificates
+    #[serde(
+        serialize_with = "serialize_encrypted",
+        deserialize_with = "deserialize_encrypted",
+        skip_serializing_if = "Option::is_none",
+        default
+    )]
+    pub cert_pem: Option<String>,
+
+    /// Self-signed certificate signing key
+    #[serde(
+        serialize_with = "serialize_encrypted",
+        deserialize_with = "deserialize_encrypted",
+        skip_serializing_if = "Option::is_none",
+        default
+    )]
+    pub signing_key_pem: Option<String>,
 }
 
 impl ISynclan {
@@ -69,8 +94,14 @@ impl ISynclan {
             auto_check_update: Some(true),
             enable_random_port: Some(false),
             auto_log_clean: Some(3), // default to 1 day
+            enable_encryption: Some(true),
             ..Self::default()
         }
+    }
+
+    /// Save SyncLan App Config
+    pub fn save_file(&self) -> Result<()> {
+        help::save_yaml(&dirs::synclan_path()?, &self, Some("# SyncLan Config File"))
     }
 
     /// get app log level
@@ -88,5 +119,26 @@ impl ISynclan {
         } else {
             LevelFilter::Info // default log level
         }
+    }
+
+    /// get cert pem
+    pub fn get_cert_pem(&self) -> Option<String> {
+        self.cert_pem.clone()
+    }
+
+    /// get signing key pem
+    pub fn get_signing_key_pem(&self) -> Option<String> {
+        self.signing_key_pem.clone()
+    }
+
+    pub fn update_certificate_info(
+        &mut self,
+        cert_pem: String,
+        signing_key_pem: String,
+    ) -> Result<()> {
+        self.cert_pem = Some(cert_pem);
+        self.signing_key_pem = Some(signing_key_pem);
+
+        Ok(())
     }
 }
