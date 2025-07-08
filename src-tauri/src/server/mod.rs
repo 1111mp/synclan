@@ -7,6 +7,7 @@ use crate::{
 use anyhow::{bail, Result};
 use api_doc::ApiDoc;
 use axum_server::Handle;
+use once_cell::sync::OnceCell;
 use parking_lot::Mutex;
 use socketioxide::{handler::ConnectHandler, SocketIo};
 use sqlx::{Pool, Sqlite};
@@ -23,22 +24,24 @@ mod api_doc;
 mod events;
 mod routes;
 
-// Global http server instance
-pub static HTTP_SERVER: once_cell::sync::Lazy<HttpServer> =
-    once_cell::sync::Lazy::new(|| HttpServer::new());
-
 pub struct HttpServer {
     handle: Arc<Mutex<Option<Handle>>>,
 }
 
 impl HttpServer {
+    /// global instance
+    pub fn global() -> &'static HttpServer {
+        static INSTANCE: OnceCell<HttpServer> = OnceCell::new();
+        INSTANCE.get_or_init(|| HttpServer::new())
+    }
+
     pub fn new() -> Self {
         Self {
             handle: Arc::new(Mutex::new(None)),
         }
     }
 
-    // start http server
+    /// start http server
     pub async fn start_http_server(&self, db_pool: Pool<Sqlite>) -> Result<()> {
         // stop the current server first (if any)
         self.shutdown().await;
@@ -55,7 +58,7 @@ impl HttpServer {
         Ok(())
     }
 
-    // start the entry of http server
+    /// start the entry of http server
     pub async fn bootstrap(&self, handle: Handle, db_pool: Pool<Sqlite>) -> Result<()> {
         let app_state = Arc::new(AppState { db_pool });
 
@@ -110,7 +113,7 @@ impl HttpServer {
         Ok(())
     }
 
-    // gracefully shutdown http server
+    /// gracefully shutdown http server
     pub async fn shutdown(&self) {
         if let Some(handle) = self.handle.lock().take() {
             handle.graceful_shutdown(None);
@@ -126,7 +129,7 @@ pub fn start_http_server() {
             logging_error!(
                 Type::Server,
                 true,
-                HTTP_SERVER.start_http_server(db_pool).await
+                HttpServer::global().start_http_server(db_pool).await
             );
         });
     } else {
@@ -166,7 +169,7 @@ pub async fn restart_http_server() -> Result<()> {
         }
     };
 
-    match HTTP_SERVER.start_http_server(db_pool).await {
+    match HttpServer::global().start_http_server(db_pool).await {
         Ok(()) => {
             logging!(
                 info,
