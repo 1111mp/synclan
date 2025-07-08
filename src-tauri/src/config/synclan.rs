@@ -104,6 +104,30 @@ impl ISynclan {
         help::save_yaml(&dirs::synclan_path()?, &self, Some("# SyncLan Config File"))
     }
 
+    /// patch synclan config
+    /// only save to file
+    pub fn patch_config(&mut self, patch: ISynclan) {
+        macro_rules! patch {
+            ($key: tt) => {
+                if patch.$key.is_some() {
+                    self.$key = patch.$key;
+                }
+            };
+        }
+
+        patch!(app_log_level);
+        patch!(locale);
+        patch!(theme);
+        patch!(enable_auto_launch);
+        patch!(enable_silent_start);
+        patch!(auto_check_update);
+        patch!(auto_log_clean);
+        patch!(enable_random_port);
+        patch!(enable_encryption);
+        patch!(cert_pem);
+        patch!(signing_key_pem);
+    }
+
     /// get app log level
     pub fn get_log_level(&self) -> LevelFilter {
         if let Some(level) = self.app_log_level.as_ref() {
@@ -130,15 +154,33 @@ impl ISynclan {
     pub fn get_signing_key_pem(&self) -> Option<String> {
         self.signing_key_pem.clone()
     }
+}
 
-    pub fn update_certificate_info(
-        &mut self,
-        cert_pem: String,
-        signing_key_pem: String,
-    ) -> Result<()> {
-        self.cert_pem = Some(cert_pem);
-        self.signing_key_pem = Some(signing_key_pem);
+#[derive(Debug, Clone, Serialize)]
+pub struct ISynclanResponse {
+    pub app_log_level: Option<String>,
+    pub locale: Option<String>,
+    pub theme: Option<String>,
+    pub enable_auto_launch: Option<bool>,
+    pub enable_silent_start: Option<bool>,
+    pub auto_check_update: Option<bool>,
+    pub auto_log_clean: Option<i32>,
+    pub enable_random_port: Option<bool>,
+    pub enable_encryption: Option<bool>,
+}
 
-        Ok(())
+impl From<ISynclan> for ISynclanResponse {
+    fn from(synclan: ISynclan) -> Self {
+        Self {
+            app_log_level: synclan.app_log_level,
+            locale: synclan.locale,
+            theme: synclan.theme,
+            enable_auto_launch: synclan.enable_auto_launch,
+            enable_silent_start: synclan.enable_silent_start,
+            auto_check_update: synclan.auto_check_update,
+            auto_log_clean: synclan.auto_log_clean,
+            enable_random_port: synclan.enable_random_port,
+            enable_encryption: synclan.enable_encryption,
+        }
     }
 }

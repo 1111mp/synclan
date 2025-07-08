@@ -30,6 +30,7 @@ pub async fn authenticate_middleware(
     socket: SocketRef,
     State(clients): State<Clients>,
 ) -> Result<()> {
+		eprintln!("socket id : {}", socket.id);
     // let cookies = socket
     //     .req_parts()
     //     .headers
