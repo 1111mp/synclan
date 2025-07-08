@@ -16,7 +16,7 @@ pub async fn resolve_setup_async(app_handle: &AppHandle) {
     // Database initialization
     logging_error!(Type::Setup, true, db::DBManager::global().init());
 
-    // Start the web http server
+    // Start the local http server
     server::start_http_server();
 
     let _ = create_window();
@@ -39,6 +39,8 @@ pub fn create_window() -> Result<()> {
     )
     .title("SyncLan")
     .decorations(true)
+    // because we use a self-signed certificate
+    .additional_browser_args("--ignore-certificate-errors")
     .inner_size(1080.0, 800.0)
     .min_inner_size(750.0, 500.0)
     .background_color(background_color)
