@@ -1,7 +1,14 @@
+mod upload;
 mod user;
 
 use super::AppState;
+use axum::{
+    http::StatusCode,
+    response::{IntoResponse, Redirect, Response},
+};
+use serde::Serialize;
 use std::sync::Arc;
+use utoipa::ToSchema;
 use utoipa_axum::router::OpenApiRouter;
 
 /**
@@ -31,7 +38,45 @@ use utoipa_axum::router::OpenApiRouter;
  */
 
 pub fn router() -> OpenApiRouter<Arc<AppState>> {
-    let api_v1_router = OpenApiRouter::new().merge(user::public_route());
+    let api_v1_router = OpenApiRouter::new()
+        .merge(user::public_route())
+        .merge(upload::public_route());
 
     OpenApiRouter::new().nest("/v1", api_v1_router)
+}
+
+enum HttpResponse<T> {
+    Json {
+        payload: Option<T>,
+        message: Option<String>,
+    },
+
+    RedirectTo {
+        uri: String,
+    },
+}
+
+impl<T: Serialize> IntoResponse for HttpResponse<T> {
+    fn into_response(self) -> Response {
+        match self {
+            HttpResponse::Json { payload, message } => {
+                let status = StatusCode::OK;
+                let body = JsonResponse {
+                    status_code: status.as_u16(),
+                    payload,
+                    message,
+                };
+                (status, axum::Json(body)).into_response()
+            }
+            HttpResponse::RedirectTo { uri } => Redirect::temporary(&uri).into_response(),
+        }
+    }
+}
+
+#[derive(Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+struct JsonResponse<T> {
+    status_code: u16,
+    payload: T,
+    message: Option<String>,
 }

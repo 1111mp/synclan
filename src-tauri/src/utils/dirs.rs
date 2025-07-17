@@ -10,18 +10,18 @@ pub static SYNCLAN_CONFIG: &str = "synclan.yaml";
 
 /// get the syncio app home dir
 pub fn app_home_dir() -> Result<PathBuf> {
-    // 避免在Handle未初始化时崩溃
+    // Avoid crashing when Handle is not initialized
     let app_handle = match handle::Handle::global().app_handle() {
         Some(handle) => handle,
         None => {
             log::warn!(target: "app", "app_handle not initialized, using default path");
-            // 使用可执行文件目录作为备用
+            // Use the executable directory as a fallback
             let exe_path = tauri::utils::platform::current_exe()?;
             let exe_dir = exe_path
                 .parent()
                 .ok_or(anyhow::anyhow!("failed to get executable directory"))?;
 
-            // 使用系统临时目录 + 应用ID
+            // Use the system temporary directory + application ID
             #[cfg(target_os = "windows")]
             {
                 if let Some(local_app_data) = std::env::var_os("LOCALAPPDATA") {
@@ -52,7 +52,7 @@ pub fn app_home_dir() -> Result<PathBuf> {
                 }
             }
 
-            // 如果无法获取系统目录，则回退到可执行文件目录
+            // If the system directory cannot be obtained, fall back to the executable directory
             let fallback_dir = PathBuf::from(exe_dir).join(".config").join(APP_ID);
             log::warn!(target: "app", "Using fallback data directory: {:?}", fallback_dir);
             return Ok(fallback_dir);
@@ -98,11 +98,17 @@ pub fn app_logs_dir() -> Result<PathBuf> {
     Ok(app_home_dir()?.join("logs"))
 }
 
+/// file upload dir
+pub fn file_upload_dir() -> Result<PathBuf> {
+    Ok(app_home_dir()?.join("uploads"))
+}
+
 /// sqlite db dir
 pub fn app_db_dir() -> Result<PathBuf> {
     Ok(app_home_dir()?.join("db"))
 }
 
+/// `synclan.yaml` file path
 pub fn synclan_path() -> Result<PathBuf> {
     Ok(app_home_dir()?.join(SYNCLAN_CONFIG))
 }

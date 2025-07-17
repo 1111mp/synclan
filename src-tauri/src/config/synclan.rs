@@ -30,12 +30,22 @@ pub struct ISynclan {
     /// Automatically check for updates
     pub auto_check_update: Option<bool>,
 
-    /// 日志清理
-    /// 0: 不清理; 1: 1天；2: 7天; 3: 30天; 4: 90天
+    /// Log CLeanup
+    /// 0: No cleaning; 1: 1 day; 2: 7 days; 3: 30 days; 4: 90 days
     pub auto_log_clean: Option<i32>,
 
     /// Whether to enable random port
     pub enable_random_port: Option<bool>,
+
+    /// http server port
+    pub http_server_port: Option<u16>,
+
+    /// File Cleanup
+    /// 0: No cleaning; 1: 1 day; 2: 7 days; 3: 30 days; 4: 90 days
+    pub auto_file_clean: Option<i32>,
+
+    /// File upload directory
+    pub file_upload_dir: Option<String>,
 
     /// Whether to enable encryption for local https server
     pub enable_encryption: Option<bool>,
@@ -86,6 +96,12 @@ impl ISynclan {
     }
 
     pub fn template() -> Self {
+        let file_upload_dir = dirs::file_upload_dir()
+            .ok()
+            .and_then(|path| path.to_str().map(|s| s.to_string()))
+            .map(Some)
+            .unwrap_or(None);
+
         Self {
             locale: Some(Self::get_system_locale()),
             theme: Some("system".to_string()),
@@ -93,14 +109,20 @@ impl ISynclan {
             enable_silent_start: Some(false),
             auto_check_update: Some(true),
             enable_random_port: Some(false),
-            auto_log_clean: Some(3), // default to 1 day
+            auto_log_clean: Some(3), // default to 30 day
+            http_server_port: Some(53317),
+            file_upload_dir,
+            auto_file_clean: Some(1), // default to 1 day
+            #[cfg(target_os = "windows")]
             enable_encryption: Some(true),
+            #[cfg(not(target_os = "windows"))]
+            enable_encryption: Some(false),
             ..Self::default()
         }
     }
 
     /// Save SyncLan App Config
-    pub fn save_file(&self) -> Result<()> {
+    pub fn save_config(&self) -> Result<()> {
         help::save_yaml(&dirs::synclan_path()?, &self, Some("# SyncLan Config File"))
     }
 
@@ -123,6 +145,9 @@ impl ISynclan {
         patch!(auto_check_update);
         patch!(auto_log_clean);
         patch!(enable_random_port);
+        patch!(http_server_port);
+        patch!(auto_file_clean);
+        patch!(file_upload_dir);
         patch!(enable_encryption);
         patch!(cert_pem);
         patch!(signing_key_pem);
@@ -144,16 +169,6 @@ impl ISynclan {
             LevelFilter::Info // default log level
         }
     }
-
-    /// get cert pem
-    pub fn get_cert_pem(&self) -> Option<String> {
-        self.cert_pem.clone()
-    }
-
-    /// get signing key pem
-    pub fn get_signing_key_pem(&self) -> Option<String> {
-        self.signing_key_pem.clone()
-    }
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -165,6 +180,9 @@ pub struct ISynclanResponse {
     pub enable_silent_start: Option<bool>,
     pub auto_check_update: Option<bool>,
     pub auto_log_clean: Option<i32>,
+    pub http_server_port: Option<u16>,
+    pub auto_file_clean: Option<i32>,
+    pub file_upload_dir: Option<String>,
     pub enable_random_port: Option<bool>,
     pub enable_encryption: Option<bool>,
 }
@@ -179,6 +197,9 @@ impl From<ISynclan> for ISynclanResponse {
             enable_silent_start: synclan.enable_silent_start,
             auto_check_update: synclan.auto_check_update,
             auto_log_clean: synclan.auto_log_clean,
+            http_server_port: synclan.http_server_port,
+            auto_file_clean: synclan.auto_file_clean,
+            file_upload_dir: synclan.file_upload_dir,
             enable_random_port: synclan.enable_random_port,
             enable_encryption: synclan.enable_encryption,
         }
