@@ -1,6 +1,6 @@
 use crate::{
     config::Config,
-    logging, logging_error,
+    feat, logging, logging_error,
     process::AsyncHandler,
     utils::{db, dirs, logging::Type, tls},
 };
@@ -22,6 +22,7 @@ use utoipa_swagger_ui::SwaggerUi;
 
 mod api_doc;
 mod events;
+mod exception;
 mod routes;
 
 pub struct HttpServer {
@@ -53,6 +54,9 @@ impl HttpServer {
         // store the handle for later stopping
         *self.handle.lock() = Some(handle);
 
+        // automatically clear uploaded files
+        feat::uploaded_files_auto_cleanup().await?;
+
         self.bootstrap(cloned_handle, db_pool).await?;
 
         Ok(())
@@ -71,7 +75,7 @@ impl HttpServer {
             .with_state(events::store::Clients::default())
             .build_layer();
         io.ns(
-            "/socket",
+            "/",
             events::handlers::on_connection.with(events::handlers::authenticate_middleware),
         );
 
@@ -91,7 +95,7 @@ impl HttpServer {
         let ip: IpAddr = "0.0.0.0".parse()?;
         let addr = SocketAddr::from((ip, 53317));
 
-        let enable_encryption = Config::synclan().latest().enable_encryption;
+        let enable_encryption = Config::synclan().latest_ref().enable_encryption;
         match enable_encryption {
             Some(true) | None => {
                 let config = tls::build_rustls_config_with_ip(&ip).await?;

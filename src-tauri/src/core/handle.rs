@@ -1,5 +1,3 @@
-// use super::tray::Tray;
-use anyhow::Result;
 use once_cell::sync::OnceCell;
 use parking_lot::RwLock;
 use std::sync::Arc;

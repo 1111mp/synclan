@@ -8,7 +8,7 @@ use crate::{
 #[tauri::command]
 pub async fn get_synclan_config() -> CmdResult<ISynclanResponse> {
     let synclan = Config::synclan();
-    let synclan_data = synclan.data().clone();
+    let synclan_data = synclan.latest_ref().clone();
     Ok(ISynclanResponse::from(*synclan_data))
 }
 

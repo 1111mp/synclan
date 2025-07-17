@@ -4,7 +4,6 @@ use utoipa::{
     Modify, OpenApi,
 };
 
-pub const POST_TAG: &str = "Post";
 pub const USER_TAG: &str = "User";
 pub const UPLOAD_TAG: &str = "Upload";
 
@@ -16,7 +15,7 @@ pub const UPLOAD_TAG: &str = "Upload";
 		(url = "http://{domain}:{port}", description = "remote api", 
       variables(
 				("domain" = (default = "127.0.0.1", description = "Default domain for API")),
-				("port" = (default = "3000", enum_values("53317"), description = "Supported ports for the API"))
+				("port" = (default = "53317", enum_values("53317"), description = "Supported ports for the API"))
 			)
     )
   ),

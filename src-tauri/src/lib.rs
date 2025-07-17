@@ -20,6 +20,7 @@ pub fn run() {
     let devtools = tauri_plugin_devtools::init();
 
     let mut builder = tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             logging!(info, Type::Setup, true, "开始应用初始化...");
@@ -63,7 +64,10 @@ pub fn run() {
             cmd::get_synclan_config,
             cmd::patch_synclan_config,
             // system
-            cmd::get_local_ip
+            cmd::get_local_ip,
+            // server
+            cmd::clean_upload_files,
+            cmd::export_server_cert
         ]);
 
     #[cfg(debug_assertions)]

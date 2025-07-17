@@ -13,7 +13,7 @@ enum UpdateFlags {
 
 /// Patch Synclan Configuration
 pub async fn patch_config(patch: ISynclan, need_save_file: bool) -> Result<()> {
-    Config::synclan().draft().patch_config(patch.clone());
+    Config::synclan().draft_mut().patch_config(patch.clone());
 
     let enable_encryption = patch.enable_encryption;
     let result: Result<()> = {
@@ -36,7 +36,7 @@ pub async fn patch_config(patch: ISynclan, need_save_file: bool) -> Result<()> {
         Ok(()) => {
             Config::synclan().apply();
             if need_save_file {
-                Config::synclan().data().save_file()?;
+                Config::synclan().data_mut().save_config()?;
             }
 
             Ok(())

@@ -24,7 +24,7 @@ fn init_logger() -> Result<()> {
     }
 
     // read from config
-    let log_level = Config::synclan().data().get_log_level();
+    let log_level = Config::synclan().latest_ref().get_log_level();
     if log_level == LevelFilter::Off {
         return Ok(());
     }
@@ -73,7 +73,7 @@ pub fn delete_log_file() -> Result<()> {
 
     let auto_log_clean = {
         let synclan = Config::synclan();
-        let synclan = synclan.data();
+        let synclan = synclan.latest_ref();
         synclan.auto_log_clean.unwrap_or(0)
     };
 
