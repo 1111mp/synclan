@@ -4,6 +4,7 @@ use utoipa::{
     Modify, OpenApi,
 };
 
+pub const SYNCLAN_TAG: &str = "Synclan";
 pub const USER_TAG: &str = "User";
 pub const UPLOAD_TAG: &str = "Upload";
 
@@ -21,6 +22,7 @@ pub const UPLOAD_TAG: &str = "Upload";
   ),
   modifiers(&SecurityAddon),
   tags(
+    (name = SYNCLAN_TAG, description = "Synclan application API endpoints"),
     (name = USER_TAG, description = "User API endpoints"),
     (name = UPLOAD_TAG, description = "Upload API endpoints")
   )

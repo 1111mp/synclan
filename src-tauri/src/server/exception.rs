@@ -176,8 +176,12 @@ struct ExceptionResponse {
 
 #[macro_export]
 macro_rules! http_exception {
+    ($variant:ident) => {
+        return Err(HttpException::$variant(None))
+    };
     ($variant:ident, $msg:expr) => {
-        return Err(HttpException::$variant(Some($msg.to_string())))
+        let msg = $msg.map(|s| s.to_string());
+        return Err(HttpException::$variant(msg))
     };
 }
 

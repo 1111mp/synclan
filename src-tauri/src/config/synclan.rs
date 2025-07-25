@@ -34,6 +34,18 @@ pub struct ISynclan {
     /// 0: No cleaning; 1: 1 day; 2: 7 days; 3: 30 days; 4: 90 days
     pub auto_log_clean: Option<i32>,
 
+    /// Whether to enable authorized access
+    pub enable_authorized_access: Option<bool>,
+
+    /// Authorization access code
+    #[serde(
+        serialize_with = "serialize_encrypted",
+        deserialize_with = "deserialize_encrypted",
+        skip_serializing_if = "Option::is_none",
+        default
+    )]
+    pub authorized_access_code: Option<String>,
+
     /// Whether to enable random port
     pub enable_random_port: Option<bool>,
 
@@ -110,6 +122,7 @@ impl ISynclan {
             auto_check_update: Some(true),
             enable_random_port: Some(false),
             auto_log_clean: Some(3), // default to 30 day
+            enable_authorized_access: Some(false),
             http_server_port: Some(53317),
             file_upload_dir,
             auto_file_clean: Some(1), // default to 1 day
@@ -144,6 +157,8 @@ impl ISynclan {
         patch!(enable_silent_start);
         patch!(auto_check_update);
         patch!(auto_log_clean);
+        patch!(enable_authorized_access);
+        patch!(authorized_access_code);
         patch!(enable_random_port);
         patch!(http_server_port);
         patch!(auto_file_clean);
@@ -180,6 +195,8 @@ pub struct ISynclanResponse {
     pub enable_silent_start: Option<bool>,
     pub auto_check_update: Option<bool>,
     pub auto_log_clean: Option<i32>,
+    pub enable_authorized_access: Option<bool>,
+    pub authorized_access_code: Option<String>,
     pub http_server_port: Option<u16>,
     pub auto_file_clean: Option<i32>,
     pub file_upload_dir: Option<String>,
@@ -197,6 +214,8 @@ impl From<ISynclan> for ISynclanResponse {
             enable_silent_start: synclan.enable_silent_start,
             auto_check_update: synclan.auto_check_update,
             auto_log_clean: synclan.auto_log_clean,
+            enable_authorized_access: synclan.enable_authorized_access,
+            authorized_access_code: synclan.authorized_access_code,
             http_server_port: synclan.http_server_port,
             auto_file_clean: synclan.auto_file_clean,
             file_upload_dir: synclan.file_upload_dir,
