@@ -6,6 +6,7 @@ use crate::{
 };
 use anyhow::{bail, Result};
 use api_doc::ApiDoc;
+use axum::{handler::HandlerWithoutStateExt, http::StatusCode};
 use axum_server::Handle;
 use once_cell::sync::OnceCell;
 use parking_lot::Mutex;
@@ -21,8 +22,10 @@ use utoipa_axum::router::OpenApiRouter;
 use utoipa_swagger_ui::SwaggerUi;
 
 mod api_doc;
+mod dtos;
 mod events;
 mod exception;
+mod extractors;
 mod routes;
 
 pub struct HttpServer {
@@ -62,7 +65,7 @@ impl HttpServer {
         Ok(())
     }
 
-    /// start the entry of http server
+    /// the entry to start http server
     pub async fn bootstrap(&self, handle: Handle, db_pool: Pool<Sqlite>) -> Result<()> {
         let app_state = Arc::new(AppState { db_pool });
 
@@ -81,8 +84,9 @@ impl HttpServer {
 
         let resources = dirs::app_resources_dir()?;
         let web_static_dir = resources.join("web");
+        let synclan = Config::synclan().latest_ref().clone();
 
-        let app = router
+        let mut app = router
             // swagger ui
             .merge(SwaggerUi::new("/api/docs").url("/api/docs/openapi.json", api))
             // web static server
@@ -90,13 +94,22 @@ impl HttpServer {
             .layer(layer)
             .with_state(app_state);
 
+        if let Some(file_upload_dir) = synclan.file_upload_dir {
+            // uploads files static server
+            app = app.nest_service(
+                "/uploads",
+                ServeDir::new(file_upload_dir).not_found_service(
+                    (async || (StatusCode::NOT_FOUND, "Not found")).into_service(),
+                ),
+            );
+        }
+
         logging!(info, Type::Server, true, "Starting server...");
 
         let ip: IpAddr = "0.0.0.0".parse()?;
         let addr = SocketAddr::from((ip, 53317));
 
-        let enable_encryption = Config::synclan().latest_ref().enable_encryption;
-        match enable_encryption {
+        match synclan.enable_encryption {
             Some(true) | None => {
                 let config = tls::build_rustls_config_with_ip(&ip).await?;
                 logging!(info, Type::Server, true, "Listening on https://{}", addr);

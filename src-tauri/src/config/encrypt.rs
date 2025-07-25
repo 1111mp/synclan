@@ -57,13 +57,13 @@ where
     T: Serialize,
     S: Serializer,
 {
-    // 如果序列化失败，返回 None
+    // If serialization fails, returns None
     let json = match serde_json::to_string(value) {
         Ok(j) => j,
         Err(_) => return serializer.serialize_none(),
     };
 
-    // 如果加密失败，返回 None
+    // If encryption fails, returns None
     match encrypt_data(&json) {
         Ok(encrypted) => serializer.serialize_str(&encrypted),
         Err(_) => serializer.serialize_none(),
@@ -76,18 +76,18 @@ where
     T: for<'de> Deserialize<'de> + Default,
     D: Deserializer<'a>,
 {
-    // 如果反序列化字符串失败，返回默认值
+    // If deserialization of the string fails, return the default value
     let encrypted = match String::deserialize(deserializer) {
         Ok(s) => s,
         Err(_) => return Ok(T::default()),
     };
 
-    // 如果解密失败，返回默认值
+    // If decryption fails, return the default value
     let decrypted_string = match decrypt_data(&encrypted) {
         Ok(data) => data,
         Err(_) => return Ok(T::default()),
     };
-    // 如果 JSON 解析失败，返回默认值
+    // If JSON parsing fails, return a default value
     match serde_json::from_str(&decrypted_string) {
         Ok(value) => Ok(value),
         Err(_) => Ok(T::default()),
