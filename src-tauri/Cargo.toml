@@ -26,9 +26,11 @@ axum-macros = "0.5"
 axum-server = { version = "0.7", features = ["tls-rustls"] }
 axum_typed_multipart = "0.16"
 base64 = "0.22"
-chrono = "0.4"
+chrono = { version = "0.4", features = ["serde"] }
 dark-light = "2"
+dashmap = "6"
 getrandom = "0.3"
+libc = "0.2"
 libsqlite3-sys = { version = "0.30", features = [
 	"bundled-sqlcipher-vendored-openssl",
 ] }
@@ -53,6 +55,7 @@ sqlx = { version = "0.8", features = [
 	"runtime-tokio",
 	"migrate",
 	"json",
+	"chrono",
 ] }
 sys-locale = "0.3"
 tauri = { version = "2", features = ["macos-private-api", "protocol-asset"] }
@@ -68,3 +71,6 @@ utoipa-swagger-ui = { version = "9", features = ["axum", "reqwest"] }
 utoipa-axum = "0.2"
 validator = { version = "0.20", features = ["derive"] }
 whoami = "1.6"
+
+[target.'cfg(windows)'.dependencies]
+deelevate = "0.2"

@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use once_cell::sync::OnceCell;
 use parking_lot::RwLock;
 use sqlx::{
@@ -89,4 +89,10 @@ impl DBManager {
     pub fn db_pool(&self) -> Option<Pool<Sqlite>> {
         self.db_pool.read().clone()
     }
+}
+
+pub fn get_db_pool() -> Result<Pool<Sqlite>> {
+    DBManager::global()
+        .db_pool()
+        .ok_or_else(|| anyhow!("SQLite connection pool has not been initialized"))
 }
