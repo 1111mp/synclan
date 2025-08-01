@@ -24,3 +24,11 @@ export async function getSynclanConfig() {
 export async function patchSynclanConfig(payload: ISynclanConfig) {
   return invoke<void>('patch_synclan_config', { payload });
 }
+
+export async function getClientById(id: string) {
+  return invoke<Client | null>('get_client_by_id', { id });
+}
+
+export async function createClient(client: Partial<Client>) {
+  return invoke<Client>('create_client', { client });
+}

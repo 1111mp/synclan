@@ -27,6 +27,7 @@ mod events;
 mod exception;
 mod extractors;
 mod routes;
+mod status_code_serde;
 
 pub struct HttpServer {
     handle: Arc<Mutex<Option<Handle>>>,

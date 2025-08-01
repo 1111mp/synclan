@@ -10,7 +10,7 @@ export const AppContext = createContext<AppContext | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const { state: socketState, sendMessage } = useSocketIO(
-    'wss://10.97.86.23:53317/socket',
+    'ws://10.97.87.45:53317/socket',
     {
       transports: ['websocket'],
       onMessage(message) {

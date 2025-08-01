@@ -2,6 +2,7 @@ mod cmd;
 mod config;
 mod core;
 mod feat;
+mod module;
 mod process;
 mod server;
 mod utils;
@@ -65,9 +66,14 @@ pub fn run() {
             cmd::patch_synclan_config,
             // system
             cmd::get_local_ip,
+            cmd::is_admin,
             // server
             cmd::clean_upload_files,
-            cmd::export_server_cert
+            cmd::export_server_cert,
+            // client
+            cmd::get_client_by_id,
+            cmd::create_client,
+            cmd::patch_client
         ]);
 
     #[cfg(debug_assertions)]
