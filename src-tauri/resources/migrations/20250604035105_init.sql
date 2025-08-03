@@ -39,7 +39,7 @@ END;
 CREATE TABLE
 	IF NOT EXISTS message_acks (
 		receiver TEXT PRIMARY KEY,
-		last_ack INTEGER DEFAULT NULL,
+		last_ack INTEGER DEFAULT NULL
 	);
 
 CREATE INDEX IF NOT EXISTS idx_message_acks_receiver_last_ack ON message_acks (receiver, last_ack);

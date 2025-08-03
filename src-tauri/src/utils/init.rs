@@ -148,6 +148,12 @@ pub fn init_config() -> Result<()> {
         }
     }));
 
+    crate::log_err!(dirs::file_upload_dir().map(|app_dir| {
+        if !app_dir.exists() {
+            let _ = fs::create_dir_all(&app_dir);
+        }
+    }));
+
     crate::log_err!(dirs::synclan_path().map(|path| {
         if !path.exists() {
             help::save_yaml(&path, &ISynclan::template(), Some("# SyncLan Config File"))?;

@@ -1,7 +1,7 @@
 use super::{AppState, HttpResponse};
 use crate::{
     config::Config,
-    server::{api_doc::UPLOAD_TAG, exception::HttpException},
+    server::{api_doc::UPLOAD_TAG, exception::HttpException, routes::JsonResponse},
 };
 use axum::{
     http::StatusCode,
@@ -16,7 +16,7 @@ use tokio::fs;
 use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
-pub fn public_route() -> OpenApiRouter<Arc<AppState>> {
+pub fn protected_route() -> OpenApiRouter<Arc<AppState>> {
     let router = OpenApiRouter::new().routes(routes!(upload_handler));
     OpenApiRouter::new().nest("/upload", router)
 }
@@ -36,15 +36,24 @@ struct FileUpload {
     pub file: FieldData<NamedTempFile>,
 }
 
-/// Step 5: Define a handler that takes the custom multipart as argument.
-// If the request is malformed, a `MultipartException` will be returned.
+/// Upload files
+///
+/// If the file is uploaded successfully, the file URL will be returned.
 #[utoipa::path(
     post,
     path = "",
     request_body(content_type = "multipart/form-data", content = FileUpload),
+    responses(
+        (status = OK, description = "the file URL", body = JsonResponse<String>)
+    ),
+    security(
+        ("bearer_auth" = [])
+    ),
     tag = UPLOAD_TAG
 )]
 #[debug_handler]
+// Step 5: Define a handler that takes the custom multipart as argument.
+// If the request is malformed, a `MultipartException` will be returned.
 async fn upload_handler(
     input: SelfTypedMultipart<FileUpload>,
 ) -> Result<HttpResponse<String>, HttpException> {
