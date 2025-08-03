@@ -4,7 +4,7 @@ use crate::{module::client::Client, wrap_err};
 /// Get client info by id
 #[tauri::command]
 pub async fn get_client_by_id(id: String) -> CmdResult<Option<Client>> {
-    wrap_err!(Client::get_by_id(id).await)
+    wrap_err!(Client::get_by_id(&id).await)
 }
 
 /// Create client

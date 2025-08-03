@@ -16,16 +16,16 @@ pub fn public_route() -> OpenApiRouter<Arc<AppState>> {
     OpenApiRouter::new().nest("/synclan", router)
 }
 
-/// Verify the authorization code
+/// Verify the authorization code.
 ///
-/// If successful, identity credentials are returned
+/// If successful, identity credentials are returned.
 #[utoipa::path(
     post,
     path = "/access-code",
     request_body = AccessCodeDto,
     responses(
-        (status = 200, description = "Authorization code verification passed.", body = JsonResponse<EmptyPayload>),
-        (status = 401, description = "Authorization code verification failed.")
+        (status = OK, description = "Authorization code verification passed.", body = JsonResponse<EmptyPayload>),
+        (status = UNAUTHORIZED, description = "Authorization code verification failed.")
     ),
     tag = SYNCLAN_TAG
 )]

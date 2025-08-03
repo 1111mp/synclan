@@ -1,10 +1,14 @@
+mod message;
 mod synclan;
 mod upload;
 mod user;
 
+use crate::server::guards::AuthGuard;
+
 use super::AppState;
 use axum::{
     http::StatusCode,
+    middleware,
     response::{IntoResponse, Redirect, Response},
 };
 use serde::Serialize;
@@ -40,9 +44,11 @@ use utoipa_axum::router::OpenApiRouter;
 
 pub fn router() -> OpenApiRouter<Arc<AppState>> {
     let api_v1_router = OpenApiRouter::new()
+        .merge(message::protected_route())
+        .merge(upload::protected_route())
+        .route_layer(middleware::from_extractor::<AuthGuard>())
         .merge(synclan::public_route())
-        .merge(user::public_route())
-        .merge(upload::public_route());
+        .merge(user::public_route());
 
     OpenApiRouter::new().nest("/v1", api_v1_router)
 }

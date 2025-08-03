@@ -78,7 +78,7 @@ pub async fn authenticate_middleware(
     State(clients): State<Clients>,
 ) -> Result<()> {
     let fingerprint = auth.fingerprint.ok_or_else(|| anyhow!("Unauthorized"))?;
-    let client = client::Client::get_by_id(fingerprint)
+    let client = client::Client::get_by_id(&fingerprint)
         .await?
         .ok_or_else(|| anyhow!("Unauthorized"))?;
     if !clients.contains(&client.id) {

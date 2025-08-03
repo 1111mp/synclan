@@ -16,7 +16,7 @@ pub struct Client {
 
 impl Client {
     /// Get client by id
-    pub async fn get_by_id(id: String) -> Result<Option<Client>> {
+    pub async fn get_by_id(id: &str) -> Result<Option<Client>> {
         let db_pool = db::get_db_pool()?;
         let client = sqlx::query_as::<_, Client>(
             "SELECT id, name, avatar, auto_message_clean, created_at, updated_at FROM clients WHERE id = $1",
