@@ -1,13 +1,15 @@
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { createHtmlPlugin } from 'vite-plugin-html';
 
 const host = process.env.TAURI_DEV_HOST;
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // https://vitejs.dev/config/
-export default defineConfig(async ({ mode }) => ({
+export default defineConfig(async () => ({
   root: 'src',
   publicDir: '../public',
 
@@ -18,16 +20,29 @@ export default defineConfig(async ({ mode }) => ({
       },
     }),
     createHtmlPlugin({
-      inject: {
-        data: {
-          NODE_ENV: mode,
+      pages: [
+        {
+          entry: './main.tsx',
+          filename: 'index.html',
+          template: './index.html',
         },
-      },
+        {
+          entry: './preview/main.tsx',
+          filename: 'index.html',
+          template: './preview/index.html',
+        },
+      ],
     }),
     tailwindcss(),
   ],
 
   build: {
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'src/index.html'),
+        preview: resolve(__dirname, 'src/preview/index.html'),
+      },
+    },
     emptyOutDir: true,
     outDir: '../dist/ui',
   },
