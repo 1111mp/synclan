@@ -1,6 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Smile } from 'lucide-react';
-import { Button, Popover, PopoverContent, PopoverTrigger } from '../ui';
+import {
+  Button,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '../ui';
 import { EmojiPicker, type EmojiPickerProps } from './emoji-picker';
 
 type Props = Pick<
@@ -39,14 +47,24 @@ function EmojiButton({ ...props }: Props) {
         setOpen(o);
       }}
     >
-      <PopoverTrigger asChild>
-        <Button variant='ghost'>
-          <Smile />
-        </Button>
+      <PopoverTrigger>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              className='text-muted-foreground hover:text-muted-foreground'
+              size='xs'
+              variant='ghost'
+            >
+              <Smile className='size-5' strokeWidth={2.25} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>表情</TooltipContent>
+        </Tooltip>
       </PopoverTrigger>
       <PopoverContent
-        align='start'
+        align='center'
         side='top'
+        sideOffset={12}
         className='w-auto p-0'
         onEscapeKeyDown={(event) => event.preventDefault()}
       >
