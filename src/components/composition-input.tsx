@@ -5,6 +5,7 @@ import { AutoLinkNode, LinkNode } from '@lexical/link';
 import { TRANSFORMERS } from '@lexical/markdown';
 import { ListNode, ListItemNode } from '@lexical/list';
 import { $generateHtmlFromNodes } from '@lexical/html';
+import { EmojiNode } from './emoji';
 import {
   LexicalComposer,
   type InitialConfigType,
@@ -19,7 +20,12 @@ import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPl
 import { TabIndentationPlugin } from '@lexical/react/LexicalTabIndentationPlugin';
 import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
-import { ClearSelectionPlugin, EmojiPickerPlugin } from './plugins';
+import {
+  AutoLinePlugin,
+  ClearSelectionPlugin,
+  EmojiPickerPlugin,
+  EnterPlugin,
+} from './plugins';
 
 import type { EditorState, LexicalEditor } from 'lexical';
 
@@ -38,14 +44,17 @@ function CompositionInput() {
       HeadingNode,
       QuoteNode,
       CodeNode,
+      EmojiNode,
     ],
     theme: {
+      paragraph: 'mt-0 mb-0',
       link: 'text-blue-500',
       list: {
-        ul: 'list-inside marker:text-blue-500',
+        ul: 'mt-0 mb-0 pl-0 list-inside marker:text-blue-500',
         ulDepth: ['list-disc', 'list-[circle]', 'list-[square]'],
         ol: 'list-inside marker:text-blue-500',
         olDepth: ['list-decimal', 'list-[lower-alpha]', 'list-[lower-roman]'],
+        listitem: 'mt-0 mb-0',
         nested: {
           listitem: 'ml-6 list-none',
         },
@@ -64,58 +73,62 @@ function CompositionInput() {
   };
 
   return (
-    <div>
-      <LexicalComposer initialConfig={initialConfig}>
-        <div className='relative'>
-          <RichTextPlugin
-            contentEditable={
-              <ContentEditable
-                className='min-h-40 prose outline-none focus:outline-none'
-                aria-placeholder='Enter Message'
-                placeholder={
-                  <p className='inline-block absolute top-0.5 text-gray-45 select-none pointer-events-none'>
-                    Enter Message
-                  </p>
-                }
-              />
-            }
-            ErrorBoundary={LexicalErrorBoundary}
-          />
-          <HistoryPlugin />
-          <AutoFocusPlugin />
-          <AutoLinkPlugin
-            matchers={[
-              (text) => {
-                const match = URL_MATCHER.exec(text);
-                if (match === null) {
-                  return null;
-                }
+    <LexicalComposer initialConfig={initialConfig}>
+      <div className='relative'>
+        <RichTextPlugin
+          contentEditable={
+            <ContentEditable
+              className='w-full prose max-w-none text-sm leading-5 text-foreground outline-none focus:outline-none'
+              aria-placeholder='Enter Message'
+              placeholder={
+                <p className='inline-block absolute top-0 text-sm text-muted-foreground select-none pointer-events-none'>
+                  发送消息
+                </p>
+              }
+            />
+          }
+          ErrorBoundary={LexicalErrorBoundary}
+        />
+        <HistoryPlugin />
+        <AutoFocusPlugin />
+        <AutoLinkPlugin
+          matchers={[
+            (text) => {
+              const match = URL_MATCHER.exec(text);
+              if (match === null) {
+                return null;
+              }
 
-                const fullMatch = match[0];
-                return {
-                  index: match.index,
-                  length: fullMatch.length,
-                  text: fullMatch,
-                  url: fullMatch.startsWith('http')
-                    ? fullMatch
-                    : `https://${fullMatch}`,
-                  attributes: {
-                    rel: 'noreferrer',
-                    target: '_blank',
-                  },
-                };
-              },
-            ]}
-          />
-          <ListPlugin hasStrictIndent={false} />
-          <TabIndentationPlugin maxIndent={3} />
-          <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
-          <ClearSelectionPlugin />
-          <EmojiPickerPlugin />
-          <OnChangePlugin onChange={onChange} />
-        </div>
-      </LexicalComposer>
-    </div>
+              const fullMatch = match[0];
+              return {
+                index: match.index,
+                length: fullMatch.length,
+                text: fullMatch,
+                url: fullMatch.startsWith('http')
+                  ? fullMatch
+                  : `https://${fullMatch}`,
+                attributes: {
+                  rel: 'noreferrer',
+                  target: '_blank',
+                },
+              };
+            },
+          ]}
+        />
+        <ListPlugin hasStrictIndent={false} />
+        <TabIndentationPlugin maxIndent={3} />
+        <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
+        <ClearSelectionPlugin />
+        <EmojiPickerPlugin />
+        <AutoLinePlugin />
+        <OnChangePlugin onChange={onChange} />
+        <EnterPlugin
+          onSend={() => {
+            console.log('onSend');
+          }}
+        />
+      </div>
+    </LexicalComposer>
   );
 }
 
