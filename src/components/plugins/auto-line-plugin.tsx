@@ -1,35 +1,78 @@
 import { useEffect, useRef } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+import {
+  $getSelection,
+  $isRangeSelection,
+  COMMAND_PRIORITY_LOW,
+  SELECTION_CHANGE_COMMAND,
+} from 'lexical';
 
-function AutoLinePlugin() {
+type AutoLinePluginProps = {
+  onLineChange?: (changed: boolean) => void;
+};
+
+function AutoLinePlugin({ onLineChange }: AutoLinePluginProps) {
   const [editor] = useLexicalComposerContext();
+  const rootInitialSizeRef = useRef<{ width: number; height: number } | null>(
+    null,
+  );
 
-  const initialHeight = useRef<number>(0);
+  const onLineChangeRef = useRef<AutoLinePluginProps['onLineChange']>(void 0);
+  onLineChangeRef.current = onLineChange;
 
   useEffect(() => {
-    const editable = editor.getRootElement();
-    if (!editable) return;
+    const rootElement = editor.getRootElement();
+    if (rootElement) {
+      const rect = rootElement.getBoundingClientRect();
+      rootInitialSizeRef.current = {
+        width: rect.width,
+        height: rect.height,
+      };
+    }
 
-    initialHeight.current = editable.getBoundingClientRect().height;
+    return editor.registerCommand(
+      SELECTION_CHANGE_COMMAND,
+      (_payload, newEditor) => {
+        newEditor.read(() => {
+          const selection = $getSelection();
+          if (!$isRangeSelection(selection)) return false;
 
-    return editor.registerUpdateListener(() => {
-      const editable = editor.getRootElement();
-      if (!editable) return;
+          const rootElement = editor.getRootElement();
+          if (!rootElement) return false;
 
-      // 获取容器当前高度
-      const { height } = editable.getBoundingClientRect();
-      console.log('height', height);
-      console.log('prevHeightRef.current', initialHeight.current);
-      // 如果高度增加，说明出现换行（Enter 或自动换行）
-      if (height > initialHeight.current) {
-        console.log('换行了');
-      } else if (height <= initialHeight.current) {
-        console.log('回来了');
-      }
-    });
+          const domSelection = window.getSelection();
+          if (!domSelection || domSelection.rangeCount === 0) return false;
+
+          const range = domSelection.getRangeAt(0);
+          if (!range.collapsed) return false;
+
+          const rootRect = rootElement.getBoundingClientRect();
+
+          if (
+            rootInitialSizeRef.current &&
+            rootRect.height > rootInitialSizeRef.current.height
+          ) {
+            onLineChangeRef.current?.(true);
+          }
+
+          const selectionRect = range.getBoundingClientRect();
+          const left = selectionRect.left - rootRect.left;
+          if (
+            rootInitialSizeRef.current &&
+            rootRect.height <= rootInitialSizeRef.current.height &&
+            left < rootInitialSizeRef.current.width
+          ) {
+            onLineChangeRef.current?.(false);
+          }
+        });
+
+        return false;
+      },
+      COMMAND_PRIORITY_LOW,
+    );
   }, [editor]);
 
   return null;
 }
 
-export { AutoLinePlugin };
+export { AutoLinePlugin, type AutoLinePluginProps };

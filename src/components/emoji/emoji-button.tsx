@@ -41,41 +41,43 @@ function EmojiButton({ ...props }: Props) {
   }, []);
 
   return (
-    <Popover
-      open={open}
-      onOpenChange={(o) => {
-        setOpen(o);
-      }}
-    >
-      <PopoverTrigger>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              className='text-muted-foreground hover:text-muted-foreground'
-              size='xs'
-              variant='ghost'
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div>
+          <Popover
+            open={open}
+            onOpenChange={(o) => {
+              setOpen(o);
+            }}
+          >
+            <PopoverTrigger asChild>
+              <Button
+                className='text-muted-foreground hover:text-muted-foreground'
+                size='xs'
+                variant='ghost'
+              >
+                <Smile className='size-5' strokeWidth={2.25} />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent
+              align='center'
+              side='top'
+              sideOffset={12}
+              className='w-auto p-0'
+              onEscapeKeyDown={(event) => event.preventDefault()}
             >
-              <Smile className='size-5' strokeWidth={2.25} />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>表情</TooltipContent>
-        </Tooltip>
-      </PopoverTrigger>
-      <PopoverContent
-        align='center'
-        side='top'
-        sideOffset={12}
-        className='w-auto p-0'
-        onEscapeKeyDown={(event) => event.preventDefault()}
-      >
-        <EmojiPicker
-          onClose={() => {
-            setOpen(false);
-          }}
-          {...props}
-        />
-      </PopoverContent>
-    </Popover>
+              <EmojiPicker
+                onClose={() => {
+                  setOpen(false);
+                }}
+                {...props}
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+      </TooltipTrigger>
+      <TooltipContent>表情</TooltipContent>
+    </Tooltip>
   );
 }
 

@@ -65,42 +65,6 @@ function EmojiPicker({
     disableSkinTones ? 0 : skinTone,
   );
 
-  // Handle escape key
-  useEffect(() => {
-    const handler = (event: KeyboardEvent) => {
-      if (searchMode && event.key === 'Escape') {
-        setSearchText('');
-        setSearchMode(false);
-        rowVirtualizer.scrollToIndex(0, { align: 'start' });
-
-        event.preventDefault();
-        event.stopPropagation();
-      } else if (
-        !searchMode &&
-        ![
-          'ArrowUp',
-          'ArrowDown',
-          'ArrowLeft',
-          'ArrowRight',
-          'Shift',
-          'Tab',
-          ' ', // Space
-        ].includes(event.key)
-      ) {
-        onClose?.();
-
-        event.preventDefault();
-        event.stopPropagation();
-      }
-    };
-
-    document.addEventListener('keydown', handler);
-
-    return () => {
-      document.removeEventListener('keydown', handler);
-    };
-  }, [onClose, searchMode]);
-
   const content = useRef<HTMLDivElement>(null);
 
   const [, ...renderableCategories] = categories;
@@ -152,6 +116,56 @@ function EmojiPicker({
     [catRowEnds, searchText],
   );
 
+  const rowVirtualizer = useVirtualizer({
+    count: emojiGrid.length,
+    getScrollElement: () => content.current,
+    estimateSize: getRowHeight,
+    overscan: 12,
+  });
+
+  const columnVirtualizer = useVirtualizer({
+    horizontal: true,
+    count: COL_COUNT,
+    getScrollElement: () => content.current,
+    estimateSize: () => 38,
+  });
+
+  // Handle escape key
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      if (searchMode && event.key === 'Escape') {
+        setSearchText('');
+        setSearchMode(false);
+        rowVirtualizer.scrollToIndex(0, { align: 'start' });
+
+        event.preventDefault();
+        event.stopPropagation();
+      } else if (
+        !searchMode &&
+        ![
+          'ArrowUp',
+          'ArrowDown',
+          'ArrowLeft',
+          'ArrowRight',
+          'Shift',
+          'Tab',
+          ' ', // Space
+        ].includes(event.key)
+      ) {
+        onClose?.();
+
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+
+    document.addEventListener('keydown', handler);
+
+    return () => {
+      document.removeEventListener('keydown', handler);
+    };
+  }, [rowVirtualizer, searchMode, onClose]);
+
   const catToRowOffsets = useMemo(() => {
     const offsets = initial(catRowEnds).map((i) => i + 1);
 
@@ -179,7 +193,7 @@ function EmojiPicker({
         });
       }
     },
-    [catToRowOffsets, setSelectedCategory],
+    [rowVirtualizer, catToRowOffsets, setSelectedCategory],
   );
 
   const debounceSearchChange = useMemo(
@@ -189,7 +203,7 @@ function EmojiPicker({
         setSearchText(query);
         rowVirtualizer.scrollToIndex(0, { align: 'start' });
       }, 200),
-    [setSearchText],
+    [rowVirtualizer, setSearchText],
   );
 
   const handleSearchChange = useCallback(
@@ -233,20 +247,6 @@ function EmojiPicker({
     [onSetSkinTone],
   );
 
-  const rowVirtualizer = useVirtualizer({
-    count: emojiGrid.length,
-    getScrollElement: () => content.current,
-    estimateSize: getRowHeight,
-    overscan: 12,
-  });
-
-  const columnVirtualizer = useVirtualizer({
-    horizontal: true,
-    count: COL_COUNT,
-    getScrollElement: () => content.current,
-    estimateSize: () => 38,
-  });
-
   return (
     <div className='w-[332px] h-[428px] grid grid-rows-[44px_1fr] grid-cols-1 rounded-lg z-10 select-none overflow-hidden'>
       <header className='flex h-11 mx-3 flex-row justify-between items-center'>
@@ -281,7 +281,7 @@ function EmojiPicker({
                 data-category={category}
                 aria-label={category}
                 className={cn(
-                  selectedCategory === category && 'bg-gray-05 dark:bg-gray-60',
+                  selectedCategory === category && 'bg-gray-05 dark:bg-gray-60/30',
                 )}
                 onClick={handleSelectCategory}
               />
