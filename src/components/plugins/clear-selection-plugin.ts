@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import {
   COMMAND_PRIORITY_HIGH,
   KEY_BACKSPACE_COMMAND,
@@ -7,6 +6,8 @@ import {
   $getSelection,
   $isRangeSelection,
 } from 'lexical';
+import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+import { mergeRegister } from '@lexical/utils';
 
 function ClearSelectionPlugin() {
   const [editor] = useLexicalComposerContext();
@@ -28,23 +29,19 @@ function ClearSelectionPlugin() {
       return false;
     };
 
-    const deleteListener = editor.registerCommand(
-      KEY_DELETE_COMMAND,
-      removeCommand,
-      COMMAND_PRIORITY_HIGH,
+    return mergeRegister(
+      editor.registerCommand(
+        KEY_DELETE_COMMAND,
+        removeCommand,
+        COMMAND_PRIORITY_HIGH,
+      ),
+      editor.registerCommand(
+        KEY_BACKSPACE_COMMAND,
+        removeCommand,
+        COMMAND_PRIORITY_HIGH,
+      ),
     );
-
-    const backspaceListener = editor.registerCommand(
-      KEY_BACKSPACE_COMMAND,
-      removeCommand,
-      COMMAND_PRIORITY_HIGH,
-    );
-
-    return () => {
-      deleteListener();
-      backspaceListener();
-    };
-  }, []);
+  }, [editor]);
 
   return null;
 }
