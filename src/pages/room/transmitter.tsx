@@ -20,7 +20,7 @@ function Transmitter() {
     <div className='px-4 pb-5'>
       <div
         className={cn(
-          'flex items-center px-3 py-2 border rounded-lg bg-card',
+          'flex items-center py-2 border rounded-lg bg-card',
           lineOverflow && 'flex-col space-y-3',
         )}
       >
@@ -37,7 +37,7 @@ function Transmitter() {
             }}
           />
         </div>
-        <ul className={cn('flex items-center self-end pl-4 space-x-1')}>
+        <ul className={cn('flex items-center self-end pl-4 pr-3 space-x-1')}>
           <li className='flex items-center'>
             <Tooltip>
               <TooltipTrigger asChild>

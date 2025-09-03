@@ -1,11 +1,11 @@
-'use no memo';
-
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useParams } from 'react-router';
+import { LoaderCircle } from 'lucide-react';
 import { MessageWrapper } from '@/components';
 import { Transmitter } from './transmitter';
+
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { useVirtualizer } from '@tanstack/react-virtual';
+import { useVirtualizer, elementScroll } from '@tanstack/react-virtual';
 import { faker } from '@faker-js/faker';
 import { useInView, InView } from 'react-intersection-observer';
 
@@ -56,9 +56,17 @@ function getVideoMessageExtra() {
   };
 }
 
+function sleep() {
+  return new Promise((resolve) => {
+    setTimeout(resolve, 1000);
+  });
+}
+
 async function fetchServerPage(cursor: number) {
   const pageSize = 20;
   let baseTime = Date.now();
+
+  // await sleep();
 
   const data: Message[] = Array(pageSize)
     .fill(0)
@@ -90,8 +98,8 @@ async function fetchServerPage(cursor: number) {
       }
 
       return message as Message;
-    })
-    .reverse();
+    });
+  // .reverse();
 
   const nextId = data[data.length - 1].id + 1;
   const previousId = data[0].id - pageSize;
@@ -102,10 +110,9 @@ async function fetchServerPage(cursor: number) {
 function RoomPage() {
   const params = useParams();
 
-  const loaderInView = useInView();
+  const mounted = useRef<boolean>(false);
   const contentRef = useRef<HTMLDivElement>(null);
-  const hasInitScroll = useRef<boolean>(false);
-  const preLength = useRef<number>(0);
+  const loaderInView = useInView();
   const lastMessageInViewRef = useRef<boolean>(false);
 
   const {
@@ -113,8 +120,11 @@ function RoomPage() {
     data,
     error,
     isFetching,
+    isFetchingNextPage,
     isFetchingPreviousPage,
+    hasNextPage,
     hasPreviousPage,
+    fetchNextPage,
     fetchPreviousPage,
   } = useInfiniteQuery({
     queryKey: ['messages', params.id],
@@ -124,13 +134,6 @@ function RoomPage() {
     getPreviousPageParam: (firstPage) => firstPage.previousId ?? undefined,
     getNextPageParam: (lastPage) => lastPage.nextId ?? undefined,
   });
-  // console.log('data', data);
-
-  useEffect(() => {
-    if (loaderInView.inView) {
-      fetchPreviousPage();
-    }
-  }, [fetchPreviousPage, loaderInView.inView]);
 
   const messages = useMemo(() => {
     return data?.pages?.flatMap((p) => p.data) ?? [];
@@ -139,69 +142,63 @@ function RoomPage() {
   const virtualizer = useVirtualizer({
     count: messages.length,
     overscan: 10,
-    scrollMargin: 20,
-    paddingEnd: 12,
+    // scrollMargin: 20,
+    paddingStart: 12,
     // gap: 12,
-    estimateSize: () => 45,
+    estimateSize: () => 120,
     getScrollElement: () => contentRef.current,
-    getItemKey: useCallback((index: number) => messages[index].id, [messages]),
+    scrollToFn(offset, options, instance) {
+      return elementScroll(offset * -1, options, instance);
+    },
   });
 
   useEffect(() => {
-    if (!hasInitScroll.current && messages.length > 0) {
-      virtualizer.scrollToIndex(messages.length - 1, { align: 'end' });
-      hasInitScroll.current = true;
+    // @ts-expect-error Overriding private method.
+    const getScrollOffset = virtualizer.getScrollOffset;
+
+    // @ts-expect-error Overriding private method.
+    virtualizer.getScrollOffset = () => Math.abs(getScrollOffset());
+  }, [virtualizer]);
+
+  useEffect(() => {
+    if (!mounted.current && virtualizer.elementsCache.size) {
+      virtualizer.scrollToIndex(0);
+      // setMounted(true);
+      mounted.current = true;
     }
-  }, [messages.length, virtualizer]);
+  }, [virtualizer.elementsCache.size]);
+
+  useEffect(() => {
+    if (!mounted.current || !loaderInView.inView || isFetchingNextPage) return;
+
+    fetchNextPage();
+  }, [loaderInView.inView]);
 
   const items = virtualizer.getVirtualItems();
 
-  const need = messages.length > preLength.current && hasInitScroll.current;
-  if (need) {
-    const offset =
-      (virtualizer.scrollOffset ?? 0) + (data?.pages[0].data ?? []).length * 45;
-    // eslint-disable-next-line react-compiler/react-compiler
-    virtualizer.scrollOffset = offset;
-    virtualizer.calculateRange();
-    virtualizer.scrollToOffset(offset, { align: 'start' });
-  }
-  preLength.current = messages.length;
-
   const renderMessageList = () => {
-    if (!hasInitScroll.current && messages.length === 0) return null;
-
     return (
       <div
         ref={contentRef}
-        className='w-full flex-1 overflow-y-auto contain-strict scrollbar-color dark:scrollbar-color'
+        className='w-full flex flex-1 flex-col-reverse contain-strict overflow-y-auto scrollbar-color dark:scrollbar-color'
       >
-        {hasInitScroll.current && (
-          <div ref={loaderInView.ref} className='bg-red-400 absolute top-20'>
-            {isFetchingPreviousPage
-              ? 'Loading more...'
-              : hasPreviousPage
-                ? 'Load Older'
-                : 'Nothing more to load'}
-          </div>
-        )}
-
         <div
-          className='relative w-full'
+          className='relative w-full flex flex-col-reverse shrink-0'
           style={{ height: virtualizer.getTotalSize() }}
         >
           <div
-            className='w-full absolute top-0 left-0'
+            className='w-full flex flex-col-reverse'
             style={{
-              transform: `translateY(${(items[0]?.start ?? 0) - virtualizer.options.scrollMargin}px)`,
+              transform: `translateY(${-(items[0]?.start ?? 0) - virtualizer.options.scrollMargin}px)`,
             }}
           >
             {items.map((row) => {
               const message = messages[row.index],
                 previousMessage = messages[row.index - 1] || void 0,
                 left = row.index % 2 === 0,
-                isLast = row.index === messages.length - 1;
+                isBegin = row.index === 0;
 
-              if (isLast)
+              if (isBegin)
                 return (
                   <div
                     key={row.key}
@@ -238,6 +235,21 @@ function RoomPage() {
               );
             })}
           </div>
+          {hasNextPage && (
+            <div
+              ref={loaderInView.ref}
+              className='w-full absolute top-96 flex justify-center items-center'
+            >
+              {isFetchingNextPage ? (
+                <LoaderCircle
+                  className='animate-spin text-primary opacity-50'
+                  size={28}
+                />
+              ) : (
+                'Load Older'
+              )}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -250,7 +262,7 @@ function RoomPage() {
           onClick={() => {
             console.log('lastMessageInView', lastMessageInViewRef.current);
             if (lastMessageInViewRef.current) {
-              virtualizer.scrollToIndex(messages.length - 1, { align: 'end' });
+              virtualizer.scrollToIndex(0, { align: 'end' });
             }
           }}
         >
