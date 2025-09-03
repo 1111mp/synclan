@@ -65,11 +65,11 @@ function CompositionInput({
       paragraph: 'mt-0 mb-0',
       link: 'text-blue-500',
       list: {
-        ul: 'mt-0 mb-0 pl-0 list-inside marker:text-blue-500',
+        ul: 'mt-0 mb-0 pl-0 list-outside marker:text-blue-500',
         ulDepth: ['list-disc', 'list-[circle]', 'list-[square]'],
         ol: 'list-inside marker:text-blue-500',
         olDepth: ['list-decimal', 'list-[lower-alpha]', 'list-[lower-roman]'],
-        listitem: 'mt-0 mb-0',
+        listitem: 'mt-0 mb-0 ml-4',
         nested: {
           listitem: 'ml-6 list-none',
         },
@@ -89,11 +89,11 @@ function CompositionInput({
 
   return (
     <LexicalComposer initialConfig={initialConfig}>
-      <div className='relative'>
+      <div className='relative px-3 max-h-56 overflow-y-auto scrollbar-color dark:scrollbar-color'>
         <RichTextPlugin
           contentEditable={
             <ContentEditable
-              className='w-full prose max-w-none text-sm leading-5 text-foreground outline-none focus:outline-none'
+              className='prose w-full max-w-none text-sm leading-5 text-foreground outline-none focus:outline-none'
               aria-placeholder='Enter Message'
               placeholder={
                 <p className='inline-block absolute top-0 text-sm text-muted-foreground select-none pointer-events-none'>

@@ -1,5 +1,3 @@
-'use no memo';
-
 import {
   Fragment,
   useCallback,
@@ -281,7 +279,8 @@ function EmojiPicker({
                 data-category={category}
                 aria-label={category}
                 className={cn(
-                  selectedCategory === category && 'bg-gray-05 dark:bg-gray-60/30',
+                  selectedCategory === category &&
+                    'bg-gray-05 dark:bg-gray-60/30',
                 )}
                 onClick={handleSelectCategory}
               />
