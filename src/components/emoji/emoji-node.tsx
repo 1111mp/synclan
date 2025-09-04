@@ -6,6 +6,8 @@ import {
   type Spread,
   type LexicalNode,
   type DOMExportOutput,
+  type DOMConversionMap,
+  type DOMConversionOutput,
 } from 'lexical';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { Emoji } from './emoji';
@@ -34,7 +36,7 @@ export class EmojiNode extends DecoratorNode<React.ReactNode> {
   createDOM(): HTMLElement {
     const node = document.createElement('span');
     node.className =
-      'w-[18px] h-[18px] inline-flex justify-center items-center align-text-bottom';
+      'size-[18px] inline-flex justify-center items-center align-text-bottom';
     return node;
   }
 
@@ -57,6 +59,15 @@ export class EmojiNode extends DecoratorNode<React.ReactNode> {
     };
   }
 
+  static importDOM(): DOMConversionMap | null {
+    return {
+      span: () => ({
+        conversion: $convertEmojiElement,
+        priority: 0,
+      }),
+    };
+  }
+
   exportDOM(): DOMExportOutput {
     const element = document.createElement('span');
     element.className =
@@ -69,6 +80,20 @@ export class EmojiNode extends DecoratorNode<React.ReactNode> {
       element,
     };
   }
+}
+
+function $convertEmojiElement(domNode: Node): null | DOMConversionOutput {
+  if (!(domNode instanceof HTMLElement)) return null;
+
+  if (domNode.nodeName.toLowerCase() !== 'span') return null;
+
+  const img = domNode.querySelector('img');
+  if (!img) return null;
+
+  const shortName = img.getAttribute('data-short-name');
+  if (!shortName) return null;
+
+  return { node: $createEmojiNode(shortName) };
 }
 
 export function $createEmojiNode(shortName: string): EmojiNode {
