@@ -157,6 +157,7 @@ function RoomPage() {
     const getScrollOffset = virtualizer.getScrollOffset;
 
     // @ts-expect-error Overriding private method.
+    // eslint-disable-next-line react-compiler/react-compiler
     virtualizer.getScrollOffset = () => Math.abs(getScrollOffset());
   }, [virtualizer]);
 
@@ -166,13 +167,13 @@ function RoomPage() {
       // setMounted(true);
       mounted.current = true;
     }
-  }, [virtualizer.elementsCache.size]);
+  }, [virtualizer, virtualizer.elementsCache.size]);
 
   useEffect(() => {
     if (!mounted.current || !loaderInView.inView || isFetchingNextPage) return;
 
     fetchNextPage();
-  }, [loaderInView.inView]);
+  }, [fetchNextPage, isFetchingNextPage, loaderInView.inView]);
 
   const items = virtualizer.getVirtualItems();
 
