@@ -13,24 +13,26 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { Emoji } from './emoji';
 
 export type SerializedEmojiNode = Spread<
-  { shortName: string },
+  { shortName: string; skinTone: number },
   SerializedLexicalNode
 >;
 
 export class EmojiNode extends DecoratorNode<React.ReactNode> {
   __shortName: string;
+  __skinTone: number;
 
   static getType() {
     return 'emoji';
   }
 
   static clone(node: EmojiNode) {
-    return new EmojiNode(node.__shortName, node.__key);
+    return new EmojiNode(node.__shortName, node.__skinTone, node.__key);
   }
 
-  constructor(shortName: string, key?: NodeKey) {
+  constructor(shortName: string, skinTone: number, key?: NodeKey) {
     super(key);
     this.__shortName = shortName;
+    this.__skinTone = skinTone;
   }
 
   createDOM(): HTMLElement {
@@ -45,17 +47,24 @@ export class EmojiNode extends DecoratorNode<React.ReactNode> {
   }
 
   decorate(): React.ReactNode {
-    return <Emoji shortName={this.__shortName} size={18} />;
+    return (
+      <Emoji
+        shortName={this.__shortName}
+        skinTone={this.__skinTone}
+        size={18}
+      />
+    );
   }
 
   static importJSON(serializedNode: SerializedEmojiNode): EmojiNode {
-    return $createEmojiNode(serializedNode.shortName);
+    return $createEmojiNode(serializedNode.shortName, serializedNode.skinTone);
   }
 
   exportJSON(): SerializedEmojiNode {
     return {
       ...super.exportJSON(),
       shortName: this.__shortName,
+      skinTone: this.__skinTone,
     };
   }
 
@@ -73,7 +82,11 @@ export class EmojiNode extends DecoratorNode<React.ReactNode> {
     element.className =
       'w-[18px] h-[18px] inline-flex justify-center items-center align-text-bottom';
     element.innerHTML = renderToStaticMarkup(
-      <Emoji shortName={this.__shortName} size={18} />,
+      <Emoji
+        shortName={this.__shortName}
+        skinTone={this.__skinTone}
+        size={18}
+      />,
     );
 
     return {
@@ -91,13 +104,17 @@ function $convertEmojiElement(domNode: Node): null | DOMConversionOutput {
   if (!img) return null;
 
   const shortName = img.getAttribute('data-short-name');
+  const skinTone = parseInt(img.getAttribute('data-tone') || '0');
   if (!shortName) return null;
 
-  return { node: $createEmojiNode(shortName) };
+  return { node: $createEmojiNode(shortName, skinTone) };
 }
 
-export function $createEmojiNode(shortName: string): EmojiNode {
-  const node = new EmojiNode(shortName);
+export function $createEmojiNode(
+  shortName: string,
+  skinTone: number = 0,
+): EmojiNode {
+  const node = new EmojiNode(shortName, skinTone);
   return $applyNodeReplacement(node);
 }
 
