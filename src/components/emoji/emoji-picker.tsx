@@ -250,6 +250,9 @@ function EmojiPicker({
       <header className='flex h-11 mx-3 flex-row justify-between items-center'>
         <EmojiCategory
           type='button'
+          role='button'
+          tabIndex={0}
+          aria-label='搜索表情'
           category={searchMode ? 'close' : 'search'}
           onClick={handleToggleSearch}
         />
@@ -272,6 +275,8 @@ function EmojiPicker({
 
             return (
               <EmojiCategory
+                tabIndex={0}
+                role='button'
                 type='button'
                 title={category}
                 key={category}
@@ -318,6 +323,8 @@ function EmojiPicker({
                         }}
                       >
                         <button
+                          tabIndex={0}
+                          role='button'
                           type='button'
                           title={shortName}
                           data-short-name={shortName}
@@ -356,6 +363,8 @@ function EmojiPicker({
           ].map((tone, index) => (
             <button
               key={tone}
+              tabIndex={0}
+              role='button'
               type='button'
               title={`Skin tone ${tone}`}
               data-tone={index}

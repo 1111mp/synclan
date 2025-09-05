@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { CaseSensitive, Maximize2 } from 'lucide-react';
 import {
   Button,
@@ -7,6 +7,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
+  type CompositionInputRef,
 } from '@/components';
 import { AnimatePresence, motion } from 'motion/react';
 import { cn } from '@/lib/utils';
@@ -15,6 +16,8 @@ function Transmitter() {
   const [isEmpty, setIsEmpty] = useState<boolean>(true);
   const [focused, setFocueed] = useState<boolean>(true);
   const [lineOverflow, setLineOverflow] = useState<boolean>(false);
+
+  const compositionInputRef = useRef<CompositionInputRef>(null);
 
   return (
     <div className='px-4 pb-5'>
@@ -26,6 +29,7 @@ function Transmitter() {
       >
         <div className='w-full'>
           <CompositionInput
+            ref={compositionInputRef}
             onLineChange={(changed) => {
               setLineOverflow(changed);
             }}
@@ -57,9 +61,11 @@ function Transmitter() {
           </li>
           <li className='flex items-center'>
             <EmojiButton
-              onPickEmoji={({ skinTone, shortName }) => {
-                console.log('skinTone', skinTone);
-                console.log('shortName', shortName);
+              onPickEmoji={({ shortName, skinTone }) => {
+                compositionInputRef.current?.onPickEmoji?.({
+                  shortName,
+                  skinTone,
+                });
               }}
             />
           </li>
