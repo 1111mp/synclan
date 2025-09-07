@@ -1,5 +1,7 @@
 export * from './auto-line-plugin';
 export * from './clear-selection-plugin';
+export * from './code-high-light-shiki-plugin';
+export * from './code-node-toolbar-pligin';
 export * from './emoji-picker-plugin';
 export * from './enter-plugin';
 export * from './is-empty-plugin';
