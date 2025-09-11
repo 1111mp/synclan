@@ -1,5 +1,6 @@
 import {
   $create,
+  $createParagraphNode,
   type EditorConfig,
   type LexicalNode,
   type NodeKey,
@@ -8,6 +9,7 @@ import { CodeNode } from '@lexical/code';
 
 export class CodePlusNode extends CodeNode {
   __theme: string;
+  __pendingDelete: boolean;
 
   static getType(): string {
     return 'code-plus';
@@ -20,6 +22,7 @@ export class CodePlusNode extends CodeNode {
   ) {
     super(language, key);
     this.__theme = theme;
+    this.__pendingDelete = false;
   }
 
   static clone(node: CodePlusNode): CodePlusNode {
@@ -32,13 +35,35 @@ export class CodePlusNode extends CodeNode {
   }
 
   getTheme(): string | undefined {
-    return this.__theme;
+    return this.getLatest().__theme;
   }
 
   setTheme(theme: string): this {
     const writable = this.getWritable();
     writable.__theme = theme;
     return writable;
+  }
+
+  collapseAtStart(): boolean {
+    if (this.getPendingDelete()) {
+      const paragraph = $createParagraphNode();
+      const children = this.getChildren();
+      children.forEach((child) => paragraph.append(child));
+      this.replace(paragraph);
+      return true;
+    }
+    return false;
+  }
+
+  setPendingDelete(pending: boolean) {
+    const writable = this.getWritable();
+    writable.__pendingDelete = pending;
+    return writable;
+  }
+
+  getPendingDelete() {
+    const latest = this.getLatest();
+    return latest.__pendingDelete;
   }
 }
 

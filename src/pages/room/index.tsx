@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useParams } from 'react-router';
 import { LoaderCircle } from 'lucide-react';
-import { MessageWrapper } from '@/components';
+import { MessageWrapper, Toaster } from '@/components';
 import { Transmitter } from './transmitter';
 
 import { useInfiniteQuery } from '@tanstack/react-query';
@@ -257,7 +257,7 @@ function RoomPage() {
   };
 
   return (
-    <div className='h-full flex flex-col'>
+    <div className='relative h-full flex flex-col'>
       <header className='w-full h-14 flex items-center px-3 border-b border-solid border-black/16 dark:border-white/16  shadow-sm overflow-hidden'>
         <h1
           onClick={() => {
@@ -274,6 +274,7 @@ function RoomPage() {
       <footer className='w-full'>
         <Transmitter />
       </footer>
+      <Toaster />
     </div>
   );
 }

@@ -1,5 +1,10 @@
 import { useMemo, useState } from 'react';
-import { $getSelection, $isRangeSelection, type TextNode } from 'lexical';
+import {
+  $createLineBreakNode,
+  $getSelection,
+  $isRangeSelection,
+  type TextNode,
+} from 'lexical';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import {
   LexicalTypeaheadMenuPlugin,
@@ -30,7 +35,7 @@ function EmojiPickerPlugin() {
     punctuation: '\\.,\\+\\*\\?\\$\\@\\|#{}\\(\\)\\^\\[\\]\\\\/!%\'"~=<>:;', // allow _ and -
   });
 
-  const { refs, x, y, strategy } = useFloating({
+  const { refs, floatingStyles } = useFloating({
     placement: 'top-start',
     middleware: [offset(10)],
   });
@@ -89,11 +94,7 @@ function EmojiPickerPlugin() {
             <div
               ref={refs.setFloating}
               className='min-w-52 py-2 rounded-lg bg-popover shadow-lg'
-              style={{
-                position: strategy,
-                top: y ?? 0,
-                left: x ?? 0,
-              }}
+              style={floatingStyles}
             >
               <ul className='max-h-56 overflow-y-auto no-scrollbar'>
                 {options.map((emoji, index) => {
