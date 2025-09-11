@@ -1,13 +1,17 @@
 import { ListNode, type ListType } from '@lexical/list';
-import { $applyNodeReplacement, type LexicalNode, type NodeKey } from 'lexical';
+import {
+  $applyNodeReplacement,
+  type DOMConversionMap,
+  type LexicalNode,
+  type NodeKey,
+} from 'lexical';
 
 export class SimpleListNode extends ListNode {
   $config() {
     return this.config('simple-list', {
       $transform: void 0,
       extends: ListNode,
-      // @ts-ignore
-      importDOM: super.$config().importDOM,
+      importDOM: super.$config().importDOM as DOMConversionMap,
     });
   }
 
