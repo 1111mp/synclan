@@ -1,4 +1,9 @@
-import { $createTextNode, ElementNode, type LexicalNode } from 'lexical';
+import {
+  $createParagraphNode,
+  $createTextNode,
+  ElementNode,
+  type LexicalNode,
+} from 'lexical';
 import { $createCodePlusNode, $isCodePlusNode, CodePlusNode } from '../nodes';
 import type {
   ElementTransformer,
@@ -17,6 +22,10 @@ const createBlockNode = (
     parentNode.replace(node);
     if (!isImport) {
       node.select(0, 0);
+    }
+    if (node.getNextSibling() === null) {
+      const paragraph = $createParagraphNode();
+      node.insertAfter(paragraph);
     }
   };
 };

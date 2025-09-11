@@ -1,5 +1,10 @@
 import { useImperativeHandle, useRef, type Ref } from 'react';
-import { $getSelection, $isRangeSelection, ParagraphNode } from 'lexical';
+import {
+  $getSelection,
+  $isRangeSelection,
+  LineBreakNode,
+  ParagraphNode,
+} from 'lexical';
 import { CodeHighlightNode, CodeNode } from '@lexical/code';
 import { HeadingNode, QuoteNode } from '@lexical/rich-text';
 import { AutoLinkNode, LinkNode } from '@lexical/link';
@@ -31,16 +36,23 @@ import {
   ClearSelectionPlugin,
   CodeHighlightShikiPlugin,
   CodeNodeToolbarPlugin,
+  CodeBehaviorPlugin,
   EmojiPickerPlugin,
   EnterPlugin,
   IsEmptyPlugin,
   IsFocusedPlugin,
+  FloatingTextFormatToolbarPlugin,
   type AutoLinePluginProps,
   type IsEmptyPluginProps,
   type IsFocusedPluginProps,
 } from './plugins';
 import { CODE_PLUS } from './transformers';
-import { $createCodePlusNode, CodePlusNode } from './nodes';
+import {
+  $createCodePlusNode,
+  $createSimpleListNode,
+  CodePlusNode,
+  SimpleListNode,
+} from './nodes';
 
 import type { EditorState, LexicalEditor } from 'lexical';
 
@@ -89,7 +101,13 @@ function CompositionInput({
     nodes: [
       AutoLinkNode,
       LinkNode,
-      ListNode,
+      SimpleListNode,
+      {
+        replace: ListNode,
+        with: (node: ListNode) =>
+          $createSimpleListNode(node.getListType(), node.getStart()),
+        withKlass: SimpleListNode,
+      },
       ListItemNode,
       ParagraphNode,
       HeadingNode,
@@ -103,20 +121,29 @@ function CompositionInput({
       },
       CodeHighlightNode,
       EmojiNode,
+      LineBreakNode,
     ],
     theme: {
-      code: 'block relative pt-7 pb-4 pl-[72px] pr-2 border rounded-md bg-muted! text-muted-foreground! before:absolute before:top-0 before:left-0 before:content-[attr(data-gutter)] before:p-2 before:pt-[29px] before:pl-8 before:min-w-6 before:font-thin',
+      code: 'block relative pt-7 pb-4 pl-[72px] pr-2 my-2 border rounded-md bg-muted! text-muted-foreground! before:absolute before:top-0 before:left-0 before:content-[attr(data-gutter)] before:p-2 before:pt-[29px] before:pl-8 before:min-w-6 before:font-thin',
       paragraph: 'mt-0 mb-0',
       link: 'font-light text-blue-500 no-underline',
       list: {
-        ul: 'mt-0 mb-0 pl-0 list-outside marker:text-blue-500',
+        ul: 'mt-0 mb-0 pl-0 list-outside indent-2 marker:text-blue-500',
         ulDepth: ['list-disc', 'list-[circle]', 'list-[square]'],
-        ol: 'list-inside marker:text-blue-500',
+        ol: 'list-inside indent-2 marker:text-blue-500 *:ml-0!',
         olDepth: ['list-decimal', 'list-[lower-alpha]', 'list-[lower-roman]'],
         listitem: 'mt-0 mb-0 ml-4',
         nested: {
           listitem: 'ml-6 list-none',
         },
+      },
+      quote: 'm-0 pl-2 text-gray-300 border-l-2 border-input',
+      text: {
+        bold: 'font-bold',
+        strikethrough: 'line-through',
+        italic: 'italic',
+        underline: 'underline',
+        underlineStrikethrough: '[text-decoration-line:underline_line-through]',
       },
     },
     onError(error) {
@@ -188,6 +215,8 @@ function CompositionInput({
         />
         <CodeHighlightShikiPlugin />
         <CodeNodeToolbarPlugin />
+        <CodeBehaviorPlugin />
+        <FloatingTextFormatToolbarPlugin />
         <ListPlugin hasStrictIndent={false} />
         <TabIndentationPlugin maxIndent={3} />
         <ClearSelectionPlugin />
