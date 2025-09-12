@@ -6,6 +6,7 @@ import {
   type NodeKey,
 } from 'lexical';
 
+// To avoid merge the next sibling list if same type.
 export class SimpleListNode extends ListNode {
   $config() {
     return this.config('simple-list', {
