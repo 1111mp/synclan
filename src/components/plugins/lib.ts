@@ -20,11 +20,15 @@ import {
 } from 'lexical';
 import { $copyBlockFormatIndent, $isAtNodeEnd } from '@lexical/selection';
 import {
+  $createListItemNode,
+  $createListNode,
   $isListItemNode,
   $isListNode,
   ListItemNode,
   type ListNode,
+  type ListType,
 } from '@lexical/list';
+import { $findMatchingParent } from '@lexical/utils';
 
 declare global {
   interface Document {
@@ -94,6 +98,39 @@ export function getSelectedNode(
   } else {
     return $isAtNodeEnd(anchor) ? anchorNode : focusNode;
   }
+}
+
+export function $findNearestListItemNode(
+  node: LexicalNode,
+): ListItemNode | null {
+  const matchingParent = $findMatchingParent(node, (parent) =>
+    $isListItemNode(parent),
+  );
+  return matchingParent as ListItemNode | null;
+}
+
+export function $createNestedListWithDepth(listType: ListType, depth: number) {
+  const innerList = $createListNode(listType),
+    innerListItem = $createListItemNode();
+  innerList.append(innerListItem);
+
+  let outer = innerList;
+  for (let i = 0; i < depth; i++) {
+    const parentList = $createListNode(listType),
+      parentListItem = $createListItemNode();
+
+    parentList.append(parentListItem);
+
+    parentListItem.append(outer);
+
+    outer = parentList;
+  }
+
+  return {
+    outerListNode: outer,
+    innerListNode: innerList,
+    innerListItemNode: innerListItem,
+  };
 }
 
 export function $warpBlockswith<T extends ElementNode>(
