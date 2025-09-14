@@ -16,12 +16,19 @@ const variants = cva('', {
 });
 
 type Props = {
+  className?: string;
   emoji?: string;
   shortName?: string;
   skinTone?: SkinToneKey | number;
 } & VariantProps<typeof variants>;
 
-function Emoji({ emoji, shortName, skinTone = 0, size = 28 }: Props) {
+function Emoji({
+  emoji,
+  className,
+  shortName,
+  skinTone = 0,
+  size = 28,
+}: Props) {
   let image = '';
   if (shortName) {
     image = getImagePath(shortName, skinTone);
@@ -38,7 +45,10 @@ function Emoji({ emoji, shortName, skinTone = 0, size = 28 }: Props) {
       title={emoji}
       data-tone={skinTone}
       data-short-name={shortName}
-      className={cn('transform-gpu align-baseline', variants({ size }))}
+      className={cn(
+        'transform-gpu align-baseline',
+        variants({ size, className }),
+      )}
     />
   );
 }
