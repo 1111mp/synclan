@@ -1,4 +1,4 @@
-import { useImperativeHandle, useRef, type Ref } from 'react';
+import { useImperativeHandle, useRef, useState, type Ref } from 'react';
 import {
   $getSelection,
   $isRangeSelection,
@@ -44,6 +44,8 @@ import {
   type AutoLinePluginProps,
   type IsEmptyPluginProps,
   type IsFocusedPluginProps,
+  LinkPlugin,
+  FloatingLinkEditorPlugin,
 } from './plugins';
 import { CODE_PLUS } from './transformers';
 import {
@@ -57,6 +59,7 @@ import {
   $createSimpleListItemNode,
   SimpleQuoteNode,
   $createSimpleQuoteNode,
+  PreLinkNode,
 } from './nodes';
 
 import type { EditorState, LexicalEditor } from 'lexical';
@@ -82,6 +85,8 @@ function CompositionInput({
   onFocusChange,
   onLineChange,
 }: CompositionInputProps) {
+  const [isLinkEditMode, setIsLinkEditMode] = useState<boolean>(false);
+
   const editorRef = useRef<LexicalEditor>(null);
 
   useImperativeHandle(ref, () => ({
@@ -107,6 +112,7 @@ function CompositionInput({
     nodes: [
       AutoLinkNode,
       LinkNode,
+      PreLinkNode,
       SimpleListNode,
       {
         replace: ListNode,
@@ -222,6 +228,7 @@ function CompositionInput({
             },
           ]}
         />
+        <LinkPlugin hasLinkAttributes={true} />
         <MarkdownShortcutPlugin
           transformers={[
             ...ELEMENT_TRANSFORMERS,
@@ -233,7 +240,13 @@ function CompositionInput({
         <CodeHighlightShikiPlugin />
         <CodeNodeToolbarPlugin />
         <CodeBehaviorPlugin />
-        <FloatingTextFormatToolbarPlugin />
+        <FloatingTextFormatToolbarPlugin
+          setIsLinkEditMode={setIsLinkEditMode}
+        />
+        {/* <FloatingLinkEditorPlugin
+          isLinkEditMode={isLinkEditMode}
+          setIsLinkEditMode={setIsLinkEditMode}
+        /> */}
         <ListPlugin hasStrictIndent={false} />
         <TabIndentationPlugin maxIndent={3} />
         {/* <ClearSelectionPlugin /> */}
