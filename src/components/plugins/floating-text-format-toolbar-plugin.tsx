@@ -398,7 +398,7 @@ function TextFormatFloatingToolbar({
           onClick={() => {
             if (!isLink) {
               setIsLinkEditMode(true);
-              editor.dispatchCommand(TOGGLE_LINK_CREATE_COMMAND, 'https://');
+              editor.dispatchCommand(TOGGLE_LINK_CREATE_COMMAND, '');
             } else {
               setIsLinkEditMode(false);
               editor.dispatchCommand(TOGGLE_LINK_CREATE_COMMAND, null);
