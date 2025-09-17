@@ -85,7 +85,6 @@ function CompositionInput({
   onFocusChange,
   onLineChange,
 }: CompositionInputProps) {
-  const [linkEditorOpen, setLinkEditorOpen] = useState<boolean>(false);
   const [isLinkEditMode, setIsLinkEditMode] = useState<boolean>(false);
 
   const editorRef = useRef<LexicalEditor>(null);
@@ -149,7 +148,7 @@ function CompositionInput({
     theme: {
       code: 'block relative pt-7 pb-4 pl-[72px] pr-2 my-2 border rounded-md bg-muted! text-muted-foreground! before:absolute before:top-0 before:left-0 before:content-[attr(data-gutter)] before:p-2 before:pt-[29px] before:pl-8 before:min-w-6 before:font-thin',
       paragraph: 'mt-0 mb-0',
-      link: 'font-light text-blue-500 no-underline cursor-pointer',
+      link: 'font-light text-blue-500 no-underline cursor-pointer hover:underline',
       list: {
         ul: 'mt-0 mb-0 pl-0 list-outside indent-2 marker:text-blue-500',
         ulDepth: ['list-disc', 'list-[circle]', 'list-[square]'],
@@ -192,7 +191,6 @@ function CompositionInput({
             <ContentEditable
               className={cn(
                 'w-full max-w-none text-sm leading-5 text-foreground outline-none focus:outline-none',
-                linkEditorOpen && '[&_a]:bg-input [&_a]:text-foreground',
               )}
               aria-placeholder='Enter Message'
               placeholder={
@@ -231,12 +229,7 @@ function CompositionInput({
             },
           ]}
         />
-        <LinkPlugin
-          hasLinkAttributes={true}
-          onOpenChange={(isOpen) => {
-            setLinkEditorOpen(isOpen);
-          }}
-        />
+        <LinkPlugin hasLinkAttributes={true} />
         <MarkdownShortcutPlugin
           transformers={[
             ...ELEMENT_TRANSFORMERS,
