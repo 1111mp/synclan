@@ -8,7 +8,9 @@ import {
   $isRangeSelection,
   $normalizeSelection__EXPERIMENTAL,
   $setSelection,
+  CLICK_COMMAND,
   COMMAND_PRIORITY_HIGH,
+  COMMAND_PRIORITY_LOW,
   createCommand,
   getDOMSelection,
   type BaseSelection,
@@ -24,8 +26,8 @@ import {
   LinkNode,
   type LinkAttributes,
 } from '@lexical/link';
-import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { Button, Input } from '../ui';
+import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import {
   autoUpdate,
   flip,
@@ -37,9 +39,10 @@ import {
   useFloating,
   useInteractions,
 } from '@floating-ui/react';
-import { $findMatchingParent } from '@lexical/utils';
-import { $getAncestor } from './lib';
+import { $findMatchingParent, mergeRegister } from '@lexical/utils';
+import { $getAncestor, getSelectedNode } from './lib';
 import invariant from './invariant';
+import { $isEmojiNode } from '../nodes';
 
 // Source: https://stackoverflow.com/a/8234912/2013580
 const urlRegExp = new RegExp(
@@ -48,7 +51,7 @@ const urlRegExp = new RegExp(
 export function validateUrlHandle(url: string): boolean {
   // TODO Fix UI for link insertion; it should never default to an invalid URL such as https://.
   // Maybe show a dialog where they user can type the URL before inserting it.
-  return url === 'https://' || urlRegExp.test(url);
+  return urlRegExp.test(url);
 }
 
 export const TOGGLE_LINK_CREATE_COMMAND: LexicalCommand<
@@ -77,11 +80,14 @@ function LinkPlugin({
 
   const { context, refs, floatingStyles } = useFloating({
     open: isOpen,
-    onOpenChange: (nextOpen) => {
+    onOpenChange: (nextOpen, _event, reason) => {
       if (nextOpen) {
         setIsOpen(nextOpen);
       } else {
         onAfterCloseHandle();
+        if (reason === 'escape-key') {
+          editor?.focus();
+        }
       }
 
       onOpenChange?.(nextOpen);
@@ -95,54 +101,75 @@ function LinkPlugin({
 
   const { getFloatingProps } = useInteractions([dismiss]);
 
+  const attributes = hasLinkAttributes
+    ? {
+        rel: 'noopener noreferrer',
+        target: '_blank',
+      }
+    : void 0;
+
   useEffect(() => {
     if (!editor.hasNodes([LinkNode])) {
       throw new Error('LinkPlugin: LinkNode not registered on editor');
     }
 
-    return editor.registerCommand(
-      TOGGLE_LINK_CREATE_COMMAND,
-      (payload) => {
-        console.log('payload', payload);
-        const selection = $getSelection();
+    return mergeRegister(
+      editor.registerCommand(
+        TOGGLE_LINK_CREATE_COMMAND,
+        (payload) => {
+          const selection = $getSelection();
 
-        if (payload === null) {
-          $toggleLink(selection, payload);
-          return true;
-        } else if (typeof payload === 'string') {
-          if (validateUrl === undefined || payload === '') {
-            $toggleLink(
-              selection,
-              payload,
-              hasLinkAttributes
-                ? {
-                    rel: 'noopener noreferrer',
-                    target: '_blank',
-                  }
-                : void 0,
-            );
+          if (payload === null) {
+            $toggleLink(selection, payload);
+            return true;
+          } else if (typeof payload === 'string') {
+            if (
+              payload === '' ||
+              validateUrl === undefined ||
+              validateUrl(payload)
+            ) {
+              $toggleLink(selection, payload, attributes);
+              showEditor();
+              return true;
+            }
+            return false;
+          } else {
+            const { url, target, rel, title } = payload;
+            $toggleLink(selection, url, {
+              ...attributes,
+              rel,
+              target,
+              title,
+            });
             showEditor();
             return true;
           }
+        },
+        COMMAND_PRIORITY_HIGH,
+      ),
+
+      editor.registerCommand(
+        CLICK_COMMAND,
+        (event) => {
+          const node = $getNearestNodeFromDOMNode(event.target as HTMLElement);
+          if (!node) return false;
+
+          const linkNode = $findMatchingParent(node, $isLinkNode);
+          if ($isLinkNode(linkNode)) {
+            if ($isLinkNode(linkNode)) {
+              if (event.metaKey || event.ctrlKey) {
+                window.open(linkNode.getURL(), '_blank');
+              } else {
+                console.log('click', linkNode);
+              }
+              return true;
+            }
+          }
+
           return false;
-        } else {
-          const { url, target, rel, title } = payload;
-          $toggleLink(selection, url, {
-            ...(hasLinkAttributes
-              ? {
-                  rel: 'noopener noreferrer',
-                  target: '_blank',
-                }
-              : void 0),
-            rel,
-            target,
-            title,
-          });
-          showEditor();
-          return true;
-        }
-      },
-      COMMAND_PRIORITY_HIGH,
+        },
+        COMMAND_PRIORITY_LOW,
+      ),
     );
   }, [editor]);
 
@@ -216,14 +243,60 @@ function LinkPlugin({
       setIsOpen(false);
     });
 
-    setLinkUrl('');
-    setLastSelection(null);
-
     editor.update(() => {
       if (lastSelection) {
         $toggleLink(lastSelection, null);
       }
+
+      if ($isRangeSelection(lastSelection)) {
+        const parent = getSelectedNode(lastSelection).getParent();
+        if ($isAutoLinkNode(parent)) {
+          const linkNode = $createLinkNode(parent.getURL(), {
+            rel: parent.__rel,
+            target: parent.__target,
+            title: parent.__title,
+          });
+          parent.replace(linkNode, true);
+        }
+      }
     });
+
+    setLinkUrl('');
+    setLastSelection(null);
+    onOpenChange?.(false);
+  };
+
+  const handleLinkSubmission = (
+    event:
+      | React.KeyboardEvent<HTMLInputElement>
+      | React.MouseEvent<HTMLElement>,
+  ) => {
+    event.preventDefault();
+
+    // delayed close
+    setTimeout(() => {
+      setIsOpen(false);
+    });
+
+    editor.update(() => {
+      $toggleLink(lastSelection, linkUrl, attributes);
+
+      if ($isRangeSelection(lastSelection)) {
+        const parent = getSelectedNode(lastSelection).getParent();
+        if ($isAutoLinkNode(parent)) {
+          const linkNode = $createLinkNode(parent.getURL(), {
+            rel: parent.__rel,
+            target: parent.__target,
+            title: parent.__title,
+          });
+          parent.replace(linkNode, true);
+        }
+      }
+    });
+
+    setLinkUrl('');
+    setLastSelection(null);
+    onOpenChange?.(false);
   };
 
   if (!isOpen) return null;
@@ -246,6 +319,11 @@ function LinkPlugin({
             onChange={(event) => {
               setLinkUrl(event.target.value);
             }}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' && validateUrlHandle(linkUrl)) {
+                handleLinkSubmission(event);
+              }
+            }}
           />
         </div>
         <div className='flex justify-end items-center space-x-2'>
@@ -262,10 +340,8 @@ function LinkPlugin({
           <Button
             size='xxs'
             className='text-popover-foreground'
-            // disabled={!validateUrl(linkUrl)}
-            onClick={() => {
-              // setIsOpen(false);
-            }}
+            disabled={!validateUrl(linkUrl)}
+            onClick={handleLinkSubmission}
           >
             确认
           </Button>
@@ -343,7 +419,6 @@ export function $toggleLink(
 
   // Handle RangeSelection
   const nodes = selection.extract();
-  console.log('nodes', nodes);
   if (url === null) {
     // Remove LinkNodes
     nodes.forEach((node) => {
@@ -353,7 +428,6 @@ export function $toggleLink(
           !$isAutoLinkNode(parent) && $isLinkNode(parent),
       );
 
-      console.log('parentLink', parentLink);
       if (parentLink) {
         const children = parentLink.getChildren();
 
@@ -382,6 +456,8 @@ export function $toggleLink(
     if (title !== undefined) {
       linkNode.setTitle(title);
     }
+
+    linkNode?.select();
   };
   // Add or merge LinkNodes
   if (nodes.length === 1) {
@@ -400,13 +476,14 @@ export function $toggleLink(
       if (!node.isAttached()) {
         continue;
       }
+
       const parentLinkNode = $getAncestor(node, $isLinkNode);
       if (parentLinkNode) {
         updateLinkNode(parentLinkNode);
         continue;
       }
       if ($isElementNode(node)) {
-        if (!node.isInline()) {
+        if (!node.isInline() || $isEmojiNode(node)) {
           // Ignore block nodes, if there are any children we will see them
           // later and wrap in a new LinkNode
           continue;
