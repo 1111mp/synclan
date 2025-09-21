@@ -45,7 +45,6 @@ import {
   type IsEmptyPluginProps,
   type IsFocusedPluginProps,
   LinkPlugin,
-  FloatingLinkEditorPlugin,
 } from './plugins';
 import { CODE_PLUS } from './transformers';
 import {
@@ -244,10 +243,6 @@ function CompositionInput({
         <FloatingTextFormatToolbarPlugin
           setIsLinkEditMode={setIsLinkEditMode}
         />
-        {/* <FloatingLinkEditorPlugin
-          isLinkEditMode={isLinkEditMode}
-          setIsLinkEditMode={setIsLinkEditMode}
-        /> */}
         <ListPlugin hasStrictIndent={false} />
         <TabIndentationPlugin maxIndent={3} />
         {/* <ClearSelectionPlugin /> */}
