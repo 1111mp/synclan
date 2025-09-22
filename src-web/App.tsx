@@ -17,13 +17,13 @@ function App() {
       <h1>Welcome to Tauri + React</h1>
 
       <div className='row'>
-        <a href='https://vitejs.dev' target='_blank'>
+        <a href='https://vitejs.dev' rel='noreferrer' target='_blank'>
           <img src='/vite.svg' className='logo vite' alt='Vite logo' />
         </a>
-        <a href='https://tauri.app' target='_blank'>
+        <a href='https://tauri.app' rel='noreferrer' target='_blank'>
           <img src='/tauri.svg' className='logo tauri' alt='Tauri logo' />
         </a>
-        <a href='https://reactjs.org' target='_blank'>
+        <a href='https://reactjs.org' rel='noreferrer' target='_blank'>
           <img src={reactLogo} className='logo react' alt='React logo' />
         </a>
       </div>
@@ -31,9 +31,9 @@ function App() {
 
       <form
         className='row'
-        onSubmit={(e) => {
+        onSubmit={async (e) => {
           e.preventDefault();
-          greet();
+          await greet();
         }}
       >
         <input

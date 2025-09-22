@@ -13,7 +13,7 @@ const resources = {
   },
 };
 
-i18n.use(initReactI18next).init({
+void i18n.use(initReactI18next).init({
   resources,
   lng: 'en',
   interpolation: {

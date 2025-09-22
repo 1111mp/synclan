@@ -1,7 +1,7 @@
 import { has } from 'lodash-es';
 
 // We want this to work with any object, so we allow `object` here.
-// eslint-disable-next-line @typescript-eslint/ban-types
+// oxlint-disable-next-line @typescript-eslint/ban-types
 export function getOwn<TObject extends object, TKey extends keyof TObject>(
   obj: TObject,
   key: TKey,
