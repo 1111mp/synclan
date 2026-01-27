@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $getSelection, $isRangeSelection, getDOMSelection } from 'lexical';
+import { useLatestRef } from '@/hooks';
 
 type AutoLinePluginProps = {
   onLineChange?: (changed: boolean) => void;
@@ -12,8 +13,7 @@ function AutoLinePlugin({ onLineChange }: AutoLinePluginProps) {
     null,
   );
 
-  const onLineChangeRef = useRef<AutoLinePluginProps['onLineChange']>(void 0);
-  onLineChangeRef.current = onLineChange;
+  const latestLineChange = useLatestRef(onLineChange);
 
   useEffect(() => {
     const rootElement = editor.getRootElement();
@@ -47,7 +47,7 @@ function AutoLinePlugin({ onLineChange }: AutoLinePluginProps) {
           (rootRect.height > rootInitialSizeRef.current.height ||
             selectionRect.width > rootInitialSizeRef.current.width)
         ) {
-          onLineChangeRef.current?.(true);
+          latestLineChange.current?.(true);
           return false;
         }
 
@@ -57,13 +57,13 @@ function AutoLinePlugin({ onLineChange }: AutoLinePluginProps) {
           rootRect.height <= rootInitialSizeRef.current.height &&
           left < rootInitialSizeRef.current.width
         ) {
-          onLineChangeRef.current?.(false);
+          latestLineChange.current?.(false);
         }
       });
 
       return false;
     });
-  }, [editor]);
+  }, [editor, latestLineChange]);
 
   return null;
 }

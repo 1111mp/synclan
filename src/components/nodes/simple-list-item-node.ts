@@ -2,6 +2,7 @@ import { $isListItemNode, ListItemNode } from '@lexical/list';
 import {
   $applyNodeReplacement,
   $createParagraphNode,
+  type LexicalNode,
   type NodeKey,
   type RangeSelection,
 } from 'lexical';
@@ -37,7 +38,7 @@ export class SimpleListItemNode extends ListItemNode {
         listNodeParent.select();
       } else if ($isSimpleQuoteNode(listNodeParent)) {
         listNode.remove();
-        listNodeParent.setPendingDelete(true);
+        // listNodeParent.setPendingDelete(true);
         listNodeParent.select();
       } else {
         listNode.insertBefore(paragraph);
@@ -72,7 +73,7 @@ export function $createSimpleListItemNode(
 }
 
 export function $isSimpleListItemNode(
-  node: SimpleListItemNode | null | undefined,
+  node: LexicalNode | null | undefined,
 ): node is SimpleListItemNode {
   return node instanceof SimpleListItemNode;
 }

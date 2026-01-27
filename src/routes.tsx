@@ -1,8 +1,8 @@
-import { createMemoryRouter, createBrowserRouter } from 'react-router';
+import { createMemoryRouter } from 'react-router';
 import HomePage from '@/pages/home';
 import ConversationPage from '@/pages/conversation';
 
-export const router = createBrowserRouter(
+export const router = createMemoryRouter(
   [
     {
       Component: HomePage,
@@ -21,6 +21,6 @@ export const router = createBrowserRouter(
     },
   ],
   {
-    // initialEntries: ['/conversation'],
+    initialEntries: ['/conversation'],
   },
 );
