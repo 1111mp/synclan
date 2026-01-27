@@ -6,11 +6,23 @@
  *
  */
 import {
+  $copyNode,
+  $createParagraphNode,
   $createRangeSelection,
+  $createTextNode,
+  $getRoot,
   $getSelection,
   $isElementNode,
+  $isLineBreakNode,
+  $isParagraphNode,
+  $isRangeSelection,
+  $isRootNode,
+  $isTextNode,
   $setSelection,
+  DecoratorNode,
   INTERNAL_$isBlock,
+  ParagraphNode,
+  RootNode,
   type BaseSelection,
   type ElementNode,
   type LexicalNode,
@@ -18,16 +30,23 @@ import {
   type RangeSelection,
   type TextNode,
 } from 'lexical';
-import { $isAtNodeEnd } from '@lexical/selection';
+import { $copyBlockFormatIndent, $isAtNodeEnd } from '@lexical/selection';
+import { type ListType } from '@lexical/list';
+import { $isLinkNode, type LinkNode } from '@lexical/link';
 import {
-  $createListItemNode,
-  $createListNode,
-  $isListItemNode,
-  $isListNode,
-  ListItemNode,
-  ListNode,
-  type ListType,
-} from '@lexical/list';
+  $createCodePlusNode,
+  $createSimpleQuoteNode,
+  $isSimpleQuoteNode,
+  $createSimpleListItemNode,
+  $createSimpleListNode,
+  $isCodePlusNode,
+  $isSimpleListNode,
+  $isSimpleListItemNode,
+  type CodePlusNode,
+  type SimpleListNode,
+  type SimpleListItemNode,
+  SimpleQuoteNode,
+} from '../nodes';
 import { $findMatchingParent } from '@lexical/utils';
 import invariant from './invariant';
 
@@ -83,7 +102,7 @@ export const IS_ANDROID_CHROME: boolean =
 export const IS_APPLE_WEBKIT =
   CAN_USE_DOM && /AppleWebKit\/[\d.]+/.test(navigator.userAgent) && !IS_CHROME;
 
-export function getSelectedNode(
+export function $getSelectedNode(
   selection: RangeSelection,
 ): TextNode | ElementNode {
   const anchor = selection.anchor;
@@ -101,24 +120,107 @@ export function getSelectedNode(
   }
 }
 
+export function $selectionContainsOnlyText(selection: RangeSelection): boolean {
+  if (!$isRangeSelection(selection)) return false;
+
+  const nodes = selection.getNodes();
+  return nodes.every((n) => {
+    if ($isTextNode(n)) return true;
+    if ($isLineBreakNode(n)) return true;
+    if ($isParagraphNode(n)) return true;
+
+    return false;
+  });
+}
+
+export function $selectionJustContainsSameCodeNode(
+  selection: RangeSelection,
+): boolean {
+  if (!$isRangeSelection(selection)) return false;
+
+  const anchorNode = selection.anchor.getNode(),
+    focusNode = selection.focus.getNode(),
+    anchorTopNode = $findNearestCodeNode(anchorNode),
+    focusTopNode = $findNearestCodeNode(focusNode);
+  return anchorTopNode === focusTopNode && $isCodePlusNode(anchorTopNode);
+}
+
+export function $isSelectedAll(root: RootNode, selection: RangeSelection) {
+  if (!$isRangeSelection(selection) || selection.isCollapsed()) return false;
+
+  const selected = new Set();
+  const nodes = selection.getNodes();
+  for (const n of nodes) {
+    const top = n.getTopLevelElement();
+    if (top) {
+      selected.add(top.getKey());
+    }
+  }
+
+  return root.getChildrenSize() === selected.size;
+}
+
+export function $findNearestListNode(
+  node: LexicalNode | null,
+): SimpleListNode | null {
+  if (!node) return null;
+
+  if ($isSimpleListNode(node)) return node;
+
+  if ($isSimpleListItemNode(node)) {
+    const parent = node.getParent();
+    return $isSimpleListNode(parent) ? parent : null;
+  }
+
+  let parent = node.getParent();
+  if ($isSimpleListItemNode(parent)) {
+    const listNode = parent.getParent();
+    return $isSimpleListNode(listNode) ? listNode : null;
+  }
+
+  while (parent) {
+    if ($isSimpleListItemNode(parent)) {
+      const listNode = parent.getParent();
+      return $isSimpleListNode(listNode) ? listNode : null;
+    }
+
+    if ($isSimpleListNode(parent)) {
+      return parent;
+    }
+
+    parent = parent.getParent();
+  }
+
+  return null;
+}
+
 export function $findNearestListItemNode(
   node: LexicalNode,
-): ListItemNode | null {
+): SimpleListItemNode | null {
   const matchingParent = $findMatchingParent(node, (parent) =>
-    $isListItemNode(parent),
+    $isSimpleListItemNode(parent),
   );
-  return matchingParent as ListItemNode | null;
+  return matchingParent as SimpleListItemNode | null;
+}
+
+export function $findNearestCodeNode(node?: LexicalNode): CodePlusNode | null {
+  if (!node) return null;
+
+  const matchingParent = $findMatchingParent(node, (parent) =>
+    $isCodePlusNode(parent),
+  );
+  return matchingParent as CodePlusNode | null;
 }
 
 export function $createNestedListWithDepth(listType: ListType, depth: number) {
-  const innerList = $createListNode(listType),
-    innerListItem = $createListItemNode();
+  const innerList = $createSimpleListNode(listType),
+    innerListItem = $createSimpleListItemNode();
   innerList.append(innerListItem);
 
   let outer = innerList;
   for (let i = 0; i < depth; i++) {
-    const parentList = $createListNode(listType),
-      parentListItem = $createListItemNode();
+    const parentList = $createSimpleListNode(listType),
+      parentListItem = $createSimpleListItemNode();
 
     parentList.append(parentListItem);
 
@@ -150,19 +252,19 @@ export function $getAncestor<NodeType extends LexicalNode = LexicalNode>(
  * @param listItem - The node to be checked.
  * @returns The ListNode found.
  */
-export function $getTopListNode(listItem: LexicalNode): ListNode {
-  let list = listItem.getParent<ListNode>();
+export function $getTopListNode(listItem: LexicalNode): SimpleListNode {
+  let list = listItem.getParent<SimpleListNode>();
 
-  if (!$isListNode(list)) {
+  if (!$isSimpleListNode(list)) {
     invariant(false, 'A ListItemNode must have a ListNode for a parent.');
   }
 
-  let parent: ListNode | null = list;
+  let parent: SimpleListNode | null = list;
 
   while (parent !== null) {
     parent = parent.getParent();
 
-    if ($isListNode(parent)) {
+    if ($isSimpleListNode(parent)) {
       list = parent;
     }
   }
@@ -178,7 +280,7 @@ export function $getTopListNode(listItem: LexicalNode): ListNode {
  * @param sublist - The nested ListNode or ListItemNode to be brought up the branch.
  */
 export function $removeHighestEmptyListParent(
-  sublist: ListItemNode | ListNode,
+  sublist: SimpleListItemNode | SimpleListNode,
 ) {
   // Nodes may be repeatedly indented, to create deeply nested lists that each
   // contain just one bullet.
@@ -194,7 +296,10 @@ export function $removeHighestEmptyListParent(
   ) {
     const parent = emptyListPtr.getParent();
 
-    if (parent == null || !($isListItemNode(parent) || $isListNode(parent))) {
+    if (
+      parent == null ||
+      !($isSimpleListItemNode(parent) || $isSimpleListNode(parent))
+    ) {
       break;
     }
 
@@ -264,4 +369,676 @@ export function $setBlocksTypeWith<T extends ElementNode>(
   if (newSelection && selection.is($getSelection())) {
     $setSelection(newSelection);
   }
+}
+
+export function $getSelectionAllNodesByBlock(
+  selection: RangeSelection,
+): LexicalNode[] {
+  if (!$isRangeSelection(selection)) return [];
+
+  const nodes = selection.getNodes();
+  const blockSet = new Map<string, ElementNode>();
+
+  for (const node of nodes) {
+    const block = node.getTopLevelElement() as ElementNode;
+    if (block) {
+      blockSet.set(block.getKey(), block);
+    }
+  }
+
+  const blocks = Array.from(blockSet.values()).sort((a, b) => {
+    return a.isBefore(b) ? -1 : 1;
+  });
+
+  const result: LexicalNode[] = [];
+
+  for (const block of blocks) {
+    result.push(...block.getChildren());
+  }
+
+  return result;
+}
+
+export function $getSelectedTopLevelElements(selection: RangeSelection) {
+  if (!$isRangeSelection(selection)) return [];
+
+  const nodes = selection.getNodes();
+  const topLevelSet = new Set<ElementNode | DecoratorNode<unknown>>();
+
+  for (const node of nodes) {
+    const top = node.getTopLevelElement();
+    if (top) {
+      topLevelSet.add(top);
+    }
+  }
+
+  return Array.from(topLevelSet);
+}
+
+export function $toggleOrderedList(
+  selection: BaseSelection | null,
+  isOrderedList?: boolean,
+) {
+  if (isOrderedList) {
+    $setBlocksTypeWith(selection, (preNode) => {
+      if ($isCodePlusNode(preNode)) {
+        if (preNode.getTopLevelElement() === preNode) return null;
+        const topListNode = $getTopListNode(preNode.getParent()!);
+        if (!topListNode) return null;
+        topListNode.replace(preNode);
+        return preNode;
+      }
+
+      if (!$isSimpleListItemNode(preNode)) return null;
+
+      const preTopNode = preNode.getTopLevelElementOrThrow();
+      if (!$isSimpleListNode(preTopNode)) {
+        const topListNode = $getTopListNode(preNode);
+        preTopNode.append(...preNode.getChildren());
+        topListNode.remove();
+        return preTopNode;
+      } else {
+        const paragraph = $createParagraphNode();
+        paragraph.append(...preNode.getChildren());
+        preTopNode.insertBefore(paragraph);
+        preTopNode.remove();
+        return paragraph;
+      }
+    });
+  } else {
+    $setBlocksTypeWith(selection, (preNode) => {
+      if ($isSimpleListItemNode(preNode)) {
+        let parent = preNode.getParent();
+        while (parent) {
+          if ($isSimpleListNode(parent)) {
+            parent.setListType('number');
+          }
+          parent = parent.getParent();
+        }
+        return null;
+      }
+
+      const preTopNode = preNode.getTopLevelElementOrThrow();
+      if ($isSimpleQuoteNode(preTopNode)) {
+        const { outerListNode, innerListItemNode } = $createNestedListWithDepth(
+          'number',
+          0,
+        );
+        if ($isCodePlusNode(preNode)) {
+          innerListItemNode.append(preNode);
+          preTopNode.clear();
+          preTopNode.append(outerListNode);
+        } else {
+          innerListItemNode.append(...preTopNode.getChildren());
+          preTopNode.append(outerListNode);
+        }
+        return preTopNode;
+      }
+
+      if ($isCodePlusNode(preNode)) {
+        const { outerListNode, innerListItemNode } = $createNestedListWithDepth(
+          'number',
+          0,
+        );
+        preTopNode.replace(outerListNode);
+        innerListItemNode.append(preNode);
+        return outerListNode;
+      }
+
+      const { outerListNode, innerListItemNode } = $createNestedListWithDepth(
+        'number',
+        0,
+      );
+      innerListItemNode.append(...preTopNode.getChildren());
+      preTopNode.replace(outerListNode);
+      return outerListNode;
+    });
+  }
+}
+
+export function $toggleButtletedList(
+  selection: BaseSelection | null,
+  isBulletList?: boolean,
+) {
+  if (isBulletList) {
+    $setBlocksTypeWith(selection, (preNode) => {
+      if ($isCodePlusNode(preNode)) {
+        if (preNode.getTopLevelElement() === preNode) return null;
+        const topListNode = $getTopListNode(preNode.getParent()!);
+        if (!topListNode) return null;
+        topListNode.replace(preNode);
+        return preNode;
+      }
+
+      if (!$isSimpleListItemNode(preNode)) return null;
+
+      const preTopNode = preNode.getTopLevelElementOrThrow();
+      if (!$isSimpleListNode(preTopNode)) {
+        const topListNode = $getTopListNode(preNode);
+        preTopNode.append(...preNode.getChildren());
+        topListNode.remove();
+        return preTopNode;
+      } else {
+        const paragraph = $createParagraphNode();
+        paragraph.append(...preNode.getChildren());
+        preTopNode.insertBefore(paragraph);
+        preTopNode.remove();
+        return paragraph;
+      }
+    });
+  } else {
+    $setBlocksTypeWith(selection, (preNode) => {
+      if ($isSimpleListItemNode(preNode)) {
+        let parent = preNode.getParent();
+        while (parent) {
+          if ($isSimpleListNode(parent)) {
+            parent.setListType('bullet');
+          }
+          parent = parent.getParent();
+        }
+        return null;
+      }
+
+      const preTopNode = preNode.getTopLevelElementOrThrow();
+      if ($isSimpleQuoteNode(preTopNode)) {
+        const { outerListNode, innerListItemNode } = $createNestedListWithDepth(
+          'bullet',
+          0,
+        );
+        if ($isCodePlusNode(preNode)) {
+          innerListItemNode.append(preNode);
+          preTopNode.clear();
+          preTopNode.append(outerListNode);
+        } else {
+          innerListItemNode.append(...preTopNode.getChildren());
+          preTopNode.append(outerListNode);
+        }
+        return preTopNode;
+      }
+
+      if ($isCodePlusNode(preNode)) {
+        const { outerListNode, innerListItemNode } = $createNestedListWithDepth(
+          'bullet',
+          0,
+        );
+        preTopNode.replace(outerListNode);
+        innerListItemNode.append(preNode);
+        return outerListNode;
+      }
+
+      const { outerListNode, innerListItemNode } = $createNestedListWithDepth(
+        'bullet',
+        0,
+      );
+      innerListItemNode.append(...preTopNode.getChildren());
+      preTopNode.replace(outerListNode);
+      return outerListNode;
+    });
+  }
+}
+
+export function $toggleQuoteNode(
+  selection: BaseSelection | null,
+  isQuoteNode?: boolean,
+) {
+  if (isQuoteNode) {
+    $setBlocksTypeWith(selection, (preNode) => {
+      const preTopNode = preNode.getTopLevelElementOrThrow();
+      if (!$isSimpleQuoteNode(preTopNode)) return null;
+
+      if ($isCodePlusNode(preNode)) {
+        if (preNode.getParent()?.getKey() === preTopNode.getKey()) {
+          $copyBlockFormatIndent(preTopNode, preNode);
+          preTopNode.replace(preNode, true);
+          return preNode;
+        }
+
+        // just `ListNode` and `QuoteNode` can contain `CodeNode`
+        const blockNode = preTopNode.getFirstChildOrThrow<SimpleListNode>();
+        $copyBlockFormatIndent(preTopNode, blockNode);
+        preTopNode.replace(blockNode, true);
+        return blockNode;
+      }
+
+      if ($isSimpleListItemNode(preNode)) {
+        const listNode = $getTopListNode(preNode);
+        preTopNode.replace(listNode);
+        return listNode;
+      }
+
+      const paragraph = $createParagraphNode();
+      $copyBlockFormatIndent(preTopNode, paragraph);
+      preTopNode.replace(paragraph, true);
+      return paragraph;
+    });
+  } else {
+    $setBlocksTypeWith(selection, (preNode) => {
+      const preTopNode = preNode.getTopLevelElementOrThrow();
+      if ($isSimpleQuoteNode(preTopNode)) return null;
+
+      if ($isSimpleListItemNode(preNode) || $isSimpleListNode(preTopNode)) {
+        const quoteNode = $createSimpleQuoteNode();
+        preTopNode.insertBefore(quoteNode);
+        quoteNode.append(preTopNode);
+        return quoteNode;
+      }
+
+      if ($isCodePlusNode(preNode) || $isCodePlusNode(preTopNode)) {
+        const quoteNode = $createSimpleQuoteNode();
+        preTopNode.insertBefore(quoteNode);
+        quoteNode.append(preTopNode);
+        return quoteNode;
+      }
+
+      const quoteNode = $createSimpleQuoteNode();
+      $copyBlockFormatIndent(preTopNode, quoteNode);
+      preTopNode.replace(quoteNode, true);
+      return quoteNode;
+    });
+  }
+}
+
+export function $toggleCodeNode(
+  selection: RangeSelection,
+  isCodeNode?: boolean,
+) {
+  const anchorNode = selection.anchor.getNode();
+  const focusNode = selection.focus.getNode();
+
+  if (isCodeNode) {
+    const topLevelNode = anchorNode.getTopLevelElement(),
+      codeNode = $findNearestCodeNode(anchorNode);
+
+    if (topLevelNode === null || codeNode === null) return;
+
+    if (topLevelNode === codeNode) {
+      // `CodeNode` already is the top level node
+      const paragraph = $createParagraphNode();
+      paragraph.append(...codeNode?.getChildren());
+      codeNode.replace(paragraph);
+      paragraph.selectEnd();
+      return;
+    }
+
+    // `QuoteNode` or `ListNode`
+    const children = codeNode.getChildren();
+    const { firstLine, rest } = parseFirstLineFromCodeChildren(children);
+
+    const parent = codeNode.getParent();
+    codeNode.remove();
+    if ($isSimpleListItemNode(parent)) {
+      const listItem = $createSimpleListItemNode();
+      listItem.append(...firstLine);
+      parent.replace(listItem);
+    } else {
+      parent?.append(...firstLine);
+    }
+
+    if (rest.length > 0) {
+      const paragraph = $createParagraphNode();
+      paragraph.append(...rest);
+      topLevelNode.insertAfter(paragraph);
+      paragraph.selectEnd();
+    } else {
+      parent?.selectEnd();
+    }
+  } else {
+    const text = selection.getTextContent();
+    if (!text) return;
+
+    const isBackward = selection.isBackward();
+
+    const children = $getSelectionAllNodesByBlock(selection);
+    const selectedNodes = selection.getNodes();
+
+    const startIndex = Math.min(
+        children.indexOf(anchorNode),
+        children.indexOf(focusNode),
+      ),
+      endIndex = Math.max(
+        children.indexOf(anchorNode),
+        children.indexOf(focusNode),
+      );
+    const startNode = isBackward ? focusNode : anchorNode,
+      endNode = isBackward ? anchorNode : focusNode,
+      leftNodes: TextNode[] = [],
+      rightNodes: TextNode[] = [];
+
+    for (let i = 0; i < children.length; i++) {
+      const node = children[i];
+      if (!$isTextNode(node)) continue;
+
+      if (node.getKey() === startNode.getKey()) {
+        const textContent = startNode.getTextContent();
+
+        if (node.getKey() === endNode.getKey()) {
+          // both anchor and focus are same node
+          const leftText = textContent.slice(
+              0,
+              Math.min(selection.anchor.offset, selection.focus.offset),
+            ),
+            rightText = textContent.slice(
+              Math.max(selection.anchor.offset, selection.focus.offset),
+            );
+
+          if (leftText) {
+            leftNodes.push($createTextNode(leftText));
+          }
+          if (rightText !== '') {
+            rightNodes.push($createTextNode(rightText));
+          }
+        } else {
+          const offset = isBackward
+            ? selection.focus.offset
+            : selection.anchor.offset;
+
+          const newTextContent = textContent.slice(0, offset);
+          if (newTextContent) {
+            leftNodes.push($createTextNode(newTextContent));
+          }
+        }
+
+        continue;
+      }
+
+      if (node.getKey() === endNode.getKey()) {
+        const textContent = endNode.getTextContent();
+
+        const offset = isBackward
+          ? selection.anchor.offset
+          : selection.focus.offset;
+        const newTextContent = textContent.slice(offset);
+        if (newTextContent) {
+          rightNodes.push($createTextNode(newTextContent));
+        }
+        continue;
+      }
+
+      // left not selected nodes
+      if (i < startIndex) {
+        leftNodes.push(node);
+        continue;
+      }
+      // right not selected nodes
+      if (i > endIndex) {
+        rightNodes.push(node);
+        continue;
+      }
+      // selected nodes
+      if (selectedNodes.indexOf(node) !== -1) {
+        const topNode = node.getTopLevelElement();
+        if (
+          topNode?.getKey() !== startNode.getTopLevelElement()?.getKey() &&
+          topNode?.getKey() !== endNode.getTopLevelElement()?.getKey()
+        ) {
+          node.getTopLevelElement()?.remove();
+        } else {
+          node.remove();
+        }
+        continue;
+      }
+    }
+
+    const startBlockNode = startNode.getTopLevelElementOrThrow();
+    // create code node
+    const codePlusNode = $createCodePlusNode();
+    codePlusNode.append($createTextNode(text));
+    startBlockNode.insertAfter(codePlusNode);
+
+    if (leftNodes.length > 0) {
+      const paragraph = $createParagraphNode();
+      paragraph.append(...leftNodes);
+      startBlockNode.replace(paragraph);
+      paragraph.insertAfter(codePlusNode);
+    } else {
+      startBlockNode.insertAfter(codePlusNode);
+      if (startBlockNode.getPreviousSibling() === null) {
+        codePlusNode.insertBefore($createParagraphNode());
+      }
+      startBlockNode.remove();
+    }
+
+    endNode.getTopLevelElement()?.remove();
+
+    if (rightNodes.length > 0) {
+      const paragraph = $createParagraphNode();
+      paragraph.append(...rightNodes);
+      codePlusNode.insertAfter(paragraph);
+    } else {
+      if (codePlusNode.getNextSibling() === null) {
+        codePlusNode.insertAfter($createParagraphNode());
+      }
+    }
+
+    codePlusNode.selectEnd();
+  }
+}
+
+function parseFirstLineFromCodeChildren(children: LexicalNode[]) {
+  for (let i = 0; i < children.length; i++) {
+    if ($isLineBreakNode(children[i])) {
+      return {
+        firstLine: children.slice(0, i),
+        rest: children.slice(i + 1),
+      };
+    }
+  }
+
+  return {
+    firstLine: children,
+    rest: [],
+  };
+}
+
+export function $recomputeOrderedListNumbers() {
+  const root = $getRoot();
+  const children = root.getChildren();
+  // console.log('children', children);
+
+  const counters = new Map<number, number>(); // indent -> count
+
+  for (const node of children) {
+    let listNode = node;
+    // `QuoteNode` can contain `ListNode`
+    if ($isSimpleQuoteNode(node) && $isSimpleListNode(node.getFirstChild())) {
+      const child = node.getFirstChild();
+      if (child) {
+        listNode = child;
+      }
+    }
+
+    if ($isSimpleListNode(listNode) && listNode.getListType() === 'number') {
+      const indent = $getListNodeDepth(listNode);
+      const prev = counters.get(indent) ?? 0;
+      const size = listNode.getChildrenSize();
+
+      const start = prev + 1;
+      if (listNode.getStart() !== start) {
+        listNode.setStart(start);
+      }
+
+      counters.set(indent, prev + size);
+    }
+  }
+}
+
+function $getListNodeDepth(node: SimpleListNode) {
+  let depth = 0,
+    nextListNode = node;
+
+  while (true) {
+    const curNode = nextListNode
+      .getFirstChild<SimpleListItemNode>()
+      ?.getFirstChild();
+    if ($isSimpleListNode(curNode)) {
+      nextListNode = curNode;
+      depth++;
+      continue;
+    }
+
+    break;
+  }
+
+  return depth;
+}
+
+export function $copyCompleteNodeWithChildren(
+  node:
+    | ParagraphNode
+    | SimpleListItemNode
+    | SimpleListNode
+    | SimpleQuoteNode
+    | CodePlusNode,
+  children: LexicalNode[] = [],
+) {
+  if (!node) return null;
+
+  let current: LexicalNode | null = node;
+  let innerClone: LexicalNode | null = null;
+  let topClone: LexicalNode | null = null;
+
+  while (current) {
+    const cloned = $copyNode(current);
+
+    if ($isElementNode(cloned)) {
+      cloned.clear();
+
+      if (!innerClone) {
+        cloned.append(...children);
+      } else {
+        cloned.append(innerClone);
+      }
+    }
+
+    innerClone = cloned;
+    topClone = cloned;
+
+    const parent: LexicalNode | null = current.getParent();
+    if (!parent || $isRootNode(parent)) {
+      break;
+    }
+
+    current = parent;
+  }
+
+  return topClone;
+}
+
+export function $splitNodesFromOneLine(
+  children: LexicalNode[],
+  anchorNode: LexicalNode,
+  offset: number,
+) {
+  let leftNodes = [],
+    rightNodes = [];
+
+  let matched = false;
+  for (const child of children) {
+    if (child.is(anchorNode) || child.isParentOf(anchorNode)) {
+      matched = true;
+
+      if ($isTextNode(child)) {
+        const textContent = child.getTextContent();
+        const leftText = textContent.slice(0, offset),
+          rightText = textContent.slice(offset);
+
+        if (leftText) {
+          const textNode = $copyNode(child);
+          textNode.setTextContent(leftText);
+          leftNodes.push(textNode);
+        }
+
+        if (rightText) {
+          const textNode = $copyNode(child);
+          textNode.setTextContent(rightText);
+          rightNodes.push(textNode);
+        }
+      }
+
+      if ($isLinkNode(child) && $isTextNode(anchorNode)) {
+        const { leftNodes: left, rightNodes: right } =
+          $splitLinkNodeBySelection(child, anchorNode, offset);
+
+        if (left.length > 0) {
+          const linkNode = $copyNode(child);
+          linkNode.clear();
+          linkNode.append(...left);
+          leftNodes.push(linkNode);
+        }
+
+        if (right.length > 0) {
+          const linkNode = $copyNode(child);
+          linkNode.clear();
+          linkNode.append(...right);
+          rightNodes.push(linkNode);
+        }
+      }
+
+      continue;
+    }
+
+    if (!matched) {
+      leftNodes.push(child);
+      continue;
+    }
+
+    if (matched) {
+      rightNodes.push(child);
+      continue;
+    }
+  }
+
+  return {
+    leftNodes,
+    rightNodes,
+  };
+}
+
+export function $splitLinkNodeBySelection(
+  linkNode: LinkNode,
+  anchorNode: TextNode,
+  offset: number,
+) {
+  const text = anchorNode.getTextContent();
+
+  const leftText = text.slice(0, offset);
+  const rightText = text.slice(offset);
+
+  const leftNodes = [],
+    rightNodes = [];
+
+  if (rightText) {
+    const rightTextNode = $copyNode(anchorNode);
+    rightTextNode.setTextContent(rightText);
+    rightNodes.push(rightTextNode);
+  }
+
+  let matched = false;
+  for (const child of linkNode.getChildren()) {
+    if (child.is(anchorNode)) {
+      matched = true;
+      continue;
+    }
+
+    if (!matched) {
+      leftNodes.push(child);
+      continue;
+    }
+
+    if (matched) {
+      rightNodes.push(child);
+      continue;
+    }
+  }
+
+  if (leftText) {
+    const leftTextNode = $copyNode(anchorNode);
+    leftTextNode.setTextContent(leftText);
+    leftNodes.push(leftTextNode);
+  }
+
+  return {
+    leftNodes,
+    rightNodes,
+  };
 }

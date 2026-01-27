@@ -20,6 +20,8 @@ import {
   type Point,
   $getNodeByKey,
   $createTextNode,
+  HISTORIC_TAG,
+  type RangeSelection,
 } from 'lexical';
 import {
   $createLinkNode,
@@ -28,8 +30,8 @@ import {
   LinkNode,
   type LinkAttributes,
 } from '@lexical/link';
-import { Button, Input, Label } from '../ui';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+import { Button, Input, Label } from '../ui';
 import {
   autoUpdate,
   flip,
@@ -42,9 +44,10 @@ import {
   useInteractions,
 } from '@floating-ui/react';
 import { $findMatchingParent, mergeRegister } from '@lexical/utils';
-import { $getAncestor, getSelectedNode } from './lib';
-import invariant from './invariant';
 import { $isEmojiNode } from '../nodes';
+import { $getAncestor, $getSelectedNode } from './lib';
+import invariant from './invariant';
+import type { HistoryState } from '@lexical/react/LexicalHistoryPlugin';
 
 // Source: https://stackoverflow.com/a/8234912/2013580
 const urlRegExp = new RegExp(
@@ -57,10 +60,14 @@ export function validateUrlHandle(url: string): boolean {
 }
 
 export const TOGGLE_LINK_CREATE_COMMAND: LexicalCommand<
-  string | ({ url: string } & LinkAttributes) | null
+  string | ({ url: string; noText?: boolean } & LinkAttributes) | null
 > = createCommand('TOGGLE_LINK_CREATE_COMMAND');
+export const SHORTCUT_LINK_CREATE_COMMAND = createCommand<string | undefined>(
+  'SHORTCUT_LINK_CREATE_COMMAND',
+);
 
 type Props = {
+  historyState?: HistoryState;
   hasLinkAttributes?: boolean;
   validateUrl?: (url: string) => boolean;
 };
@@ -72,11 +79,13 @@ type LinkNodeInfo = {
 };
 
 function LinkPlugin({
+  historyState,
   hasLinkAttributes = false,
   validateUrl = validateUrlHandle,
 }: Props): JSX.Element | null {
   const [linkUrl, setLinkUrl] = useState<string>('');
   const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [isFromShortcut, setIsFromShortcut] = useState<boolean>(false);
   const [activedLinkNode, setActivedLinkNode] = useState<LinkNodeInfo | null>(
     null,
   );
@@ -86,6 +95,7 @@ function LinkPlugin({
 
   const inputRef = useRef<HTMLInputElement>(null);
   const pendingLinkNodes = useRef<NodeKey[]>([]);
+  const lastSelectionRef = useRef<RangeSelection | null>(null);
 
   const [editor] = useLexicalComposerContext();
 
@@ -94,12 +104,15 @@ function LinkPlugin({
     onOpenChange: (nextOpen, _event, reason) => {
       if (nextOpen) {
         setIsOpen(nextOpen);
-      } else {
-        onAfterCloseHandle();
-        if (reason === 'escape-key') {
-          editor?.focus();
-        }
+        return;
       }
+
+      if (isFromShortcut) {
+        onFromShortcutCloseHandle(reason === 'escape-key');
+        return;
+      }
+
+      onAfterCloseHandle(activedLinkNode === null, reason === 'escape-key');
     },
     placement: 'top-start',
     middleware: [offset(10), flip(), shift(), inline()],
@@ -136,9 +149,23 @@ function LinkPlugin({
     const showEditor = () => {
       const nativeSelection = getDOMSelection(editor._window);
       if (nativeSelection && nativeSelection.rangeCount > 0) {
-        const range = nativeSelection.getRangeAt(0),
-          boundingClientRect = range.getBoundingClientRect(),
+        const range = nativeSelection.getRangeAt(0);
+        let boundingClientRect = range.getBoundingClientRect(),
           clientRects = range.getClientRects();
+
+        if (clientRects.length === 0 && nativeSelection.anchorNode) {
+          const anchorNode = nativeSelection.anchorNode;
+          const element =
+            anchorNode.nodeType === Node.ELEMENT_NODE
+              ? (anchorNode as HTMLElement)
+              : anchorNode.parentElement;
+
+          if (element) {
+            boundingClientRect = element.getBoundingClientRect();
+            clientRects = [boundingClientRect] as unknown as DOMRectList;
+          }
+        }
+
         const virtualEl = {
           getBoundingClientRect: () => boundingClientRect,
           getClientRects: () => clientRects,
@@ -148,7 +175,9 @@ function LinkPlugin({
         setIsOpen(true);
       }
 
-      $setSelection(null);
+      editor.update(() => {
+        $setSelection(null);
+      });
     };
 
     const attributes = hasLinkAttributes
@@ -192,6 +221,23 @@ function LinkPlugin({
             showEditor();
             return true;
           }
+        },
+        COMMAND_PRIORITY_HIGH,
+      ),
+
+      editor.registerCommand(
+        SHORTCUT_LINK_CREATE_COMMAND,
+        (_payload) => {
+          editor.update(() => {
+            const selection = $getSelection();
+            // clone the selection to store it for later use
+            if ($isRangeSelection(selection)) {
+              lastSelectionRef.current = selection.clone();
+            }
+          });
+          setIsFromShortcut(true);
+          showEditor();
+          return true;
         },
         COMMAND_PRIORITY_HIGH,
       ),
@@ -279,45 +325,33 @@ function LinkPlugin({
     }
   }, [isOpen]);
 
-  const onAfterCloseHandle = () => {
-    // delayed close
-    setTimeout(() => {
-      setIsOpen(false);
-    });
+  const onAfterCloseHandle = (
+    isCreate: boolean = true,
+    shouldFocus: boolean = true,
+  ) => {
+    setIsOpen(false);
 
-    editor.update(() => {
-      pendingLinkNodes.current.forEach((key) => {
-        const linkNode = $getNodeByKey(key);
-        if ($isLinkNode(linkNode)) {
-          // Unwrap LinkNode, we already have one or it's an AutoLinkNode
-          for (const child of linkNode.getChildren()) {
-            linkNode.insertBefore(child);
-          }
-          linkNode.remove();
-        }
-      });
-
-      const selection = $getSelection();
-      if ($isRangeSelection(selection)) {
-        const parent = getSelectedNode(selection).getParent();
-        if ($isAutoLinkNode(parent)) {
-          const linkNode = $createLinkNode(parent.getURL(), {
-            rel: parent.__rel,
-            target: parent.__target,
-            title: parent.__title,
-          });
-          parent.replace(linkNode, true);
-        }
+    if (isCreate) {
+      const prevEntry = historyState?.undoStack.pop();
+      if (prevEntry) {
+        prevEntry.editorState._selection = null;
+        prevEntry.editor.setEditorState(prevEntry.editorState, {
+          tag: HISTORIC_TAG,
+        });
       }
-    });
-    pendingLinkNodes.current = [];
 
-    setLinkUrl('');
+      setLinkUrl('');
+    } else {
+      pendingLinkNodes.current = [];
+      setIsEdit(false);
+      setNodeUrl('');
+      setNodeText('');
+      setActivedLinkNode(null);
+    }
 
-    setIsEdit(false);
-    setNodeUrl('');
-    setNodeText('');
-    setActivedLinkNode(null);
+    if (shouldFocus) {
+      editor.focus();
+    }
   };
 
   const handleLinkSubmission = (
@@ -336,7 +370,7 @@ function LinkPlugin({
       pendingLinkNodes.current.forEach((key) => {
         const linkNode = $getNodeByKey(key);
         if ($isLinkNode(linkNode)) {
-          updateLinkNodeInfo(
+          $updateLinkNodeInfo(
             linkNode,
             linkUrl,
             hasLinkAttributes
@@ -350,7 +384,7 @@ function LinkPlugin({
 
       const selection = $getSelection();
       if ($isRangeSelection(selection)) {
-        const parent = getSelectedNode(selection).getParent();
+        const parent = $getSelectedNode(selection).getParent();
         if ($isAutoLinkNode(parent)) {
           const linkNode = $createLinkNode(parent.getURL(), {
             rel: parent.__rel,
@@ -374,33 +408,36 @@ function LinkPlugin({
   ) => {
     event.preventDefault();
 
-    if (activedLinkNode === null) return;
+    if (
+      !validateUrl(nodeUrl) ||
+      nodeText.trim() === '' ||
+      activedLinkNode === null
+    )
+      return;
 
     // delayed close
     setTimeout(() => {
       setIsOpen(false);
     });
 
-    if (validateUrl(nodeUrl) && nodeText.trim() !== '') {
-      editor.update(() => {
-        const linkNode = $getNodeByKey(activedLinkNode?.key);
-        if ($isLinkNode(linkNode)) {
-          linkNode.setURL(nodeUrl);
+    editor.update(() => {
+      const linkNode = $getNodeByKey(activedLinkNode?.key);
+      if ($isLinkNode(linkNode)) {
+        linkNode.setURL(nodeUrl);
 
-          const children = linkNode.getChildren();
-          if (children.length > 0) {
-            children[0].replace($createTextNode(nodeText));
-            for (let i = 1; i < children.length; i++) {
-              children[i].remove();
-            }
-          } else {
-            linkNode.append($createTextNode(nodeText));
+        const children = linkNode.getChildren();
+        if (children.length > 0) {
+          children[0].replace($createTextNode(nodeText));
+          for (let i = 1; i < children.length; i++) {
+            children[i].remove();
           }
-
-          linkNode.selectEnd();
+        } else {
+          linkNode.append($createTextNode(nodeText));
         }
-      });
-    }
+
+        linkNode.selectEnd();
+      }
+    });
 
     pendingLinkNodes.current = [];
 
@@ -410,7 +447,256 @@ function LinkPlugin({
     setActivedLinkNode(null);
   };
 
+  const onFromShortcutCloseHandle = (shouldFocus: boolean = true) => {
+    setIsOpen(false);
+    setNodeUrl('');
+    setNodeText('');
+    setIsFromShortcut(false);
+
+    if (lastSelectionRef.current) {
+      editor.update(() => {
+        $setSelection(lastSelectionRef.current);
+      });
+    }
+
+    lastSelectionRef.current = null;
+
+    if (shouldFocus) {
+      editor.focus();
+    }
+  };
+
+  const handlerShortcusSubmission = (
+    event:
+      | React.KeyboardEvent<HTMLInputElement>
+      | React.MouseEvent<HTMLElement>,
+  ) => {
+    event.preventDefault();
+
+    if (!validateUrl(nodeUrl) || nodeText.trim() === '') return;
+
+    editor.update(() => {
+      if (lastSelectionRef.current !== null) {
+        $setSelection(lastSelectionRef.current);
+      }
+
+      const selection = $getSelection();
+      if ($isRangeSelection(selection)) {
+        const linkNode = $createLinkNode(nodeUrl.trim(), {
+          rel: 'noreferrer',
+          target: '_blank',
+        });
+        const textNode = $createTextNode(nodeText.trim());
+        linkNode.append(textNode);
+
+        selection.insertNodes([linkNode]);
+        linkNode.selectEnd();
+      }
+    });
+
+    lastSelectionRef.current = null;
+    setIsOpen(false);
+    setNodeUrl('');
+    setNodeText('');
+    setIsFromShortcut(false);
+
+    editor.focus();
+  };
+
   if (!isOpen) return null;
+
+  const renderContent = () => {
+    if (isFromShortcut) {
+      return (
+        <div className='space-y-3'>
+          <div className='flex items-center space-x-2'>
+            <Label className='font-light'>文本：</Label>
+            <Input
+              autoFocus
+              className='w-56 h-7'
+              value={nodeText}
+              onChange={(event) => {
+                setNodeText(event.target.value);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  handlerShortcusSubmission(event);
+                }
+              }}
+            />
+          </div>
+          <div className='flex items-center space-x-2'>
+            <Label className='font-light'>链接：</Label>
+            <Input
+              className='w-56 h-7'
+              value={nodeUrl}
+              onChange={(event) => {
+                setNodeUrl(event.target.value);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  handlerShortcusSubmission(event);
+                }
+              }}
+            />
+          </div>
+          <div className='flex justify-end'>
+            <div className='flex item-center space-x-2'>
+              <Button
+                size='xxs'
+                variant='outline'
+                onClick={() => {
+                  onFromShortcutCloseHandle(true);
+                }}
+              >
+                取消
+              </Button>
+              <Button
+                size='xxs'
+                className='text-popover-foreground'
+                disabled={!validateUrl(nodeUrl)}
+                onClick={handlerShortcusSubmission}
+              >
+                确认
+              </Button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (!activedLinkNode) {
+      return (
+        <>
+          <div className='flex items-center space-x-3'>
+            <span className='inline-block w-8 text-xs'>链接</span>
+            <Input
+              ref={inputRef}
+              value={linkUrl}
+              className='w-56 h-7'
+              placeholder='粘贴或输入一个链接'
+              onChange={(event) => {
+                setLinkUrl(event.target.value);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' && validateUrlHandle(linkUrl)) {
+                  handleLinkSubmission(event);
+                }
+              }}
+            />
+          </div>
+          <div className='flex justify-end items-center space-x-2'>
+            <Button
+              size='xxs'
+              variant='outline'
+              onClick={() => {
+                onAfterCloseHandle(true, true);
+              }}
+            >
+              取消
+            </Button>
+            <Button
+              size='xxs'
+              className='text-popover-foreground'
+              disabled={!validateUrl(linkUrl)}
+              onClick={handleLinkSubmission}
+            >
+              确认
+            </Button>
+          </div>
+        </>
+      );
+    }
+
+    return (
+      <div className='space-y-3'>
+        <div className='flex items-center space-x-2'>
+          <Label className='font-light'>文本：</Label>
+          {isEdit ? (
+            <Input
+              autoFocus
+              className='w-56 h-7'
+              value={nodeText}
+              onChange={(event) => {
+                setNodeText(event.target.value);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  handleLinkInfoSubmission(event);
+                }
+              }}
+            />
+          ) : (
+            <p className='w-56 truncate'>{activedLinkNode.text}</p>
+          )}
+        </div>
+        <div className='flex items-center space-x-2'>
+          <Label className='font-light'>链接：</Label>
+          {isEdit ? (
+            <Input
+              className='w-56 h-7'
+              value={nodeUrl}
+              onChange={(event) => {
+                setNodeUrl(event.target.value);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  handleLinkInfoSubmission(event);
+                }
+              }}
+            />
+          ) : (
+            <p>
+              <span
+                className='inline-block max-w-56 truncate cursor-pointer hover:underline text-blue-500'
+                onClick={() => {
+                  window.open(activedLinkNode.url, '_blank');
+                }}
+              >
+                {activedLinkNode.url}
+              </span>
+            </p>
+          )}
+        </div>
+        <div className='flex justify-end'>
+          {isEdit ? (
+            <div className='flex item-center space-x-2'>
+              <Button
+                size='xxs'
+                variant='outline'
+                onClick={() => {
+                  onAfterCloseHandle(false, true);
+                }}
+              >
+                取消
+              </Button>
+              <Button
+                size='xxs'
+                className='text-popover-foreground'
+                disabled={!validateUrl(nodeUrl)}
+                onClick={handleLinkInfoSubmission}
+              >
+                确认
+              </Button>
+            </div>
+          ) : (
+            <Button
+              className='font-light'
+              variant='outline'
+              size='xxs'
+              onClick={() => {
+                setIsEdit(true);
+                setNodeUrl(activedLinkNode.url);
+                setNodeText(activedLinkNode.text);
+              }}
+            >
+              编辑链接
+            </Button>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <FloatingPortal>
@@ -420,141 +706,13 @@ function LinkPlugin({
         style={floatingStyles}
         {...getFloatingProps()}
       >
-        {activedLinkNode === null ? (
-          <>
-            <div className='flex items-center space-x-3'>
-              <span className='inline-block w-8 text-xs'>链接</span>
-              <Input
-                ref={inputRef}
-                value={linkUrl}
-                className='w-56 h-7'
-                placeholder='粘贴或输入一个链接'
-                onChange={(event) => {
-                  setLinkUrl(event.target.value);
-                }}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' && validateUrlHandle(linkUrl)) {
-                    handleLinkSubmission(event);
-                  }
-                }}
-              />
-            </div>
-            <div className='flex justify-end items-center space-x-2'>
-              <Button
-                size='xxs'
-                variant='outline'
-                onClick={() => {
-                  onAfterCloseHandle();
-                  editor.focus();
-                }}
-              >
-                取消
-              </Button>
-              <Button
-                size='xxs'
-                className='text-popover-foreground'
-                disabled={!validateUrl(linkUrl)}
-                onClick={handleLinkSubmission}
-              >
-                确认
-              </Button>
-            </div>
-          </>
-        ) : (
-          <div className='space-y-3'>
-            <div className='flex items-center space-x-2'>
-              <Label className='font-light'>文本：</Label>
-              {isEdit ? (
-                <Input
-                  autoFocus
-                  className='w-56 h-7'
-                  value={nodeText}
-                  onChange={(event) => {
-                    setNodeText(event.target.value);
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') {
-                      handleLinkInfoSubmission(event);
-                    }
-                  }}
-                />
-              ) : (
-                <p className='w-56 truncate'>{activedLinkNode.text}</p>
-              )}
-            </div>
-            <div className='flex items-center space-x-2'>
-              <Label className='font-light'>链接：</Label>
-              {isEdit ? (
-                <Input
-                  className='w-56 h-7'
-                  value={nodeUrl}
-                  onChange={(event) => {
-                    setNodeUrl(event.target.value);
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') {
-                      handleLinkInfoSubmission(event);
-                    }
-                  }}
-                />
-              ) : (
-                <p>
-                  <span
-                    className='inline-block max-w-56 truncate cursor-pointer hover:underline text-blue-500'
-                    onClick={() => {
-                      window.open(activedLinkNode.url, '_blank');
-                    }}
-                  >
-                    {activedLinkNode.url}
-                  </span>
-                </p>
-              )}
-            </div>
-            <div className='flex justify-end'>
-              {isEdit ? (
-                <div className='flex item-center space-x-2'>
-                  <Button
-                    size='xxs'
-                    variant='outline'
-                    onClick={() => {
-                      onAfterCloseHandle();
-                      editor?.focus();
-                    }}
-                  >
-                    取消
-                  </Button>
-                  <Button
-                    size='xxs'
-                    className='text-popover-foreground'
-                    disabled={!validateUrl(nodeUrl)}
-                    onClick={handleLinkInfoSubmission}
-                  >
-                    确认
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  className='font-light'
-                  variant='outline'
-                  size='xxs'
-                  onClick={() => {
-                    setIsEdit(true);
-                    setNodeUrl(activedLinkNode.url);
-                    setNodeText(activedLinkNode.text);
-                  }}
-                >
-                  编辑链接
-                </Button>
-              )}
-            </div>
-          </div>
-        )}
+        {renderContent()}
       </div>
     </FloatingPortal>
   );
 }
 
-function updateLinkNodeInfo(
+function $updateLinkNodeInfo(
   linkNode: LinkNode,
   url: string,
   attributes: LinkAttributes = {},
@@ -587,8 +745,7 @@ export function $toggleLink(
   attributes: LinkAttributes = {},
   updatePendingLinkNodes?: (key: NodeKey) => void,
 ): void {
-  const { target, title } = attributes;
-  const rel = attributes.rel === undefined ? 'noreferrer' : attributes.rel;
+  const { target, title, rel = 'noreferrer' } = attributes;
   const selection = $getSelection();
   if (
     selection === null ||
@@ -697,6 +854,7 @@ export function $toggleLink(
       if (parentLinkNode) {
         continue;
       }
+
       if ($isElementNode(node)) {
         if (!node.isInline() || $isEmojiNode(node)) {
           // Ignore block nodes, if there are any children we will see them
@@ -721,11 +879,13 @@ export function $toggleLink(
           continue;
         }
       }
+
       const prevLinkNode = node.getPreviousSibling();
       if ($isLinkNode(prevLinkNode) && prevLinkNode.is(linkNode)) {
         prevLinkNode.append(node);
         continue;
       }
+
       linkNode = $createLinkNode(url, { rel, target, title });
       updatePendingLinkNodes?.(linkNode.getKey());
       $updateLinkNodeTransition(editor, linkNode.getKey());
@@ -743,6 +903,7 @@ function $updateLinkNodeTransition(
   setTimeout(() => {
     const element = editor.getElementByKey(key);
     if (!element) return;
+
     const classNames = [
       'bg-input',
       'text-foreground',

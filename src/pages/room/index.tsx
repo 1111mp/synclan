@@ -272,7 +272,13 @@ function RoomPage() {
       </header>
       {renderMessageList()}
       <footer className='w-full'>
-        <Transmitter />
+        <Transmitter
+          onLineOverflow={() => {
+            if (lastMessageInViewRef.current) {
+              virtualizer.scrollToIndex(0, { align: 'end' });
+            }
+          }}
+        />
       </footer>
       <Toaster />
     </div>

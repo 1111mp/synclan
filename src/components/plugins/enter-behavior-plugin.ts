@@ -1,26 +1,35 @@
-import { useEffect, useRef } from 'react';
-import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+import { useEffect } from 'react';
 import {
-  $createParagraphNode,
+  $copyNode,
+  $findMatchingParent,
   $getSelection,
+  $isParagraphNode,
   $isRangeSelection,
   $isTextNode,
   COMMAND_PRIORITY_HIGH,
-  ElementNode,
   INSERT_PARAGRAPH_COMMAND,
   KEY_ENTER_COMMAND,
-  TextNode,
-  type LexicalNode,
-  type RangeSelection,
+  $createParagraphNode,
 } from 'lexical';
-import { $createQuoteNode, $isQuoteNode, QuoteNode } from '@lexical/rich-text';
+import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+import { $isLinkNode } from '@lexical/link';
 import {
-  $isListItemNode,
-  $isListNode,
-  ListItemNode,
-  ListNode,
-} from '@lexical/list';
-import { $createNestedListWithDepth, $findNearestListItemNode } from './lib';
+  $isSimpleQuoteNode,
+  $isSimpleListNode,
+  $isSimpleListItemNode,
+  type SimpleListNode,
+  $createSimpleListItemNode,
+} from '../nodes';
+import {
+  $copyCompleteNodeWithChildren,
+  $findNearestCodeNode,
+  $findNearestListNode,
+  $getSelectedTopLevelElements,
+  $selectionJustContainsSameCodeNode,
+  $splitLinkNodeBySelection,
+  $splitNodesFromOneLine,
+} from './lib';
+import { useLatestRef } from '@/hooks';
 
 type EnterPluginProps = {
   onSend?: () => void;
@@ -29,8 +38,7 @@ type EnterPluginProps = {
 function EnterBehaviorPlugin({ onSend }: EnterPluginProps) {
   const [editor] = useLexicalComposerContext();
 
-  const onChangeRef = useRef<EnterPluginProps['onSend']>(null);
-  onChangeRef.current = onSend;
+  const onChangeRef = useLatestRef(onSend);
 
   useEffect(() => {
     return editor.registerCommand<KeyboardEvent | null>(
@@ -54,52 +62,252 @@ function EnterBehaviorPlugin({ onSend }: EnterPluginProps) {
 
           // Shift + Enter
           if (event.shiftKey) {
-            const anchorNode = selection.anchor.getNode();
+            event.preventDefault();
 
-            // For QuoteNode
-            const topNode = anchorNode.getTopLevelElementOrThrow();
-            if ($isQuoteNode(topNode)) {
-              event.preventDefault();
+            const anchorNode = selection.anchor.getNode(),
+              focusNode = selection.focus.getNode();
 
-              $quoteNodeShiftEnterBehavior(
-                topNode,
-                anchorNode,
-                selection,
-                selection.anchor.offset,
-              );
+            const isCollapsed = selection.isCollapsed();
 
-              return true;
-            }
-
-            // For ListNode
-            if ($isListNode(topNode)) {
-              const nearestListItemNode = $findNearestListItemNode(anchorNode);
-              if (!$isListItemNode(nearestListItemNode)) return false;
-
-              const nearestListNode = nearestListItemNode.getParent<ListNode>();
-              if (!$isListNode(nearestListNode)) return false;
-
-              event.preventDefault();
-
-              if (nearestListItemNode.getChildrenSize() === 0) {
+            if (isCollapsed) {
+              if ($findNearestCodeNode(anchorNode))
                 return editor.dispatchCommand(
                   INSERT_PARAGRAPH_COMMAND,
                   undefined,
                 );
-              } else {
-                $listNodeShiftEnterBehavior(
-                  topNode,
-                  nearestListNode,
-                  nearestListItemNode,
-                  anchorNode,
-                  selection.anchor.offset,
+
+              const topNode = anchorNode.getTopLevelElementOrThrow();
+              if (
+                $isSimpleQuoteNode(topNode) ||
+                $findNearestListNode(topNode)
+              ) {
+                const parent = $findMatchingParent(anchorNode, (node) => {
+                  return (
+                    $isParagraphNode(node) ||
+                    $isSimpleListItemNode(node) ||
+                    $isSimpleListNode(node) ||
+                    $isSimpleQuoteNode(node)
+                  );
+                });
+
+                if (parent === null)
+                  return editor.dispatchCommand(
+                    INSERT_PARAGRAPH_COMMAND,
+                    undefined,
+                  );
+
+                if (parent.getChildrenSize() <= 0) {
+                  if ($isSimpleListItemNode(parent)) {
+                    const listNode = parent.getParent<SimpleListNode>();
+                    if (listNode?.is(topNode)) {
+                      const paragraph = $createParagraphNode();
+                      topNode.replace(paragraph);
+                      paragraph
+                        .setTextStyle(selection.style)
+                        .setTextFormat(selection.format)
+                        .select();
+                      return true;
+                    }
+                    const warpper = listNode?.getParent();
+                    if ($isSimpleListItemNode(warpper)) {
+                      // force to update dom
+                      const listItem = $createSimpleListItemNode();
+                      warpper.replace(listItem);
+                      listItem.selectEnd();
+                      return true;
+                    }
+                    listNode?.remove();
+                  } else {
+                    const paragraph = $createParagraphNode();
+                    topNode.replace(paragraph);
+                    paragraph
+                      .setTextStyle(selection.style)
+                      .setTextFormat(selection.format)
+                      .select();
+                  }
+                  return true;
+                }
+
+                let leftNodes = [],
+                  rightNodes = [];
+
+                let matched = false;
+                for (const child of parent.getChildren()) {
+                  if (child.is(anchorNode) || child.isParentOf(anchorNode)) {
+                    matched = true;
+
+                    if ($isTextNode(child)) {
+                      const textContent = child.getTextContent();
+                      const leftText = textContent.slice(
+                          0,
+                          selection.anchor.offset,
+                        ),
+                        rightText = textContent.slice(selection.anchor.offset);
+
+                      if (leftText) {
+                        const textNode = $copyNode(child);
+                        textNode.setTextContent(leftText);
+                        leftNodes.push(textNode);
+                      }
+
+                      if (rightText) {
+                        const textNode = $copyNode(child);
+                        textNode.setTextContent(rightText);
+                        rightNodes.push(textNode);
+                      }
+                    }
+
+                    if ($isLinkNode(child) && $isTextNode(anchorNode)) {
+                      const { leftNodes: left, rightNodes: right } =
+                        $splitLinkNodeBySelection(
+                          child,
+                          anchorNode,
+                          selection.anchor.offset,
+                        );
+
+                      if (left.length > 0) {
+                        const linkNode = $copyNode(child);
+                        linkNode.clear();
+                        linkNode.append(...left);
+                        leftNodes.push(linkNode);
+                      }
+
+                      if (right.length > 0) {
+                        const linkNode = $copyNode(child);
+                        linkNode.clear();
+                        linkNode.append(...right);
+                        rightNodes.push(linkNode);
+                      }
+                    }
+
+                    continue;
+                  }
+
+                  if (!matched) {
+                    leftNodes.push(child);
+                    continue;
+                  }
+
+                  if (matched) {
+                    rightNodes.push(child);
+                    continue;
+                  }
+                }
+
+                parent.clear();
+                parent.append(...leftNodes);
+
+                const copyedNode = $copyCompleteNodeWithChildren(
+                  parent,
+                  rightNodes,
+                )!;
+                topNode.insertAfter(copyedNode);
+                copyedNode.selectStart();
+
+                return true;
+              }
+            } else {
+              if ($selectionJustContainsSameCodeNode(selection))
+                return editor.dispatchCommand(
+                  INSERT_PARAGRAPH_COMMAND,
+                  undefined,
                 );
+
+              const isBackward = selection.isBackward();
+
+              const startNode = isBackward ? focusNode : anchorNode,
+                endNode = isBackward ? anchorNode : focusNode,
+                startOffset = isBackward
+                  ? selection.focus.offset
+                  : selection.anchor.offset,
+                endOffset = isBackward
+                  ? selection.anchor.offset
+                  : selection.focus.offset;
+
+              const startParent = $findMatchingParent(startNode, (node) => {
+                  return (
+                    $isParagraphNode(node) ||
+                    $isSimpleListItemNode(node) ||
+                    $isSimpleListNode(node) ||
+                    $isSimpleQuoteNode(node)
+                  );
+                }),
+                endParent = $findMatchingParent(endNode, (node) => {
+                  return (
+                    $isParagraphNode(node) ||
+                    $isSimpleListItemNode(node) ||
+                    $isSimpleListNode(node) ||
+                    $isSimpleQuoteNode(node)
+                  );
+                });
+
+              if (startParent === null || endParent === null)
+                return editor.dispatchCommand(
+                  INSERT_PARAGRAPH_COMMAND,
+                  undefined,
+                );
+
+              const topNode = anchorNode.getTopLevelElementOrThrow();
+
+              if (startParent.is(endParent)) {
+                // same line
+                const { leftNodes: startLeftNodes } = $splitNodesFromOneLine(
+                    startParent.getChildren(),
+                    startNode,
+                    startOffset,
+                  ),
+                  { rightNodes: endRightNodes } = $splitNodesFromOneLine(
+                    endParent.getChildren(),
+                    endNode,
+                    endOffset,
+                  );
+
+                startParent.clear();
+                startParent.append(...startLeftNodes);
+
+                const node = $copyCompleteNodeWithChildren(
+                  startParent,
+                  endRightNodes,
+                );
+                if (node) {
+                  topNode.insertAfter(node);
+                  node.selectStart();
+                }
+              } else {
+                const { leftNodes: startLeftNodes } = $splitNodesFromOneLine(
+                    startParent.getChildren(),
+                    startNode,
+                    startOffset,
+                  ),
+                  { rightNodes: endRightNodes } = $splitNodesFromOneLine(
+                    endParent.getChildren(),
+                    endNode,
+                    endOffset,
+                  );
+
+                // first line
+                startParent.clear();
+                startParent.append(...startLeftNodes);
+
+                // middle lines
+                const selectedNodes = $getSelectedTopLevelElements(selection);
+                if (selectedNodes.length > 2) {
+                  const middle = selectedNodes.slice(1, -1);
+                  for (const node of middle) {
+                    node.remove();
+                  }
+                }
+
+                // last line
+                endParent.clear();
+                endParent.append(...endRightNodes);
+
+                endParent.getTopLevelElement()?.selectStart();
               }
 
               return true;
             }
 
-            event.preventDefault();
             return editor.dispatchCommand(INSERT_PARAGRAPH_COMMAND, undefined);
           }
         }
@@ -108,164 +316,9 @@ function EnterBehaviorPlugin({ onSend }: EnterPluginProps) {
       },
       COMMAND_PRIORITY_HIGH,
     );
-  }, [editor]);
+  }, [editor, onChangeRef]);
 
   return null;
-}
-
-function $quoteNodeShiftEnterBehavior(
-  quoteNode: QuoteNode,
-  anchorNode: TextNode | ElementNode,
-  selection: RangeSelection,
-  offset: number,
-) {
-  if (quoteNode.getChildrenSize() === 0) {
-    // If the content is empty we should exit the quote mode
-    const paragraph = $createParagraphNode();
-    quoteNode.replace(paragraph);
-    paragraph
-      .setTextStyle(selection.style)
-      .setTextFormat(selection.format)
-      .select();
-  } else {
-    const children = quoteNode.getChildren();
-    const index = children.findIndex((c) => c.getKey() === anchorNode.getKey());
-
-    let preHalf: LexicalNode[] = [],
-      nextHalf: LexicalNode[] = [];
-
-    if (index < 0) {
-      preHalf = children.slice(0, offset);
-      nextHalf = children.slice(offset);
-    } else {
-      children.forEach((child, i) => {
-        if (i < index) {
-          preHalf.push(child);
-        } else if (i > index) {
-          nextHalf.push(child);
-        } else {
-          if ($isTextNode(child)) {
-            if (offset === 0) {
-              nextHalf.push(child);
-            } else {
-              const [before, after] = child.splitText(offset);
-              if (before) preHalf.push(before);
-              if (after) nextHalf.push(after);
-            }
-          } else {
-            if (offset === 0) {
-              nextHalf.push(child);
-            } else {
-              preHalf.push(child);
-            }
-          }
-        }
-      });
-    }
-
-    if (preHalf.length > 0) {
-      const newQuoteNode = $createQuoteNode();
-      newQuoteNode.append(...preHalf);
-      quoteNode.insertBefore(newQuoteNode);
-    } else {
-      const newQuoteNode = $createQuoteNode();
-      quoteNode.insertBefore(newQuoteNode);
-    }
-
-    if (nextHalf.length > 0) {
-      const newQuoteNode = $createQuoteNode();
-      newQuoteNode.append(...nextHalf);
-      quoteNode.insertBefore(newQuoteNode);
-
-      newQuoteNode.select(0, 0);
-    } else {
-      const newQuoteNode = $createQuoteNode();
-      quoteNode.insertBefore(newQuoteNode);
-      newQuoteNode.select();
-    }
-
-    quoteNode.remove();
-  }
-}
-
-function $listNodeShiftEnterBehavior(
-  topListNode: ListNode,
-  nearestListNode: ListNode,
-  nearestListItemNode: ListItemNode,
-  anchorNode: TextNode | ElementNode,
-  offset: number,
-) {
-  const children = nearestListItemNode.getChildren();
-  const index = children.findIndex((c) => c.getKey() === anchorNode.getKey());
-
-  let preHalf: LexicalNode[] = [],
-    nextHalf: LexicalNode[] = [];
-  if (index < 0) {
-    preHalf = children.slice(0, offset);
-    nextHalf = children.slice(offset);
-  } else {
-    children.forEach((child, i) => {
-      if (i < index) {
-        preHalf.push(child);
-      } else if (i > index) {
-        nextHalf.push(child);
-      } else {
-        if ($isTextNode(child)) {
-          if (offset === 0) {
-            nextHalf.push(child);
-          } else {
-            const [before, after] = child.splitText(offset);
-            if (before) preHalf.push(before);
-            if (after) nextHalf.push(after);
-          }
-        } else {
-          if (offset === 0) {
-            nextHalf.push(child);
-          } else {
-            preHalf.push(child);
-          }
-        }
-      }
-    });
-  }
-
-  const listType = nearestListNode.getListType(),
-    indent = nearestListItemNode.getIndent();
-
-  if (preHalf.length > 0) {
-    const { outerListNode: newListNode, innerListItemNode } =
-      $createNestedListWithDepth(listType, indent);
-
-    innerListItemNode.append(...preHalf);
-    topListNode.insertBefore(newListNode);
-  } else {
-    const { outerListNode: newListNode } = $createNestedListWithDepth(
-      listType,
-      indent,
-    );
-
-    topListNode.insertBefore(newListNode);
-  }
-
-  if (nextHalf.length > 0) {
-    const {
-      outerListNode: newListNode,
-      innerListNode,
-      innerListItemNode,
-    } = $createNestedListWithDepth(listType, indent);
-
-    innerListItemNode.append(...nextHalf);
-    topListNode.insertBefore(newListNode);
-    innerListNode.select(0, 0);
-  } else {
-    const { outerListNode: newListNode, innerListNode } =
-      $createNestedListWithDepth(listType, indent);
-
-    topListNode.insertBefore(newListNode);
-    innerListNode.select();
-  }
-
-  topListNode.remove();
 }
 
 export { EnterBehaviorPlugin };

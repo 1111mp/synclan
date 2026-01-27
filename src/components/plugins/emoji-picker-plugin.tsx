@@ -40,7 +40,6 @@ function EmojiPickerPlugin() {
     if (!queryString) return [];
 
     const emojis = search(queryString, 10);
-    console.log('emojis', emojis);
 
     return emojis.map((emoji) => new EmojiOption(emoji.short_name));
   }, [queryString]);
