@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useParams } from 'react-router';
 import { LoaderCircle } from 'lucide-react';
-import { MessageWrapper, Toaster } from '@/components';
-import { Transmitter } from './transmitter';
+import { MessageWrapper, Toaster, Transmitter } from '@/components';
 
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useVirtualizer, elementScroll } from '@tanstack/react-virtual';
@@ -56,11 +55,11 @@ function getVideoMessageExtra() {
   };
 }
 
-function sleep() {
-  return new Promise((resolve) => {
-    setTimeout(resolve, 1000);
-  });
-}
+// function sleep() {
+//   return new Promise((resolve) => {
+//     setTimeout(resolve, 1000);
+//   });
+// }
 
 async function fetchServerPage(cursor: number) {
   const pageSize = 20;
@@ -116,16 +115,16 @@ function RoomPage() {
   const lastMessageInViewRef = useRef<boolean>(false);
 
   const {
-    status,
+    // status,
     data,
-    error,
-    isFetching,
+    // error,
+    // isFetching,
     isFetchingNextPage,
-    isFetchingPreviousPage,
+    // isFetchingPreviousPage,
     hasNextPage,
-    hasPreviousPage,
+    // hasPreviousPage,
     fetchNextPage,
-    fetchPreviousPage,
+    // fetchPreviousPage,
   } = useInfiniteQuery({
     queryKey: ['messages', params.id],
     initialPageParam: 0,

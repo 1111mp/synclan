@@ -43,7 +43,7 @@ function EmojiButton({ ...props }: Props) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div>
+        <div className='h-7'>
           <Popover
             open={open}
             onOpenChange={(o) => {

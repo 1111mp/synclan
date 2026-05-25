@@ -48,7 +48,7 @@ impl DBManager {
                 .synchronous(SqliteSynchronous::Full)
                 .pragma("cipher", "sqlcipher")
                 .pragma("legacy", "4")
-                .pragma("key", whoami::username())
+                .pragma("key", whoami::username()?)
                 .create_if_missing(true);
             let db_pool = SqlitePoolOptions::new()
                 .max_connections(5)

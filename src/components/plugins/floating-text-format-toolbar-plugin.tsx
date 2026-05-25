@@ -19,6 +19,8 @@ import {
   KEY_ESCAPE_COMMAND,
   SELECTION_CHANGE_COMMAND,
   type LexicalEditor,
+  $addUpdateTag,
+  SKIP_SELECTION_FOCUS_TAG,
 } from 'lexical';
 import {
   Bold,
@@ -39,14 +41,15 @@ import {
   autoUpdate,
   flip,
   FloatingPortal,
+  inline,
   offset,
   shift,
   useDismiss,
   useFloating,
   useInteractions,
+  useTransitionStyles,
 } from '@floating-ui/react';
 import { $isSimpleListItemNode, $isSimpleQuoteNode } from '../nodes';
-import { debounce } from 'lodash-es';
 import {
   $findNearestListNode,
   $toggleButtletedList,
@@ -56,11 +59,311 @@ import {
   $selectionContainsOnlyText,
   $selectionJustContainsSameCodeNode,
   $toggleCodeNode,
+  $findNearestCodeNode,
 } from './lib';
 import { cn } from '@/lib/utils';
-import { TOGGLE_LINK_CREATE_COMMAND } from './link-plugin';
+import {
+  SHORTCUT_LINK_CREATE_COMMAND,
+  TOGGLE_LINK_CREATE_COMMAND,
+} from './link-plugin';
 
 const OFFSET_X = 12;
+
+type TextFormatFloatingToolbarProps = {
+  isText?: boolean;
+  editor: LexicalEditor;
+  isBold: boolean;
+  isStrikethrough: boolean;
+  isItalic: boolean;
+  isUnderline: boolean;
+  isOrderedList: boolean;
+  isBulletList: boolean;
+  isQuote: boolean;
+  isLink: boolean;
+  isCode: boolean;
+  isOnlyText: boolean;
+  onSetIsLinkEditMode: Dispatch<boolean>;
+};
+
+function TextFormatToolbar({
+  editor,
+  isBold,
+  isStrikethrough,
+  isItalic,
+  isUnderline,
+  isOrderedList,
+  isBulletList,
+  isQuote,
+  isLink,
+  isCode,
+  isOnlyText,
+  onSetIsLinkEditMode,
+}: Omit<TextFormatFloatingToolbarProps, 'isText'>) {
+  return (
+    <div className='flex items-center p-2 space-x-1'>
+      <Tooltip delayDuration={700}>
+        <TooltipTrigger asChild>
+          <Button
+            className={cn(
+              'transition-colors duration-300',
+              isBold &&
+                'bg-blue-500/20 text-blue-500 hover:bg-blue-500/20 hover:text-blue-500',
+            )}
+            disabled={isCode}
+            variant='ghost'
+            size='xs'
+            onClick={() => {
+              editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold');
+            }}
+          >
+            <Bold />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent className='text-center'>
+          <p>粗体（&#x2318;B）</p>
+          <p>Markdown：**文字** 空格</p>
+        </TooltipContent>
+      </Tooltip>
+      <Tooltip delayDuration={700}>
+        <TooltipTrigger asChild>
+          <Button
+            className={cn(
+              'transition-colors duration-300',
+              isStrikethrough &&
+                'bg-blue-500/20 text-blue-500 hover:bg-blue-500/20 hover:text-blue-500',
+            )}
+            disabled={isCode}
+            variant='ghost'
+            size='xs'
+            onClick={() => {
+              editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'strikethrough');
+            }}
+          >
+            <Strikethrough />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent className='text-center'>
+          <p>粗体（&#x2318;+Shift+X）</p>
+          <p>Markdown：~~文字~~ 空格</p>
+        </TooltipContent>
+      </Tooltip>
+      <Tooltip delayDuration={700}>
+        <TooltipTrigger asChild>
+          <Button
+            className={cn(
+              'transition-colors duration-300',
+              isItalic &&
+                'bg-blue-500/20 text-blue-500 hover:bg-blue-500/20 hover:text-blue-500',
+            )}
+            disabled={isCode}
+            variant='ghost'
+            size='xs'
+            onClick={() => {
+              editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic');
+            }}
+          >
+            <Italic />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent className='text-center'>
+          <p>粗体（&#x2318;I）</p>
+          <p>Markdown：*文字* 空格</p>
+        </TooltipContent>
+      </Tooltip>
+      <Tooltip delayDuration={700}>
+        <TooltipTrigger asChild>
+          <Button
+            className={cn(
+              'transition-colors duration-300',
+              isUnderline &&
+                'bg-blue-500/20 text-blue-500 hover:bg-blue-500/20 hover:text-blue-500',
+            )}
+            disabled={isCode}
+            variant='ghost'
+            size='xs'
+            onClick={() => {
+              editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'underline');
+            }}
+          >
+            <Underline />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent className='text-center'>
+          <p>粗体（&#x2318;U）</p>
+          <p>Markdown：~文字~ 空格</p>
+        </TooltipContent>
+      </Tooltip>
+      <Tooltip delayDuration={700}>
+        <TooltipTrigger asChild>
+          <Button
+            className={cn(
+              'transition-colors duration-300',
+              !isCode &&
+                isOrderedList &&
+                'bg-blue-500/20 text-blue-500 hover:bg-blue-500/20 hover:text-blue-500',
+            )}
+            disabled={isCode}
+            variant='ghost'
+            size='xs'
+            onClick={() => {
+              editor.update(() => {
+                const selection = $getSelection();
+                if (!$isRangeSelection(selection)) return;
+
+                $toggleOrderedList(selection, isOrderedList);
+              });
+            }}
+          >
+            <ListOrdered />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent className='text-center'>
+          <p>有序列表（&#x2318;+Shift+7）</p>
+          <p>Markdown：1. 空格</p>
+        </TooltipContent>
+      </Tooltip>
+      <Tooltip delayDuration={700}>
+        <TooltipTrigger asChild>
+          <Button
+            className={cn(
+              'transition-colors duration-300',
+              !isCode &&
+                isBulletList &&
+                'bg-blue-500/20 text-blue-500 hover:bg-blue-500/20 hover:text-blue-500',
+            )}
+            disabled={isCode}
+            variant='ghost'
+            size='xs'
+            onClick={() => {
+              editor.update(() => {
+                const selection = $getSelection();
+                if (!$isRangeSelection(selection)) return;
+
+                $toggleButtletedList(selection, isBulletList);
+              });
+            }}
+          >
+            <List />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent className='text-center'>
+          <p>无序列表（&#x2318;+Shift+8）</p>
+          <p>Markdown：- 空格</p>
+        </TooltipContent>
+      </Tooltip>
+      <Tooltip delayDuration={700}>
+        <TooltipTrigger asChild>
+          <Button
+            className={cn(
+              'transition-colors duration-300',
+              !isCode &&
+                isQuote &&
+                'bg-blue-500/20 text-blue-500 hover:bg-blue-500/20 hover:text-blue-500',
+            )}
+            disabled={isCode}
+            variant='ghost'
+            size='xs'
+            onClick={() => {
+              editor.update(() => {
+                const selection = $getSelection();
+                if (!$isRangeSelection(selection)) return;
+
+                $toggleQuoteNode(selection, isQuote);
+              });
+            }}
+          >
+            <Quote />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent className='text-center'>
+          <p>引用（&#x2318;+Shift+&gt;）</p>
+          <p>Markdown：&gt; 空格</p>
+        </TooltipContent>
+      </Tooltip>
+      <Tooltip delayDuration={700}>
+        <TooltipTrigger asChild>
+          <Button
+            className={cn(
+              'transition-colors duration-300',
+              !isCode &&
+                isLink &&
+                'bg-blue-500/20 text-blue-500 hover:bg-blue-500/20 hover:text-blue-500',
+            )}
+            disabled={isCode}
+            variant='ghost'
+            size='xs'
+            onClick={() => {
+              editor.update(() => {
+                $addUpdateTag(SKIP_SELECTION_FOCUS_TAG);
+
+                const selection = $getSelection();
+                if (!$isRangeSelection(selection)) return;
+
+                if (selection.isCollapsed()) {
+                  if ($findNearestCodeNode(selection.anchor.getNode())) return;
+
+                  editor.dispatchCommand(
+                    SHORTCUT_LINK_CREATE_COMMAND,
+                    undefined,
+                  );
+                } else {
+                  if (!isLink) {
+                    onSetIsLinkEditMode(true);
+                    editor.dispatchCommand(TOGGLE_LINK_CREATE_COMMAND, '');
+                  } else {
+                    onSetIsLinkEditMode(false);
+                    editor.dispatchCommand(TOGGLE_LINK_CREATE_COMMAND, null);
+                  }
+                }
+              });
+            }}
+          >
+            <Link />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent className='text-center'>
+          <p>链接（&#x2318;+Shift+U）</p>
+          <p>Markdown：[文字](链接) 空格</p>
+        </TooltipContent>
+      </Tooltip>
+      <Tooltip delayDuration={700}>
+        <TooltipTrigger asChild>
+          <Button
+            variant='ghost'
+            size='xs'
+            className={cn(
+              'disabled:pointer-events-auto',
+              isCode &&
+                'bg-blue-500/20 text-blue-500 hover:bg-blue-500/20 hover:text-blue-500',
+            )}
+            disabled={
+              !isCode &&
+              (!isOnlyText ||
+                isOrderedList ||
+                isBulletList ||
+                isQuote ||
+                isLink)
+            }
+            onClick={() => {
+              editor.update(() => {
+                const selection = $getSelection();
+                if (!$isRangeSelection(selection)) return;
+
+                $toggleCodeNode(selection, isCode);
+              });
+            }}
+          >
+            <Braces />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent className='text-center'>
+          <p>链接（&#x2318;+&#x2325;+C）</p>
+          <p>Markdown：``` 空格 或 ```代码语言 空格</p>
+        </TooltipContent>
+      </Tooltip>
+    </div>
+  );
+}
 
 function TextFormatFloatingToolbar({
   isText = false,
@@ -71,26 +374,12 @@ function TextFormatFloatingToolbar({
   isUnderline,
   isOrderedList,
   isBulletList,
-  isQuota,
+  isQuote,
   isLink,
   isCode,
   isOnlyText,
-  setIsLinkEditMode,
-}: {
-  isText: boolean;
-  editor: LexicalEditor;
-  isBold: boolean;
-  isStrikethrough: boolean;
-  isItalic: boolean;
-  isUnderline: boolean;
-  isOrderedList: boolean;
-  isBulletList: boolean;
-  isQuota: boolean;
-  isLink: boolean;
-  isCode: boolean;
-  isOnlyText: boolean;
-  setIsLinkEditMode: Dispatch<boolean>;
-}) {
+  onSetIsLinkEditMode,
+}: TextFormatFloatingToolbarProps) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
 
   const isMouseDown = useRef<boolean>(false);
@@ -98,16 +387,37 @@ function TextFormatFloatingToolbar({
 
   const { refs, floatingStyles, context } = useFloating({
     open: isOpen,
-    onOpenChange: setIsOpen,
+    onOpenChange: (open, event) => {
+      if (!editor.getRootElement()?.contains((event?.target as Node) ?? null)) {
+        editor.blur();
+      }
+      setIsOpen(open);
+    },
     placement: 'top-start',
-    middleware: [offset(10), flip(), shift()],
+    middleware: [offset(10), inline(), flip(), shift()],
     whileElementsMounted: autoUpdate,
   });
 
   const dismiss = useDismiss(context, {
     escapeKey: false,
+    outsidePress: true,
   });
   const { getFloatingProps } = useInteractions([dismiss]);
+
+  const { isMounted, styles: transitionStyles } = useTransitionStyles(context, {
+    initial: {
+      opacity: 0,
+      transform: 'translateY(6px)',
+    },
+    open: {
+      opacity: 1,
+      transform: 'translateY(0px)',
+    },
+    duration: {
+      open: 180,
+      close: 0,
+    },
+  });
 
   const $updateTextFormatFloatingToolbar = useCallback(() => {
     const selection = $getSelection();
@@ -249,274 +559,44 @@ function TextFormatFloatingToolbar({
     };
   }, [editor]);
 
-  if (!isText || !isOpen) return null;
+  if (!isText || !isOpen || !isMounted) return null;
 
   return (
     <FloatingPortal>
       <div
         ref={refs.setFloating}
-        className='flex items-center p-2 space-x-1 rounded-md border bg-popover text-popover-foreground'
-        style={floatingStyles}
+        className='rounded-md border bg-popover text-popover-foreground'
+        style={{
+          ...floatingStyles,
+          ...transitionStyles,
+          transform: `${floatingStyles.transform ?? ''} ${transitionStyles.transform ?? ''}`,
+        }}
         {...getFloatingProps()}
         onMouseDown={(e) => {
           // prevent editor blur
           e.preventDefault();
         }}
       >
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              className={cn(
-                'transition-colors duration-300',
-                isBold &&
-                  'bg-blue-500/20 text-blue-500 hover:bg-blue-500/20 hover:text-blue-500',
-              )}
-              disabled={isCode}
-              variant='ghost'
-              size='xs'
-              onClick={() => {
-                editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold');
-              }}
-            >
-              <Bold />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent className='text-center'>
-            <p>粗体（&#x2318;B）</p>
-            <p>Markdown：**文字** 空格</p>
-          </TooltipContent>
-        </Tooltip>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              className={cn(
-                'transition-colors duration-300',
-                isStrikethrough &&
-                  'bg-blue-500/20 text-blue-500 hover:bg-blue-500/20 hover:text-blue-500',
-              )}
-              disabled={isCode}
-              variant='ghost'
-              size='xs'
-              onClick={() => {
-                editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'strikethrough');
-              }}
-            >
-              <Strikethrough />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent className='text-center'>
-            <p>粗体（&#x2318;+Shift+X）</p>
-            <p>Markdown：~~文字~~ 空格</p>
-          </TooltipContent>
-        </Tooltip>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              className={cn(
-                'transition-colors duration-300',
-                isItalic &&
-                  'bg-blue-500/20 text-blue-500 hover:bg-blue-500/20 hover:text-blue-500',
-              )}
-              disabled={isCode}
-              variant='ghost'
-              size='xs'
-              onClick={() => {
-                editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic');
-              }}
-            >
-              <Italic />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent className='text-center'>
-            <p>粗体（&#x2318;I）</p>
-            <p>Markdown：*文字* 空格</p>
-          </TooltipContent>
-        </Tooltip>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              className={cn(
-                'transition-colors duration-300',
-                isUnderline &&
-                  'bg-blue-500/20 text-blue-500 hover:bg-blue-500/20 hover:text-blue-500',
-              )}
-              disabled={isCode}
-              variant='ghost'
-              size='xs'
-              onClick={() => {
-                editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'underline');
-              }}
-            >
-              <Underline />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent className='text-center'>
-            <p>粗体（&#x2318;U）</p>
-            <p>Markdown：~文字~ 空格</p>
-          </TooltipContent>
-        </Tooltip>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              className={cn(
-                'transition-colors duration-300',
-                !isCode &&
-                  isOrderedList &&
-                  'bg-blue-500/20 text-blue-500 hover:bg-blue-500/20 hover:text-blue-500',
-              )}
-              disabled={isCode}
-              variant='ghost'
-              size='xs'
-              onClick={() => {
-                editor.update(() => {
-                  const selection = $getSelection();
-                  if (!$isRangeSelection(selection)) return;
-
-                  $toggleOrderedList(selection, isOrderedList);
-                });
-              }}
-            >
-              <ListOrdered />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent className='text-center'>
-            <p>有序列表（&#x2318;+Shift+7）</p>
-            <p>Markdown：1. 空格</p>
-          </TooltipContent>
-        </Tooltip>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              className={cn(
-                'transition-colors duration-300',
-                !isCode &&
-                  isBulletList &&
-                  'bg-blue-500/20 text-blue-500 hover:bg-blue-500/20 hover:text-blue-500',
-              )}
-              disabled={isCode}
-              variant='ghost'
-              size='xs'
-              onClick={() => {
-                editor.update(() => {
-                  const selection = $getSelection();
-                  if (!$isRangeSelection(selection)) return;
-
-                  $toggleButtletedList(selection, isBulletList);
-                });
-              }}
-            >
-              <List />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent className='text-center'>
-            <p>无序列表（&#x2318;+Shift+8）</p>
-            <p>Markdown：- 空格</p>
-          </TooltipContent>
-        </Tooltip>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              className={cn(
-                'transition-colors duration-300',
-                !isCode &&
-                  isQuota &&
-                  'bg-blue-500/20 text-blue-500 hover:bg-blue-500/20 hover:text-blue-500',
-              )}
-              disabled={isCode}
-              variant='ghost'
-              size='xs'
-              onClick={() => {
-                editor.update(() => {
-                  const selection = $getSelection();
-                  if (!$isRangeSelection(selection)) return;
-
-                  $toggleQuoteNode(selection, isQuota);
-                });
-              }}
-            >
-              <Quote />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent className='text-center'>
-            <p>引用（&#x2318;+Shift+&gt;）</p>
-            <p>Markdown：&gt; 空格</p>
-          </TooltipContent>
-        </Tooltip>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              className={cn(
-                'transition-colors duration-300',
-                !isCode &&
-                  isLink &&
-                  'bg-blue-500/20 text-blue-500 hover:bg-blue-500/20 hover:text-blue-500',
-              )}
-              disabled={isCode}
-              variant='ghost'
-              size='xs'
-              onClick={() => {
-                if (!isLink) {
-                  setIsLinkEditMode(true);
-                  editor.dispatchCommand(TOGGLE_LINK_CREATE_COMMAND, '');
-                } else {
-                  setIsLinkEditMode(false);
-                  editor.dispatchCommand(TOGGLE_LINK_CREATE_COMMAND, null);
-                }
-              }}
-            >
-              <Link />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent className='text-center'>
-            <p>链接（&#x2318;+Shift+U）</p>
-            <p>Markdown：[文字](链接) 空格</p>
-          </TooltipContent>
-        </Tooltip>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant='ghost'
-              size='xs'
-              className={cn(
-                'disabled:pointer-events-auto',
-                isCode &&
-                  'bg-blue-500/20 text-blue-500 hover:bg-blue-500/20 hover:text-blue-500',
-              )}
-              disabled={
-                !isCode &&
-                (!isOnlyText ||
-                  isOrderedList ||
-                  isBulletList ||
-                  isQuota ||
-                  isLink)
-              }
-              onClick={() => {
-                editor.update(() => {
-                  const selection = $getSelection();
-                  if (!$isRangeSelection(selection)) return;
-
-                  $toggleCodeNode(selection, isCode);
-                });
-              }}
-            >
-              <Braces />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent className='text-center'>
-            <p>链接（&#x2318;+&#x2325;+C）</p>
-            <p>Markdown：``` 空格 或 ```代码语言 空格</p>
-          </TooltipContent>
-        </Tooltip>
+        <TextFormatToolbar
+          editor={editor}
+          isBold={isBold}
+          isStrikethrough={isStrikethrough}
+          isItalic={isItalic}
+          isUnderline={isUnderline}
+          isOrderedList={isOrderedList}
+          isBulletList={isBulletList}
+          isQuote={isQuote}
+          isLink={isLink}
+          isCode={isCode}
+          isOnlyText={isOnlyText}
+          onSetIsLinkEditMode={onSetIsLinkEditMode}
+        />
       </div>
     </FloatingPortal>
   );
 }
 
-function FloatingTextFormatToolbarPlugin({
-  setIsLinkEditMode,
-}: {
-  setIsLinkEditMode: Dispatch<boolean>;
-}): JSX.Element | null {
+function useFormatToolbar(editor: LexicalEditor) {
   const [isText, setIsText] = useState<boolean>(false);
   const [isBold, setIsBold] = useState<boolean>(false);
   const [isStrikethrough, setIsStrikethrough] = useState<boolean>(false);
@@ -529,98 +609,96 @@ function FloatingTextFormatToolbarPlugin({
   const [isCode, setIsCode] = useState<boolean>(false);
   const [isOnlyText, setIsOnlyText] = useState<boolean>(false);
 
-  const [editor] = useLexicalComposerContext();
-
   const debounceUpdatePopup = useMemo(
-    () =>
-      debounce(() => {
-        editor.getEditorState().read(() => {
-          // Should not to pop up the floating toolbar when using IME input
-          if (editor.isComposing()) return;
+    () => () => {
+      editor.getEditorState().read(() => {
+        // Should not to pop up the floating toolbar when using IME input
+        if (editor.isComposing()) return;
 
-          const selection = $getSelection();
-          const nativeSelection = getDOMSelection(editor._window);
-          const rootElement = editor.getRootElement();
-          if (
-            nativeSelection !== null &&
-            (!$isRangeSelection(selection) ||
-              rootElement === null ||
-              !rootElement.contains(nativeSelection.anchorNode))
-          ) {
-            setIsText(false);
-            return;
-          }
+        const selection = $getSelection();
+        const nativeSelection = getDOMSelection(editor._window);
+        const rootElement = editor.getRootElement();
+        if (
+          nativeSelection !== null &&
+          (!$isRangeSelection(selection) ||
+            rootElement === null ||
+            !rootElement.contains(nativeSelection.anchorNode))
+        ) {
+          setIsText(false);
+          return;
+        }
 
-          if (!$isRangeSelection(selection)) return;
+        if (!$isRangeSelection(selection)) return;
 
-          const node = $getSelectedNode(selection);
-          // const anchorNode = selection.anchor.getNode();
+        const node = $getSelectedNode(selection);
+        // const anchorNode = selection.anchor.getNode();
 
-          // Update text format
-          setIsBold(selection.hasFormat('bold'));
-          setIsStrikethrough(selection.hasFormat('strikethrough'));
-          setIsItalic(selection.hasFormat('italic'));
-          setIsUnderline(selection.hasFormat('underline'));
+        // Update text format
+        setIsBold(selection.hasFormat('bold'));
+        setIsStrikethrough(selection.hasFormat('strikethrough'));
+        setIsItalic(selection.hasFormat('italic'));
+        setIsUnderline(selection.hasFormat('underline'));
 
-          const topNode = node.getTopLevelElement();
+        const topNode = node.getTopLevelElement();
 
-          // Update quote
-          if ($isSimpleQuoteNode(topNode) || $isSimpleQuoteNode(node)) {
-            setIsQuote(true);
+        // Update quote
+        if ($isSimpleQuoteNode(topNode) || $isSimpleQuoteNode(node)) {
+          setIsQuote(true);
+        } else {
+          setIsQuote(false);
+        }
+
+        // Update ordered & bullet list
+        const listNode =
+          $findNearestListNode(node) ?? $findNearestListNode(topNode);
+        if (listNode) {
+          const type = listNode.getListType();
+          setIsOrderedList(type === 'number');
+          setIsBulletList(type === 'bullet');
+        } else {
+          setIsOrderedList(false);
+          setIsBulletList(false);
+        }
+
+        // Update links
+        const parent = node.getParent();
+        if ($isLinkNode(parent) || $isLinkNode(node)) {
+          setIsLink(true);
+        } else {
+          setIsLink(false);
+        }
+
+        if ($selectionJustContainsSameCodeNode(selection)) {
+          setIsCode(true);
+        } else {
+          setIsCode(false);
+        }
+
+        if (selection.getTextContent() !== '') {
+          setIsText(
+            $isTextNode(node) ||
+              $isParagraphNode(node) ||
+              $isSimpleListItemNode(node),
+          );
+
+          if ($selectionContainsOnlyText(selection)) {
+            setIsOnlyText(true);
           } else {
-            setIsQuote(false);
-          }
-
-          // Update ordered & bullet list
-          const listNode =
-            $findNearestListNode(node) ?? $findNearestListNode(topNode);
-          if (listNode) {
-            const type = listNode.getListType();
-            setIsOrderedList(type === 'number');
-            setIsBulletList(type === 'bullet');
-          } else {
-            setIsOrderedList(false);
-            setIsBulletList(false);
-          }
-
-          // Update links
-          const parent = node.getParent();
-          if ($isLinkNode(parent) || $isLinkNode(node)) {
-            setIsLink(true);
-          } else {
-            setIsLink(false);
-          }
-
-          if (selection.getTextContent() !== '') {
-            setIsText(
-              $isTextNode(node) ||
-                $isParagraphNode(node) ||
-                $isSimpleListItemNode(node),
-            );
-
-            if ($selectionContainsOnlyText(selection)) {
-              setIsOnlyText(true);
-            } else {
-              setIsOnlyText(false);
-            }
-
-            if ($selectionJustContainsSameCodeNode(selection)) {
-              setIsCode(true);
-            } else {
-              setIsCode(false);
-            }
-          } else {
-            setIsText(false);
             setIsOnlyText(false);
           }
+        } else {
+          setIsText(false);
+          // maybe we need to check whether it's a `CodeNode`
+          setIsOnlyText(true);
+        }
 
-          const rawTextContent = selection.getTextContent().replace(/\n/g, '');
-          if (!selection.isCollapsed() && rawTextContent === '') {
-            setIsText(false);
-            return;
-          }
-        });
-      }, 10),
+        const rawTextContent = selection.getTextContent().replace(/\n/g, '');
+        if (!selection.isCollapsed() && rawTextContent === '') {
+          setIsText(false);
+          return;
+        }
+      });
+    },
     [editor],
   );
 
@@ -644,6 +722,80 @@ function FloatingTextFormatToolbarPlugin({
     );
   }, [editor, debounceUpdatePopup]);
 
+  return {
+    isText,
+    isBold,
+    isStrikethrough,
+    isItalic,
+    isUnderline,
+    isOrderedList,
+    isBulletList,
+    isQuote,
+    isLink,
+    isCode,
+    isOnlyText,
+  };
+}
+
+function FixedTextFormatToolbar({
+  onSetIsLinkEditMode,
+}: {
+  onSetIsLinkEditMode: Dispatch<boolean>;
+}) {
+  const [editor] = useLexicalComposerContext();
+
+  const {
+    isBold,
+    isStrikethrough,
+    isItalic,
+    isUnderline,
+    isOrderedList,
+    isBulletList,
+    isQuote,
+    isLink,
+    isCode,
+    isOnlyText,
+  } = useFormatToolbar(editor);
+
+  return (
+    <TextFormatToolbar
+      editor={editor}
+      isBold={isBold}
+      isStrikethrough={isStrikethrough}
+      isItalic={isItalic}
+      isUnderline={isUnderline}
+      isOrderedList={isOrderedList}
+      isBulletList={isBulletList}
+      isQuote={isQuote}
+      isLink={isLink}
+      isCode={isCode}
+      isOnlyText={isOnlyText}
+      onSetIsLinkEditMode={onSetIsLinkEditMode}
+    />
+  );
+}
+
+function FloatingTextFormatToolbarPlugin({
+  onSetIsLinkEditMode,
+}: {
+  onSetIsLinkEditMode: Dispatch<boolean>;
+}): JSX.Element | null {
+  const [editor] = useLexicalComposerContext();
+
+  const {
+    isText,
+    isBold,
+    isStrikethrough,
+    isItalic,
+    isUnderline,
+    isOrderedList,
+    isBulletList,
+    isQuote,
+    isLink,
+    isCode,
+    isOnlyText,
+  } = useFormatToolbar(editor);
+
   return (
     <TextFormatFloatingToolbar
       isText={isText}
@@ -654,13 +806,13 @@ function FloatingTextFormatToolbarPlugin({
       isUnderline={isUnderline}
       isOrderedList={isOrderedList}
       isBulletList={isBulletList}
-      isQuota={isQuote}
+      isQuote={isQuote}
       isLink={isLink}
       isCode={isCode}
       isOnlyText={isOnlyText}
-      setIsLinkEditMode={setIsLinkEditMode}
+      onSetIsLinkEditMode={onSetIsLinkEditMode}
     />
   );
 }
 
-export { FloatingTextFormatToolbarPlugin };
+export { FloatingTextFormatToolbarPlugin, FixedTextFormatToolbar };

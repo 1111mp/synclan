@@ -21,10 +21,14 @@ function EmptyBlockToParagraphPlugin() {
       if (!$isRangeSelection(selection) || !selection.isCollapsed())
         return false;
 
-      if (selection.anchor.offset !== 0) return false;
+      const anchorNode = selection.anchor.getNode();
+      if (
+        selection.anchor.offset !== 0 ||
+        anchorNode.getPreviousSibling() !== null
+      )
+        return false;
 
-      const anchorNode = selection.anchor.getNode(),
-        topNode = anchorNode.getTopLevelElement(),
+      const topNode = anchorNode.getTopLevelElement(),
         nearestListNode = $findNearestListNode(anchorNode);
 
       // top level node is `QuoteNode` & first child is `ListNode`
@@ -70,7 +74,7 @@ function EmptyBlockToParagraphPlugin() {
       }
 
       // `QuoteNode`
-      if ($isSimpleQuoteNode(topNode)) {
+      if ($isSimpleQuoteNode(topNode) && nearestListNode === null) {
         event.preventDefault();
 
         const paragraph = $createParagraphNode();

@@ -13,11 +13,7 @@ export class SimpleListItemNode extends ListItemNode {
     return 'simple-list-item';
   }
 
-  constructor(
-    value: number = 1,
-    checked: undefined | boolean = undefined,
-    key?: NodeKey,
-  ) {
+  constructor(value: number = 1, checked?: boolean, key?: NodeKey) {
     super(value, checked, key);
   }
 

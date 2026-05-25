@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { useLexicalIsTextContentEmpty } from '@lexical/react/useLexicalIsTextContentEmpty';
+import { useLatestRef } from '@/hooks';
 
 type IsEmptyPluginProps = {
   onChange?: (empty: boolean) => void;
@@ -10,12 +11,11 @@ function IsEmptyPlugin({ onChange }: IsEmptyPluginProps) {
   const [editor] = useLexicalComposerContext();
   const isEmpty = useLexicalIsTextContentEmpty(editor);
 
-  const onChangeRef = useRef<IsEmptyPluginProps['onChange']>(null);
-  onChangeRef.current = onChange;
+  const onChangeRef = useLatestRef(onChange);
 
   useEffect(() => {
     onChangeRef.current?.(isEmpty);
-  }, [isEmpty]);
+  }, [isEmpty, onChangeRef]);
 
   return null;
 }

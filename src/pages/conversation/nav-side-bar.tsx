@@ -130,7 +130,7 @@ export function NavSidebar({
           </h1>
           <p className='flex items-center space-x-4'>
             <SquarePen size={20} strokeWidth={1.5} />
-            <QRCodeDialog url='https://192.168.8.248:53317' />
+            <QRCodeDialog url='http://192.168.0.23:53317' />
           </p>
         </header>
       </div>

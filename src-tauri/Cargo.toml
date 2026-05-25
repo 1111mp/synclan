@@ -20,27 +20,27 @@ tauri-build = { version = "2", features = [] }
 [dependencies]
 aes-gcm = { version = "0.10", features = ["std"] }
 apalis = { version = "0.7", features = [
-	"limit",
-	"retry",
-	"timeout",
-	"tracing",
+  "limit",
+  "retry",
+  "timeout",
+  "tracing",
 ] }
 apalis-sql = { version = "0.7", features = ["sqlite", "tokio-comp"] }
 anyhow = "1"
 axum = { version = "0.8", features = ["multipart"] }
-axum-extra = { version = "0.10", features = ["typed-header"] }
+axum-extra = { version = "0.12", features = ["typed-header"] }
 axum-macros = "0.5"
-axum-server = { version = "0.7", features = ["tls-rustls"] }
+axum-server = { version = "0.8", features = ["tls-rustls"] }
 axum_typed_multipart = "0.16"
 base64 = "0.22"
 chrono = { version = "0.4", features = ["serde"] }
 dark-light = "2"
 dashmap = "6"
 futures = "0.3"
-getrandom = "0.3"
+getrandom = "0.4"
 libc = "0.2"
 libsqlite3-sys = { version = "0.30", features = [
-	"bundled-sqlcipher-vendored-openssl",
+  "bundled-sqlcipher-vendored-openssl",
 ] }
 local-ip-address = "0.6"
 log = "0.4"
@@ -51,19 +51,19 @@ parking_lot = "0.12"
 rcgen = '0.14'
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-serde_yaml = "0.9.34-deprecated"
-socketioxide = { version = "0.16", features = [
-	"v4",
-	"extensions",
-	"state",
-	"tracing",
+serde_yaml = "0.9.34"
+socketioxide = { version = "0.18", features = [
+  "v4",
+  "extensions",
+  "state",
+  "tracing",
 ] }
 sqlx = { version = "0.8", features = [
-	"sqlite",
-	"runtime-tokio",
-	"migrate",
-	"json",
-	"chrono",
+  "sqlite",
+  "runtime-tokio",
+  "migrate",
+  "json",
+  "chrono",
 ] }
 sys-locale = "0.3"
 tauri = { version = "2", features = ["macos-private-api", "protocol-asset"] }
@@ -79,7 +79,7 @@ utoipa = { version = "5", features = ["axum_extras"] }
 utoipa-swagger-ui = { version = "9", features = ["axum", "reqwest"] }
 utoipa-axum = "0.2"
 validator = { version = "0.20", features = ["derive"] }
-whoami = "1.6"
+whoami = "2"
 
 [target.'cfg(windows)'.dependencies]
 deelevate = "0.2"

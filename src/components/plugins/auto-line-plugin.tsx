@@ -1,7 +1,15 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { $getSelection, $isRangeSelection, getDOMSelection } from 'lexical';
+import {
+  $getRoot,
+  $getSelection,
+  $isElementNode,
+  $isRangeSelection,
+  type LexicalNode,
+} from 'lexical';
 import { useLatestRef } from '@/hooks';
+import { mergeRegister } from '@lexical/utils';
+import { $isCodePlusNode } from '../nodes';
 
 type AutoLinePluginProps = {
   onLineChange?: (changed: boolean) => void;
@@ -9,63 +17,52 @@ type AutoLinePluginProps = {
 
 function AutoLinePlugin({ onLineChange }: AutoLinePluginProps) {
   const [editor] = useLexicalComposerContext();
-  const rootInitialSizeRef = useRef<{ width: number; height: number } | null>(
-    null,
-  );
 
   const latestLineChange = useLatestRef(onLineChange);
 
   useEffect(() => {
-    const rootElement = editor.getRootElement();
-    if (rootElement) {
-      const rect = rootElement.getBoundingClientRect();
-      rootInitialSizeRef.current = {
-        width: rect.width,
-        height: rect.height,
-      };
-    }
+    return mergeRegister(
+      editor.registerUpdateListener(({ editorState }) => {
+        editorState.read(() => {
+          const selection = $getSelection();
+          if (!$isRangeSelection(selection)) return false;
 
-    return editor.registerUpdateListener(({ editorState }) => {
-      editorState.read(() => {
-        const selection = $getSelection();
-        if (!$isRangeSelection(selection)) return false;
+          const root = $getRoot();
+          if (root.getChildrenSize() > 1) {
+            latestLineChange.current?.(true);
+            return;
+          }
 
-        const rootElement = editor.getRootElement();
-        if (!rootElement) return false;
+          const node = root.getChildAtIndex(0);
+          if ($nodeOrChildrenContainCodeNode(node)) {
+            latestLineChange.current?.(true);
+            return;
+          }
 
-        const nativeSelection = getDOMSelection(editor._window);
-        if (!nativeSelection || nativeSelection.rangeCount === 0) return false;
-
-        const range = nativeSelection.getRangeAt(0);
-        // if (!range.collapsed) return false;
-
-        const rootRect = rootElement.getBoundingClientRect();
-        const selectionRect = range.getBoundingClientRect();
-
-        if (
-          rootInitialSizeRef.current &&
-          (rootRect.height > rootInitialSizeRef.current.height ||
-            selectionRect.width > rootInitialSizeRef.current.width)
-        ) {
-          latestLineChange.current?.(true);
-          return false;
-        }
-
-        const left = selectionRect.left - rootRect.left;
-        if (
-          rootInitialSizeRef.current &&
-          rootRect.height <= rootInitialSizeRef.current.height &&
-          left < rootInitialSizeRef.current.width
-        ) {
           latestLineChange.current?.(false);
-        }
-      });
-
-      return false;
-    });
+        });
+      }),
+    );
   }, [editor, latestLineChange]);
 
   return null;
 }
 
 export { AutoLinePlugin, type AutoLinePluginProps };
+
+function $nodeOrChildrenContainCodeNode(node: LexicalNode | null): boolean {
+  if (node === null) return false;
+
+  if ($isCodePlusNode(node)) return true;
+
+  if (!$isElementNode(node)) return false;
+
+  const children = node.getChildren();
+  for (const child of children) {
+    if ($isCodePlusNode(child)) return true;
+
+    if ($nodeOrChildrenContainCodeNode(child)) return true;
+  }
+
+  return false;
+}

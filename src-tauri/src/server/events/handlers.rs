@@ -41,7 +41,7 @@ pub async fn on_connection(socket: SocketRef) {
     );
 
     socket.on_disconnect(
-        |_s: SocketRef, Extension::<Arc<Client>>(client), State::<Clients>(clients)| {
+        async |_s: SocketRef, Extension::<Arc<Client>>(client), State::<Clients>(clients)| {
             // remove client from clients
             clients.remove(&client.client_id);
         },

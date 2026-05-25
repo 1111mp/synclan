@@ -2,18 +2,10 @@ import { useImperativeHandle, useRef, useState, type Ref } from 'react';
 import {
   $getSelection,
   $isRangeSelection,
-  LineBreakNode,
-  ParagraphNode,
+  type EditorState,
+  type LexicalEditor,
 } from 'lexical';
-import { CodeHighlightNode, CodeNode } from '@lexical/code';
-import { HeadingNode, QuoteNode } from '@lexical/rich-text';
-import { AutoLinkNode, LinkNode } from '@lexical/link';
-import { ListNode, ListItemNode } from '@lexical/list';
 import { $generateHtmlFromNodes } from '@lexical/html';
-import {
-  LexicalComposer,
-  type InitialConfigType,
-} from '@lexical/react/LexicalComposer';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import {
@@ -54,28 +46,16 @@ import {
   ELEMENT_TRANSFORMERS,
   TEXT_MATCH_TRANSFORMERS,
 } from './transformers';
-import {
-  $createCodePlusNode,
-  $createSimpleListNode,
-  CodePlusNode,
-  SimpleListNode,
-  $createEmojiNode,
-  EmojiNode,
-  SimpleListItemNode,
-  $createSimpleListItemNode,
-  SimpleQuoteNode,
-  $createSimpleQuoteNode,
-} from './nodes';
-
-import type { EditorState, LexicalEditor } from 'lexical';
-import type { EmojiPickerProps } from './emoji';
+import { $createEmojiNode } from './nodes';
 import { cn } from '@/lib/utils';
+import { type EmojiPickerProps } from './emoji';
 
 const URL_MATCHER =
   /((https?:\/\/(www\.)?)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/;
 
 type CompositionInputProps = {
   ref?: Ref<CompositionInputRef>;
+  isFixedTools?: boolean;
   onEmptyChange?: IsEmptyPluginProps['onChange'];
   onFocusChange?: IsFocusedPluginProps['onFocusChange'];
   onLineChange?: AutoLinePluginProps['onLineChange'];
@@ -87,11 +67,12 @@ type CompositionInputRef = {
 
 function CompositionInput({
   ref,
+  isFixedTools = false,
   onEmptyChange,
   onFocusChange,
   onLineChange,
 }: CompositionInputProps) {
-  const [isLinkEditMode, setIsLinkEditMode] = useState<boolean>(false);
+  const [_isLinkEditMode, setIsLinkEditMode] = useState<boolean>(false);
 
   const editorRef = useRef<LexicalEditor>(null);
   const historyState = useRef<HistoryState>(createEmptyHistoryState());
@@ -114,72 +95,6 @@ function CompositionInput({
     });
   };
 
-  const initialConfig: InitialConfigType = {
-    namespace: 'synclan-editor',
-    nodes: [
-      AutoLinkNode,
-      LinkNode,
-      SimpleListNode,
-      {
-        replace: ListNode,
-        with: (node: ListNode) =>
-          $createSimpleListNode(node.getListType(), node.getStart()),
-        withKlass: SimpleListNode,
-      },
-      SimpleListItemNode,
-      {
-        replace: ListItemNode,
-        with: (node: ListItemNode) =>
-          $createSimpleListItemNode(node.getChecked()),
-        withKlass: SimpleListItemNode,
-      },
-      ParagraphNode,
-      HeadingNode,
-      SimpleQuoteNode,
-      {
-        replace: QuoteNode,
-        with: () => $createSimpleQuoteNode(),
-        withKlass: SimpleQuoteNode,
-      },
-      CodePlusNode,
-      {
-        replace: CodeNode,
-        with: (node: CodeNode) =>
-          $createCodePlusNode(node.getLanguage(), node.getTheme()),
-        withKlass: CodePlusNode,
-      },
-      CodeHighlightNode,
-      EmojiNode,
-      LineBreakNode,
-    ],
-    theme: {
-      code: 'block relative pt-7 pb-4 pl-[72px] pr-2 my-2 border rounded-md bg-muted! text-muted-foreground! indent-0 before:box-border before:absolute before:top-0 before:left-0 before:content-[attr(data-gutter)] before:w-14 before:pt-[29px] before:px-2 before:pb-0 before:font-thin before:text-right',
-      paragraph: 'mt-0 mb-0',
-      link: 'font-light text-blue-500 no-underline cursor-pointer hover:underline',
-      list: {
-        ul: 'mt-0 mb-0 pl-0 list-outside indent-2 marker:text-blue-500',
-        ulDepth: ['list-disc', 'list-[circle]', 'list-[square]'],
-        ol: 'mt-0 mb-0 pl-0 list-outside indent-2 marker:text-blue-500 ',
-        olDepth: ['list-decimal', 'list-[lower-alpha]', 'list-[lower-roman]'],
-        listitem: 'mt-0 mb-0 ml-4',
-        nested: {
-          listitem: 'ml-6 list-none',
-        },
-      },
-      quote: 'm-0 pl-2 text-gray-400 border-l-2 border-input overflow-hidden',
-      text: {
-        bold: 'font-bold',
-        strikethrough: 'line-through',
-        italic: 'italic',
-        underline: 'underline',
-        underlineStrikethrough: '[text-decoration-line:underline_line-through]',
-      },
-    },
-    onError(error) {
-      console.log('error', error);
-    },
-  };
-
   const onChange = (editorState: EditorState, editor: LexicalEditor) => {
     editorState.read(() => {
       const htmlString = $generateHtmlFromNodes(editor);
@@ -188,90 +103,90 @@ function CompositionInput({
   };
 
   return (
-    <LexicalComposer initialConfig={initialConfig}>
-      <div
-        id='synclan-composition-scroll-wrapper'
-        className='relative px-3 max-h-56 overflow-y-auto scrollbar-color dark:scrollbar-color'
-      >
-        <ShortcutsPlugin />
-        <RichTextPlugin
-          contentEditable={
-            <ContentEditable
-              className={cn(
-                'w-full max-w-none text-sm leading-5 text-foreground outline-none focus:outline-none',
-              )}
-              aria-placeholder='Enter Message'
-              placeholder={
-                <p className='inline-block absolute top-0 text-sm text-muted-foreground select-none pointer-events-none'>
-                  发送消息
-                </p>
-              }
-            />
-          }
-          ErrorBoundary={LexicalErrorBoundary}
-        />
-        <EditorRefPlugin editorRef={editorRef} />
-        <HistoryPlugin externalHistoryState={historyState.current} />
-        <AutoFocusPlugin />
-        <AutoLinkPlugin
-          matchers={[
-            (text) => {
-              const match = URL_MATCHER.exec(text);
-              if (match === null) {
-                return null;
-              }
+    <div
+      id='synclan-composition-scroll-wrapper'
+      className='relative px-3 max-h-56 overflow-y-auto scrollbar-color dark:scrollbar-color'
+    >
+      <ShortcutsPlugin />
+      <RichTextPlugin
+        contentEditable={
+          <ContentEditable
+            className={cn(
+              'w-full max-w-none text-sm leading-5.5 text-foreground outline-none focus:outline-none',
+            )}
+            aria-placeholder='Enter Message'
+            placeholder={
+              <p className='inline-block absolute top-0 text-sm text-muted-foreground select-none pointer-events-none'>
+                Send Message
+              </p>
+            }
+          />
+        }
+        ErrorBoundary={LexicalErrorBoundary}
+      />
+      <EditorRefPlugin editorRef={editorRef} />
+      <HistoryPlugin externalHistoryState={historyState.current} />
+      <AutoFocusPlugin />
+      <AutoLinkPlugin
+        matchers={[
+          (text) => {
+            const match = URL_MATCHER.exec(text);
+            if (match === null) {
+              return null;
+            }
 
-              const fullMatch = match[0];
-              return {
-                index: match.index,
-                length: fullMatch.length,
-                text: fullMatch,
-                url: fullMatch.startsWith('http')
-                  ? fullMatch
-                  : `https://${fullMatch}`,
-                attributes: {
-                  rel: 'noreferrer',
-                  target: '_blank',
-                },
-              };
-            },
-          ]}
-        />
-        <LinkPlugin
-          hasLinkAttributes={true}
-          historyState={historyState.current}
-        />
-        <MarkdownShortcutPlugin
-          transformers={[
-            ...ELEMENT_TRANSFORMERS,
-            ...TEXT_MATCH_TRANSFORMERS,
-            CODE_PLUS,
-          ]}
-        />
-        <CodeHighlightShikiPlugin />
-        <CodeNodeToolbarPlugin />
-        <CodeBehaviorPlugin />
-        <FixTextFormatPlugin />
-        <OrderedListRecomputePlugin />
-        <EmptyBlockToParagraphPlugin />
+            const fullMatch = match[0];
+            return {
+              index: match.index,
+              length: fullMatch.length,
+              text: fullMatch,
+              url: fullMatch.startsWith('http')
+                ? fullMatch
+                : `https://${fullMatch}`,
+              attributes: {
+                rel: 'noreferrer',
+                target: '_blank',
+              },
+            };
+          },
+        ]}
+      />
+      <LinkPlugin
+        hasLinkAttributes={true}
+        historyState={historyState.current}
+      />
+      <MarkdownShortcutPlugin
+        transformers={[
+          ...ELEMENT_TRANSFORMERS,
+          ...TEXT_MATCH_TRANSFORMERS,
+          CODE_PLUS,
+        ]}
+      />
+      <CodeHighlightShikiPlugin />
+      <CodeNodeToolbarPlugin />
+      <CodeBehaviorPlugin />
+      <FixTextFormatPlugin />
+      <OrderedListRecomputePlugin />
+      <EmptyBlockToParagraphPlugin />
+      {!isFixedTools ? (
         <FloatingTextFormatToolbarPlugin
-          setIsLinkEditMode={setIsLinkEditMode}
+          onSetIsLinkEditMode={setIsLinkEditMode}
         />
-        <ListPlugin hasStrictIndent={false} />
-        <TabIndentationPlugin maxIndent={3} />
-        <FixEmptyQuoteAfterDeletePlugin />
-        <EmojiPickerPlugin />
-        <AutoLinePlugin onLineChange={onLineChange} />
-        <IsEmptyPlugin onChange={onEmptyChange} />
-        <IsFocusedPlugin onFocusChange={onFocusChange} />
-        <OnChangePlugin onChange={onChange} />
-        <EnterBehaviorPlugin
-          onSend={() => {
-            console.log('onSend');
-          }}
-        />
-      </div>
-    </LexicalComposer>
+      ) : null}
+      <ListPlugin hasStrictIndent={false} />
+      <TabIndentationPlugin maxIndent={3} />
+      <FixEmptyQuoteAfterDeletePlugin />
+      <EmojiPickerPlugin />
+      <AutoLinePlugin onLineChange={onLineChange} />
+      <IsEmptyPlugin onChange={onEmptyChange} />
+      <IsFocusedPlugin onFocusChange={onFocusChange} />
+      <OnChangePlugin onChange={onChange} />
+      <EnterBehaviorPlugin
+        onSend={() => {
+          console.log('onSend');
+        }}
+      />
+    </div>
   );
 }
 

@@ -40,7 +40,7 @@ export type UseSocketOptions = Partial<
 
 export type SendMessage = (
   message: IMessage,
-  timeout: number,
+  timeout?: number,
 ) => Promise<AckResponse>;
 
 export function useSocketIO(url: string, options: UseSocketOptions = {}) {

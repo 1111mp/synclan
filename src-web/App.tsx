@@ -15,7 +15,6 @@ function App() {
   return (
     <main className='container'>
       <h1>Welcome to Tauri + React</h1>
-
       <div className='row'>
         <a href='https://vitejs.dev' rel='noreferrer' target='_blank'>
           <img src='/vite.svg' className='logo vite' alt='Vite logo' />

@@ -266,16 +266,14 @@ function CodeToolbar({ nodeKey }: { nodeKey: string }) {
   });
 
   useEffect(() => {
-    return editor.registerMutationListener(CodePlusNode, (mutations) => {
-      for (const [key, type] of mutations) {
-        if (key === nodeKey && type !== 'destroyed') {
-          const node = editor.getElementByKey(nodeKey);
-          if (node) {
-            refs.setReference(node);
-          }
+    return editor.registerUpdateListener(({ editorState }) => {
+      editorState.read(() => {
+        const el = editor.getElementByKey(nodeKey);
+        if (el) {
+          refs.setReference(el);
           update();
         }
-      }
+      });
     });
   }, [editor, refs, nodeKey, update]);
 

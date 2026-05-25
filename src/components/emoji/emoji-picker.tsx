@@ -245,7 +245,7 @@ function EmojiPicker({
   );
 
   return (
-    <div className='w-[332px] h-[428px] grid grid-rows-[44px_1fr] grid-cols-1 rounded-lg z-10 select-none overflow-hidden'>
+    <div className='w-83 h-107 grid grid-rows-[44px_1fr] grid-cols-1 rounded-lg z-10 select-none overflow-hidden'>
       <header className='flex h-11 mx-3 flex-row justify-between items-center'>
         <EmojiCategory
           type='button'
@@ -294,11 +294,11 @@ function EmojiPicker({
       </header>
       <div
         ref={content}
-        className='pt-2 pr-4 pb-0 pl-3 outline-none overflow-auto'
+        className='w-full pt-2 pb-0 px-2 outline-none overflow-x-hidden overflow-y-auto'
       >
         {emojiGrid.length ? (
           <div
-            className='relative'
+            className='relative mx-auto'
             style={{
               width: `${columnVirtualizer.getTotalSize()}px`,
               height: `${rowVirtualizer.getTotalSize()}px`,

@@ -47,7 +47,7 @@ mod routes;
 mod status_code_serde;
 
 pub struct HttpServer {
-    handle: Arc<Mutex<Option<Handle>>>,
+    handle: Arc<Mutex<Option<Handle<std::net::SocketAddr>>>>,
     monitor_token: Arc<Mutex<Option<CancellationToken>>>,
     shutdown_rx: Arc<Mutex<Option<oneshot::Receiver<()>>>>,
 }
@@ -94,7 +94,7 @@ impl HttpServer {
     pub async fn bootstrap(
         &self,
         db_pool: Pool<Sqlite>,
-        handle: Handle,
+        handle: Handle<std::net::SocketAddr>,
         token: CancellationToken,
     ) -> anyhow::Result<()> {
         let storage = SqliteStorage::<Message>::new(db_pool.clone());
