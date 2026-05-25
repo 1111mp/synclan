@@ -11,14 +11,16 @@ import { CodeHighlightNode, CodeNode } from '@lexical/code';
 import { CaseSensitive, Maximize2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
-  Button,
   CompositionInput,
   EmojiButton,
+  type CompositionInputRef,
+} from '@/components';
+import {
+  Button,
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-  type CompositionInputRef,
-} from '@/components';
+} from '@/components/ui';
 import { useLatestRef } from '@/hooks';
 import { FixedTextFormatToolbar } from './plugins';
 import {

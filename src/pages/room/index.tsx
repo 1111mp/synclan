@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useParams } from 'react-router';
 import { LoaderCircle } from 'lucide-react';
-import { MessageWrapper, Toaster, Transmitter } from '@/components';
+import { MessageWrapper, Transmitter } from '@/components';
+import { Toaster } from '@/components/ui';
 
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useVirtualizer, elementScroll } from '@tanstack/react-virtual';

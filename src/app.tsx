@@ -1,10 +1,12 @@
 import { useEffect } from 'react';
 import { RouterProvider } from 'react-router';
+
 import { LoadingScreen } from '@/components';
 // import { AppProvider } from '@/app-context';
+import { TooltipProvider } from '@/components/ui';
+import { getClient } from '@/lib/utils';
 import { router } from '@/routes';
 import { useAppStore } from '@/stores';
-import { getClient } from '@/lib/utils';
 
 function App() {
   const { loading, updateLoading, updateClient } = useAppStore();
@@ -27,10 +29,10 @@ function App() {
   }, [updateClient, updateLoading]);
 
   return (
-    <>
+    <TooltipProvider>
       <RouterProvider router={router} />
       <LoadingScreen loading={loading} />
-    </>
+    </TooltipProvider>
   );
 }
 

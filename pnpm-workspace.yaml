@@ -1,2 +1,4 @@
+allowBuilds:
+  msw: false
 minimumReleaseAgeExclude:
   - react-error-boundary@6.1.2

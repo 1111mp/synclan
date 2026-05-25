@@ -6,7 +6,7 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from '@/components';
+} from '@/components/ui';
 
 function App() {
   const [list] = useState<PreviewCore[]>(
