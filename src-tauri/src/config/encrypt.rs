@@ -5,8 +5,14 @@ use aes_gcm::{
 };
 use base64::{engine::general_purpose::STANDARD, Engine};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use std::{cell::Cell, future::Future};
 
 const NONCE_LENGTH: usize = 12;
+
+// Use task-local context so the flag follows the async task across threads
+tokio::task_local! {
+    static ENCRYPTION_ACTIVE: Cell<bool>;
+}
 
 /// Encrypt data
 pub fn encrypt_data(data: &str) -> Result<String, Box<dyn std::error::Error>> {
@@ -21,7 +27,7 @@ pub fn encrypt_data(data: &str) -> Result<String, Box<dyn std::error::Error>> {
     // Encrypt data
     let ciphertext = cipher
         .encrypt(nonce.as_slice().into(), data.as_bytes())
-        .map_err(|e| format!("Encryption failed: {}", e))?;
+        .map_err(|e| format!("Encryption failed: {e}"))?;
 
     // Concatenate nonce and ciphertext and encode them in base64
     let mut combined = nonce;
@@ -46,7 +52,7 @@ pub fn decrypt_data(encrypted: &str) -> Result<String, Box<dyn std::error::Error
     // Decrypt data
     let plaintext = cipher
         .decrypt(nonce.into(), ciphertext)
-        .map_err(|e| format!("Decryption failed: {}", e))?;
+        .map_err(|e| format!("Decryption failed: {e}"))?;
 
     String::from_utf8(plaintext).map_err(|e| e.into())
 }
@@ -57,39 +63,45 @@ where
     T: Serialize,
     S: Serializer,
 {
-    // If serialization fails, returns None
-    let json = match serde_json::to_string(value) {
-        Ok(j) => j,
-        Err(_) => return serializer.serialize_none(),
-    };
-
-    // If encryption fails, returns None
-    match encrypt_data(&json) {
-        Ok(encrypted) => serializer.serialize_str(&encrypted),
-        Err(_) => serializer.serialize_none(),
+    if is_encryption_active() {
+        let json = serde_json::to_string(value).map_err(serde::ser::Error::custom)?;
+        let encrypted = encrypt_data(&json).map_err(serde::ser::Error::custom)?;
+        serializer.serialize_str(&encrypted)
+    } else {
+        value.serialize(serializer)
     }
 }
 
 /// Deserialize decrypted function
-pub fn deserialize_encrypted<'a, T, D>(deserializer: D) -> Result<T, D::Error>
+pub fn deserialize_encrypted<'a, D, T>(deserializer: D) -> Result<T, D::Error>
 where
     T: for<'de> Deserialize<'de> + Default,
     D: Deserializer<'a>,
 {
-    // If deserialization of the string fails, return the default value
-    let encrypted = match String::deserialize(deserializer) {
-        Ok(s) => s,
-        Err(_) => return Ok(T::default()),
-    };
+    if is_encryption_active() {
+        let encrypted_opt: Option<String> = Option::deserialize(deserializer)?;
 
-    // If decryption fails, return the default value
-    let decrypted_string = match decrypt_data(&encrypted) {
-        Ok(data) => data,
-        Err(_) => return Ok(T::default()),
-    };
-    // If JSON parsing fails, return a default value
-    match serde_json::from_str(&decrypted_string) {
-        Ok(value) => Ok(value),
-        Err(_) => Ok(T::default()),
+        match encrypted_opt {
+            Some(encrypted) if !encrypted.is_empty() => {
+                let decrypted_string =
+                    decrypt_data(&encrypted).map_err(serde::de::Error::custom)?;
+                serde_json::from_str(&decrypted_string).map_err(serde::de::Error::custom)
+            }
+            _ => Ok(T::default()),
+        }
+    } else {
+        T::deserialize(deserializer)
     }
+}
+
+pub async fn with_encryption<F, Fut, R>(f: F) -> R
+where
+    F: FnOnce() -> Fut,
+    Fut: Future<Output = R>,
+{
+    ENCRYPTION_ACTIVE.scope(Cell::new(true), f()).await
+}
+
+fn is_encryption_active() -> bool {
+    ENCRYPTION_ACTIVE.try_with(|c| c.get()).unwrap_or(false)
 }

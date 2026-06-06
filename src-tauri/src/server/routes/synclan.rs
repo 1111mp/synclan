@@ -34,7 +34,8 @@ async fn verify_access_code(
     Body(input): Body<AccessCodeDto>,
 ) -> Result<HttpResponse<()>, HttpException> {
     let authorized_access_code = Config::synclan()
-        .latest_ref()
+        .await
+        .data_arc()
         .authorized_access_code
         .clone()
         .ok_or(HttpException::UnauthorizedException(None))?;

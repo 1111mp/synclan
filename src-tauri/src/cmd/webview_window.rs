@@ -1,7 +1,7 @@
 use super::CmdResult;
 use crate::{
+    cmd::StringifyErr,
     feat::{self, PreviewContext},
-    wrap_err,
 };
 use tauri::utils::config::WindowConfig;
 
@@ -11,5 +11,5 @@ pub async fn create_preview_window(
     config: WindowConfig,
     context: PreviewContext,
 ) -> CmdResult {
-    wrap_err!(feat::create_preview_window(&app_handle, config, context))
+    feat::create_preview_window(&app_handle, config, context).stringify_err()
 }

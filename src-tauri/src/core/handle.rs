@@ -1,49 +1,54 @@
-use once_cell::sync::OnceCell;
-use parking_lot::RwLock;
-use std::sync::Arc;
-use tauri::{AppHandle, Manager, WebviewWindow};
+use crate::{APP_HANDLE, singleton};
+use std::sync::atomic::{AtomicBool, Ordering};
+use tauri::AppHandle;
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug)]
 pub struct Handle {
-    pub app_handle: Arc<RwLock<Option<AppHandle>>>,
+    is_exiting: AtomicBool,
 }
 
-impl Handle {
-    pub fn global() -> &'static Handle {
-        static HANDLE: OnceCell<Handle> = OnceCell::new();
-
-        HANDLE.get_or_init(|| Handle {
-            app_handle: Arc::new(RwLock::new(None)),
-        })
-    }
-
-    pub fn init(&self, app_handle: &AppHandle) {
-        let mut handle = self.app_handle.write();
-        *handle = Some(app_handle.clone());
-    }
-
-    pub fn app_handle(&self) -> Option<AppHandle> {
-        self.app_handle.read().clone()
-    }
-
-    pub fn get_window(&self) -> Option<WebviewWindow> {
-        let app_handle = self.app_handle().unwrap();
-        let window: Option<WebviewWindow> = app_handle.get_webview_window("main");
-        if window.is_none() {
-            log::debug!(target:"app", "main window not found");
+impl Default for Handle {
+    fn default() -> Self {
+        Self {
+            is_exiting: AtomicBool::new(false),
         }
-        window
+    }
+}
+
+singleton!(Handle, HANDLE);
+
+impl Handle {
+    pub fn new() -> Self {
+        Self::default()
     }
 
-    // /// update the system tray state
-    // pub fn update_systray_part() -> Result<()> {
-    //     Tray::update_part()?;
-    //     Ok(())
-    // }
+    pub fn app_handle() -> &'static AppHandle {
+        #[allow(clippy::expect_used)]
+        APP_HANDLE.get().expect("App handle not initialized")
+    }
 
-    // /// update the system tray state & emit event
-    // pub fn update_systray_part_with_emit(event: &str, version: &str) -> Result<()> {
-    //     Tray::update_part_with_emit(event, version)?;
-    //     Ok(())
-    // }
+    pub fn set_is_exiting(&self) {
+        self.is_exiting.store(true, Ordering::Release);
+    }
+
+    pub fn is_exiting(&self) -> bool {
+        self.is_exiting.load(Ordering::Acquire)
+    }
+}
+
+#[cfg(target_os = "macos")]
+impl Handle {
+    pub fn set_activation_policy(&self, policy: tauri::ActivationPolicy) -> Result<(), String> {
+        Self::app_handle()
+            .set_activation_policy(policy)
+            .map_err(|e| e.to_string().into())
+    }
+
+    pub fn set_activation_policy_regular(&self) {
+        let _ = self.set_activation_policy(tauri::ActivationPolicy::Regular);
+    }
+
+    pub fn set_activation_policy_accessory(&self) {
+        let _ = self.set_activation_policy(tauri::ActivationPolicy::Accessory);
+    }
 }

@@ -57,7 +57,7 @@ struct FileUpload {
 async fn upload_handler(
     input: SelfTypedMultipart<FileUpload>,
 ) -> Result<HttpResponse<String>, HttpException> {
-    let file_upload_dir = Config::synclan().data_ref().file_upload_dir.clone();
+    let file_upload_dir = Config::synclan().await.data_arc().file_upload_dir.clone();
     let file_upload_dir = file_upload_dir.ok_or_else(|| {
         HttpException::ServiceUnavailableException(Some(
             "File upload directory is not configured.".to_owned(),

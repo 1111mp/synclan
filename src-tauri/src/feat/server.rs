@@ -3,7 +3,7 @@ use crate::{
     logging,
     utils::{logging::Type, tls},
 };
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use chrono::{Local, NaiveDate, TimeZone};
 use std::{
     fs::{self, DirEntry},
@@ -13,9 +13,10 @@ use tauri_plugin_dialog::{DialogExt, FilePath};
 
 /// Automatically clear uploaded files
 pub async fn uploaded_files_auto_cleanup() -> Result<()> {
-    let synclan = Config::synclan().latest_ref().clone();
+    let synclan = Config::synclan().await.data_arc();
     let file_upload_dir = synclan
         .file_upload_dir
+        .clone()
         .ok_or(anyhow!("File upload directory is not configured."))?;
 
     let auto_file_clean = { synclan.auto_file_clean.unwrap_or(0) };
@@ -29,7 +30,6 @@ pub async fn uploaded_files_auto_cleanup() -> Result<()> {
     logging!(
         debug,
         Type::Server,
-        true,
         "try to delete uploaded files, day: {day}",
     );
 
@@ -50,12 +50,7 @@ pub async fn uploaded_files_auto_cleanup() -> Result<()> {
             if duration.num_days() > day {
                 let folder_path = entry.path();
                 let _ = fs::remove_dir_all(folder_path);
-                logging!(
-                    info,
-                    Type::Server,
-                    true,
-                    "delete uploaded files: {folder_name}"
-                );
+                logging!(info, Type::Server, "delete uploaded files: {folder_name}");
             }
         }
 
@@ -73,7 +68,7 @@ pub async fn uploaded_files_auto_cleanup() -> Result<()> {
 pub async fn export_server_cert(app_handle: &tauri::AppHandle) -> Result<()> {
     if let Some(FilePath::Path(folder_path)) = app_handle.dialog().file().blocking_pick_folder() {
         // certificate content
-        let cert_pem = Config::synclan().latest_ref().cert_pem.clone();
+        let cert_pem = Config::synclan().await.data_arc().cert_pem.clone();
         let cert_pem = match cert_pem {
             Some(cert) => cert,
             None => {
@@ -86,9 +81,11 @@ pub async fn export_server_cert(app_handle: &tauri::AppHandle) -> Result<()> {
                     signing_key_pem: Some(signing_key_pem.clone()),
                     ..ISynclan::default()
                 };
-                Config::synclan().draft_mut().patch_config(patch);
-                Config::synclan().apply();
-                Config::synclan().data_mut().save_config()?;
+                Config::synclan()
+                    .await
+                    .edit_draft(|s| s.patch_config(&patch));
+                Config::synclan().await.apply();
+                Config::synclan().await.data_arc().save_config().await?;
 
                 cert_pem
             }

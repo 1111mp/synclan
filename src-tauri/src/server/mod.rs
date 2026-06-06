@@ -1,37 +1,27 @@
 use crate::{
     config::Config,
     feat, logging, logging_error,
-    module::message::{Message, MessageJob},
     process::AsyncHandler,
+    server::{
+        events::{handlers, store},
+        workers::WorkerMonitor,
+    },
+    singleton,
     utils::{db, dirs, logging::Type, tls},
 };
-use anyhow::{bail, Result};
-use apalis::{
-    layers::{
-        retry::{
-            backoff::{ExponentialBackoffMaker, MakeBackoff},
-            HasherRng, RetryPolicy,
-        },
-        ErrorHandlingLayer, WorkerBuilderExt,
-    },
-    prelude::{Event, Monitor, WorkerBuilder, WorkerFactoryFn},
-};
-use apalis_sql::sqlite::SqliteStorage;
+use anyhow::{Context, Result, anyhow};
+use apalis_sqlite::SqliteStorage;
 use api_doc::ApiDoc;
 use axum::{handler::HandlerWithoutStateExt, http::StatusCode};
 use axum_server::Handle;
-use futures::FutureExt;
-use once_cell::sync::OnceCell;
 use parking_lot::Mutex;
-use socketioxide::{handler::ConnectHandler, SocketIo};
+use socketioxide::{SocketIo, handler::ConnectHandler, layer::SocketIoLayer};
 use sqlx::{Pool, Sqlite};
 use std::{
     net::{IpAddr, SocketAddr},
     sync::Arc,
     time::Duration,
 };
-use tokio::{sync::oneshot, time::timeout};
-use tokio_util::sync::CancellationToken;
 use tower_http::services::ServeDir;
 use utoipa::OpenApi;
 use utoipa_axum::router::OpenApiRouter;
@@ -45,30 +35,37 @@ mod extractors;
 mod guards;
 mod routes;
 mod status_code_serde;
+mod workers;
+
+#[derive(Clone)]
+pub struct AppState {
+    pub db_pool: Pool<Sqlite>,
+    pub message_storage: workers::MessageBackend,
+}
 
 pub struct HttpServer {
     handle: Arc<Mutex<Option<Handle<std::net::SocketAddr>>>>,
-    monitor_token: Arc<Mutex<Option<CancellationToken>>>,
-    shutdown_rx: Arc<Mutex<Option<oneshot::Receiver<()>>>>,
+    runtime_handle: Arc<Mutex<Option<tauri::async_runtime::JoinHandle<()>>>>,
 }
 
-impl HttpServer {
-    /// global instance
-    pub fn global() -> &'static HttpServer {
-        static INSTANCE: OnceCell<HttpServer> = OnceCell::new();
-        INSTANCE.get_or_init(|| HttpServer::new())
-    }
-
-    pub fn new() -> Self {
+impl Default for HttpServer {
+    fn default() -> Self {
         Self {
             handle: Arc::new(Mutex::new(None)),
-            monitor_token: Arc::new(Mutex::new(None)),
-            shutdown_rx: Arc::new(Mutex::new(None)),
+            runtime_handle: Arc::new(Mutex::new(None)),
         }
+    }
+}
+
+singleton!(HttpServer, HTTPSERVER);
+
+impl HttpServer {
+    fn new() -> Self {
+        Self::default()
     }
 
     /// start http server
-    pub async fn start_http_server(&self, db_pool: Pool<Sqlite>) -> Result<()> {
+    pub async fn start(&self, db_pool: &Pool<Sqlite>) -> Result<()> {
         // stop the current server first (if any)
         self.shutdown().await;
 
@@ -78,49 +75,74 @@ impl HttpServer {
         // store the handle for later stopping
         *self.handle.lock() = Some(handle);
 
-        let token = CancellationToken::new();
-        let cloned_token = token.clone();
-        *self.monitor_token.lock() = Some(token);
-
         // automatically clear uploaded files
         feat::uploaded_files_auto_cleanup().await?;
 
-        self.bootstrap(db_pool, cloned_handle, cloned_token).await?;
+        let db_pool_clone = db_pool.clone();
+        let runtime_handle = AsyncHandler::spawn(|| async {
+            logging_error!(Type::Server, Self::run(db_pool_clone, cloned_handle).await);
+        });
+        *self.runtime_handle.lock() = Some(runtime_handle);
 
         Ok(())
     }
 
-    /// the entry to start http server
-    pub async fn bootstrap(
-        &self,
+    pub async fn run(
+        // &self,
         db_pool: Pool<Sqlite>,
         handle: Handle<std::net::SocketAddr>,
-        token: CancellationToken,
-    ) -> anyhow::Result<()> {
-        let storage = SqliteStorage::<Message>::new(db_pool.clone());
+    ) -> Result<()> {
+        let message_backend = SqliteStorage::new(&db_pool);
         let app_state = Arc::new(AppState {
-            db_pool,
-            message_storage: storage.clone(),
+            db_pool: db_pool,
+            message_storage: message_backend.clone(),
         });
 
-        // build our application with a single route
-        let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
-            .nest("/api", routes::router())
-            .split_for_parts();
-
-        let clients: events::store::Clients = events::store::Clients::default();
+        let clients = store::Clients::default();
         let (layer, io) = SocketIo::builder()
             .with_state(app_state.clone())
             .with_state(clients.clone())
             .build_layer();
         io.ns(
             "/",
-            events::handlers::on_connection.with(events::handlers::authenticate_middleware),
+            handlers::on_connection.with(handlers::authenticate_middleware),
         );
+
+        tokio::try_join!(
+            Self::run_http_server(handle, app_state, layer),
+            Self::run_backend_server(message_backend, io, clients),
+        )?;
+
+        Ok(())
+    }
+
+    async fn run_backend_server(
+        // &self,
+        message_backend: workers::MessageBackend,
+        io: SocketIo,
+        clients: store::Clients,
+    ) -> Result<()> {
+        WorkerMonitor::global()
+            .run(message_backend, io, clients)
+            .await
+    }
+
+    /// the entry to start http server
+    async fn run_http_server(
+        // &self,
+        handle: Handle<std::net::SocketAddr>,
+        app_state: Arc<AppState>,
+        layer: SocketIoLayer,
+        // token: CancellationToken,
+    ) -> anyhow::Result<()> {
+        // build our application with a single route
+        let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
+            .nest("/api", routes::router())
+            .split_for_parts();
 
         let resources = dirs::app_resources_dir()?;
         let web_static_dir = resources.join("web");
-        let synclan = Config::synclan().latest_ref().clone();
+        let synclan = Config::synclan().await.latest_arc();
 
         let mut app = router
             // swagger ui
@@ -130,7 +152,7 @@ impl HttpServer {
             .layer(layer)
             .with_state(app_state);
 
-        if let Some(file_upload_dir) = synclan.file_upload_dir {
+        if let Some(file_upload_dir) = &synclan.file_upload_dir {
             // uploads files static server
             app = app.nest_service(
                 "/uploads",
@@ -140,206 +162,89 @@ impl HttpServer {
             );
         }
 
-        logging!(info, Type::Server, true, "Starting server...");
+        logging!(info, Type::Server, "Starting HTTP server...");
 
         let ip: IpAddr = "0.0.0.0".parse()?;
         let addr = SocketAddr::from((ip, 53317));
 
-        let http = async {
-            match synclan.enable_encryption {
-                Some(true) | None => {
-                    let config = tls::build_rustls_config_with_ip(&ip).await?;
-                    logging!(info, Type::Server, true, "Listening on https://{}", addr);
-                    axum_server::bind_rustls(addr, config)
-                        .handle(handle)
-                        .serve(app.into_make_service())
-                        .await?;
-                }
-                Some(false) => {
-                    logging!(info, Type::Server, true, "Listening on http://{}", addr);
-                    axum_server::bind(addr)
-                        .handle(handle)
-                        .serve(app.into_make_service())
-                        .await?;
-                }
-            };
-
-            Ok::<(), anyhow::Error>(())
+        match synclan.enable_encryption {
+            Some(true) | None => {
+                let config = tls::build_rustls_config_with_ip(&ip).await?;
+                logging!(
+                    info,
+                    Type::Server,
+                    "HTTP server listening on https://{}",
+                    addr
+                );
+                axum_server::bind_rustls(addr, config)
+                    .handle(handle)
+                    .serve(app.into_make_service())
+                    .await?;
+            }
+            Some(false) => {
+                logging!(
+                    info,
+                    Type::Server,
+                    "HTTP server listening on http://{}",
+                    addr
+                );
+                axum_server::bind(addr)
+                    .handle(handle)
+                    .serve(app.into_make_service())
+                    .await?;
+            }
         };
-
-        let message_job = Arc::new(MessageJob::new(io, clients));
-        let monitor = async {
-            Monitor::new()
-                .register({
-                    WorkerBuilder::new("synclan-tasty-message")
-                        .layer(ErrorHandlingLayer::new())
-                        .rate_limit(8, Duration::from_secs(1))
-                        .timeout(Duration::from_secs(6))
-                        .concurrency(4)
-                        .retry(
-                            RetryPolicy::retries(3).with_backoff(
-                                ExponentialBackoffMaker::new(
-                                    Duration::from_secs(2),
-                                    Duration::from_secs(10),
-                                    2.0,
-                                    HasherRng::default(),
-                                )?
-                                .make_backoff(),
-                            ),
-                        )
-                        .enable_tracing()
-                        .backend(storage)
-                        .build_fn(move |message| {
-                            let message_job = message_job.clone();
-                            async move { message_job.job_fn(message).await }
-                        })
-                })
-                .on_event(|evt| {
-                    let id = evt.id();
-                    match evt.inner() {
-                        Event::Start => {
-                            logging!(info, Type::Server, true, "Worker {id} started");
-                        }
-                        Event::Error(e) => {
-                            logging!(
-                                info,
-                                Type::Server,
-                                true,
-                                "Worker {id} encountered an error: {e}"
-                            );
-                        }
-                        Event::Stop => {
-                            logging!(info, Type::Server, true, "Worker {id} stopped");
-                        }
-                        Event::Exit => {
-                            logging!(info, Type::Server, true, "Worker {id} exited");
-                        }
-                        _ => {}
-                    }
-                })
-                .shutdown_timeout(Duration::from_millis(5000))
-                .run_with_signal(token.cancelled().map(|_| Ok::<(), std::io::Error>(())))
-                .await?;
-
-            Ok::<(), anyhow::Error>(())
-        };
-
-        let (tx, rx) = oneshot::channel::<()>();
-        *self.shutdown_rx.lock() = Some(rx);
-
-        let (http_res, monitor_res) = tokio::join!(http, monitor);
-        http_res?;
-        monitor_res?;
-
-        let _ = tx.send(());
 
         Ok(())
     }
 
     /// gracefully shutdown http server & worker
     pub async fn shutdown(&self) {
-        if let Some(token) = self.monitor_token.lock().take() {
-            token.cancel();
-        }
+        logging!(info, Type::Server, "Shutting down HTTP server");
+
+        WorkerMonitor::global().shutdown();
 
         if let Some(handle) = self.handle.lock().take() {
-            handle.graceful_shutdown(None);
+            handle.graceful_shutdown(Some(Duration::from_secs(5)));
         }
 
-        let maybe_rx = { self.shutdown_rx.lock().take() };
-        if let Some(rx) = maybe_rx {
-            match timeout(Duration::from_secs(10), rx).await {
-                Ok(Ok(())) => {
-                    logging_error!(Type::Server, true, "{}", "Server shutdown completed");
-                }
-                Ok(Err(_)) => {
-                    logging_error!(
-                        Type::Server,
-                        true,
-                        "{}",
-                        "Shutdown notifier sender was dropped"
-                    );
-                }
-                Err(_) => {
-                    logging_error!(
-                        Type::Server,
-                        true,
-                        "{}",
-                        "Timed out(10s) waiting server to shutdown"
-                    );
-                }
+        let runtime_handle = self.runtime_handle.lock().take();
+        if let Some(handle) = runtime_handle {
+            // Wait for the runtime to finish, with a timeout to prevent hanging indefinitely.
+            if tokio::time::timeout(Duration::from_millis(5500), handle)
+                .await
+                .is_err()
+            {
+                logging!(
+                    warn,
+                    Type::Server,
+                    "Graceful shutdown timed out! Forcing backend tasks to abort for safety."
+                );
             }
         }
+
+        logging!(info, Type::Server, "HTTP server shutdown successfully");
     }
 }
 
 /// Start the local http server
-pub fn start_http_server() {
-    logging!(info, Type::Server, true, "Start the local http server");
-    if let Some(db_pool) = db::DBManager::global().db_pool() {
-        AsyncHandler::spawn(move || async {
-            logging_error!(
-                Type::Server,
-                true,
-                HttpServer::global().start_http_server(db_pool).await
-            );
-        });
-    } else {
-        logging_error!(
-            Type::Server,
-            true,
-            "{}",
-            "SQLite connection pool has not been initialized"
-        );
-        logging_error!(
-            Type::Server,
-            true,
-            "{}",
-            "The local http server failed to start"
-        );
-    }
+pub async fn start_http_server() -> Result<()> {
+    logging!(info, Type::Server, "Start the local http server");
+    let db_pool = db::DBManager::global()
+        .db_pool()
+        .with_context(|| anyhow!("SQLite connection pool has not been initialized"))?;
+    HttpServer::global().start(db_pool).await?;
+    logging!(info, Type::Server, "HTTP server started successfully");
+    Ok(())
 }
 
 /// Restart the local http server
 pub async fn restart_http_server() -> Result<()> {
-    logging!(
-        info,
-        Type::Server,
-        true,
-        "Attempting to restart http server..."
-    );
-    let db_pool = match db::DBManager::global().db_pool() {
-        Some(db_pool) => db_pool,
-        None => {
-            logging_error!(
-                Type::Server,
-                true,
-                "{}",
-                "Failed to restart: SQLite connection pool has not been initialized"
-            );
-            bail!("SQLite connection pool has not been initialized");
-        }
-    };
-
-    match HttpServer::global().start_http_server(db_pool).await {
-        Ok(()) => {
-            logging!(
-                info,
-                Type::Server,
-                true,
-                "HTTP server restarted successfully"
-            );
-            Ok(())
-        }
-        Err(err) => {
-            logging_error!(Type::Server, true, "HTTP server restart failed: {}", err);
-            Err(err)
-        }
-    }
-}
-
-#[derive(Clone)]
-pub struct AppState {
-    pub db_pool: Pool<Sqlite>,
-    pub message_storage: SqliteStorage<Message>,
+    logging!(info, Type::Server, "Attempting to restart http server...");
+    let db_pool = db::DBManager::global().db_pool().with_context(|| {
+        anyhow!("Failed to restart: SQLite connection pool has not been initialized")
+    })?;
+    HttpServer::global().start(db_pool).await?;
+    logging!(info, Type::Server, "HTTP server restarted successfully");
+    Ok(())
 }

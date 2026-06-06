@@ -6,36 +6,36 @@ use std::net::IpAddr;
 
 /// Self-signed certificate to support HTTPS with given IP.
 pub async fn build_rustls_config_with_ip(ip: &IpAddr) -> Result<RustlsConfig> {
-    let synclan = Config::synclan().latest_ref().clone();
-    
-    if let (Some(cert_pem), Some(signing_key_pem)) = (synclan.cert_pem, synclan.signing_key_pem) {
-        let config =
-            RustlsConfig::from_pem(cert_pem.into_bytes(), signing_key_pem.into_bytes()).await?;
+    let synclan_draft = Config::synclan().await;
+    let synclan = synclan_draft.latest_arc();
+    if let (Some(cert_pem), Some(signing_key_pem)) = (&synclan.cert_pem, &synclan.signing_key_pem) {
+        let config = RustlsConfig::from_pem(
+            cert_pem.clone().into_bytes(),
+            signing_key_pem.clone().into_bytes(),
+        )
+        .await?;
         return Ok(config);
     }
 
     // Generate new self-signed certificate
     let (cert_pem, signing_key_pem) = generate_cert(ip)?;
+    let config = RustlsConfig::from_pem(
+        cert_pem.clone().into_bytes(),
+        signing_key_pem.clone().into_bytes(),
+    )
+    .await?;
 
     // save to config
     let patch = ISynclan {
-        cert_pem: Some(cert_pem.clone()),
-        signing_key_pem: Some(signing_key_pem.clone()),
+        cert_pem: Some(cert_pem),
+        signing_key_pem: Some(signing_key_pem),
         ..ISynclan::default()
     };
-    Config::synclan().draft_mut().patch_config(patch);
+    synclan_draft.edit_draft(|s| s.patch_config(&patch));
+    synclan_draft.apply();
+    synclan_draft.data_arc().save_config().await?;
 
-    match RustlsConfig::from_pem(cert_pem.into_bytes(), signing_key_pem.into_bytes()).await {
-        Ok(config) => {
-            Config::synclan().apply();
-            Config::synclan().data_mut().save_config()?;
-            Ok(config)
-        }
-        Err(err) => {
-            Config::synclan().discard();
-            Err(err.into())
-        }
-    }
+    Ok(config)
 }
 
 /// Generate new self-signed certificate

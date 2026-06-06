@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { io as SocketIO } from 'socket.io-client';
-import { HttpStatus, type IMessage } from '@/lib/types';
-
 import type { ManagerOptions, Socket, SocketOptions } from 'socket.io-client';
+
+import { HttpStatus, type IMessage } from '@/lib/types';
 
 export enum ReadyState {
   UNINSTANTIATED = -1,
@@ -55,8 +55,8 @@ export function useSocketIO(url: string, options: UseSocketOptions = {}) {
   useEffect(() => {
     if (url) {
       const socket = SocketIO(url, optionsRef.current);
-      setState(ReadyState.CONNECTING);
       socketRef.current = socket;
+      setState(ReadyState.CONNECTING);
 
       function onConnect() {
         setState(ReadyState.CONNECTED);

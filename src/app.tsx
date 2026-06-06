@@ -1,11 +1,10 @@
 import { useEffect } from 'react';
-import { RouterProvider } from 'react-router';
 
 import { LoadingScreen } from '@/components';
 // import { AppProvider } from '@/app-context';
 import { TooltipProvider } from '@/components/ui';
 import { getClient } from '@/lib/utils';
-import { router } from '@/routes';
+import HomePage from '@/pages/home';
 import { useAppStore } from '@/stores';
 
 function App() {
@@ -30,7 +29,7 @@ function App() {
 
   return (
     <TooltipProvider>
-      <RouterProvider router={router} />
+      <HomePage />
       <LoadingScreen loading={loading} />
     </TooltipProvider>
   );

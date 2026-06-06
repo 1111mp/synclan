@@ -1,68 +1,56 @@
-use crate::core::handle;
-
+use crate::{core::handle, logging, utils::logging::Type};
 use anyhow::Result;
+use async_trait::async_trait;
+use once_cell::sync::OnceCell;
 use std::{fs, path::PathBuf};
 use tauri::Manager;
 
 pub static APP_ID: &str = "io.github.1111mp.synclan";
 
+pub static PORTABLE_FLAG: OnceCell<bool> = OnceCell::new();
+
 pub static SYNCLAN_CONFIG: &str = "synclan.yaml";
+
+/// init portable flag
+pub fn init_portable_flag() -> Result<()> {
+    use tauri::utils::platform::current_exe;
+
+    let app_exe = current_exe()?;
+    if let Some(dir) = app_exe.parent() {
+        let dir = PathBuf::from(dir).join(".config/PORTABLE");
+
+        if dir.exists() {
+            PORTABLE_FLAG.get_or_init(|| true);
+        }
+    }
+    PORTABLE_FLAG.get_or_init(|| false);
+    Ok(())
+}
 
 /// get the syncio app home dir
 pub fn app_home_dir() -> Result<PathBuf> {
-    // Avoid crashing when Handle is not initialized
-    let app_handle = match handle::Handle::global().app_handle() {
-        Some(handle) => handle,
-        None => {
-            log::warn!(target: "app", "app_handle not initialized, using default path");
-            // Use the executable directory as a fallback
-            let exe_path = tauri::utils::platform::current_exe()?;
-            let exe_dir = exe_path
-                .parent()
-                .ok_or(anyhow::anyhow!("failed to get executable directory"))?;
+    use tauri::utils::platform::current_exe;
 
-            // Use the system temporary directory + application ID
-            #[cfg(target_os = "windows")]
-            {
-                if let Some(local_app_data) = std::env::var_os("LOCALAPPDATA") {
-                    let path = PathBuf::from(local_app_data).join(APP_ID);
-                    return Ok(path);
-                }
-            }
+    let flag = PORTABLE_FLAG.get().unwrap_or(&false);
+    if *flag {
+        let app_exe = current_exe()?;
+        let app_exe = dunce::canonicalize(app_exe)?;
+        let app_dir = app_exe
+            .parent()
+            .ok_or_else(|| anyhow::anyhow!("failed to get the portable app dir"))?;
+        return Ok(PathBuf::from(app_dir).join(".config").join(APP_ID));
+    }
 
-            #[cfg(target_os = "macos")]
-            {
-                if let Some(home) = std::env::var_os("HOME") {
-                    let path = PathBuf::from(home)
-                        .join("Library")
-                        .join("Application Support")
-                        .join(APP_ID);
-                    return Ok(path);
-                }
-            }
-
-            #[cfg(target_os = "linux")]
-            {
-                if let Some(home) = std::env::var_os("HOME") {
-                    let path = PathBuf::from(home)
-                        .join(".local")
-                        .join("share")
-                        .join(APP_ID);
-                    return Ok(path);
-                }
-            }
-
-            // If the system directory cannot be obtained, fall back to the executable directory
-            let fallback_dir = PathBuf::from(exe_dir).join(".config").join(APP_ID);
-            log::warn!(target: "app", "Using fallback data directory: {:?}", fallback_dir);
-            return Ok(fallback_dir);
-        }
-    };
+    let app_handle = handle::Handle::app_handle();
 
     match app_handle.path().data_dir() {
         Ok(dir) => Ok(dir.join(APP_ID)),
         Err(e) => {
-            log::error!(target: "app", "Failed to get the app home directory: {}", e);
+            logging!(
+                error,
+                Type::File,
+                "Failed to get the app home directory: {e}"
+            );
             Err(anyhow::anyhow!("Failed to get the app homedirectory"))
         }
     }
@@ -71,23 +59,16 @@ pub fn app_home_dir() -> Result<PathBuf> {
 /// get the resources dir
 pub fn app_resources_dir() -> Result<PathBuf> {
     // Avoid crashes when Handle is not initialized
-    let app_handle = match handle::Handle::global().app_handle() {
-        Some(app_handle) => app_handle,
-        None => {
-            log::warn!(target: "app", "app_handle not initialized in app_resources_dir, using fallback");
-            // Using the executable directory as a fallback
-            let exe_dir = tauri::utils::platform::current_exe()?
-                .parent()
-                .ok_or(anyhow::anyhow!("failed to get executable directory"))?
-                .to_path_buf();
-            return Ok(exe_dir.join("resources"));
-        }
-    };
+    let app_handle = handle::Handle::app_handle();
 
     match app_handle.path().resource_dir() {
         Ok(dir) => Ok(dir.join("resources")),
         Err(err) => {
-            log::error!(target: "app", "Failed to get the resource directory: {}", err);
+            logging!(
+                error,
+                Type::File,
+                "Failed to get the resource directory: {err}"
+            );
             Err(anyhow::anyhow!("Failed to get the resource directory"))
         }
     }
@@ -134,5 +115,21 @@ pub fn get_encryption_key() -> Result<Vec<u8>> {
         fs::write(&key_path, &key)
             .map_err(|e| anyhow::anyhow!("Failed to save encryption key: {}", e))?;
         Ok(key)
+    }
+}
+
+#[async_trait]
+pub trait PathBufExec {
+    async fn remove_if_exists(&self) -> Result<()>;
+}
+
+#[async_trait]
+impl PathBufExec for PathBuf {
+    async fn remove_if_exists(&self) -> Result<()> {
+        if self.exists() {
+            tokio::fs::remove_file(self).await?;
+            logging!(info, Type::File, "Removed file: {:?}", self);
+        }
+        Ok(())
     }
 }

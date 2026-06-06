@@ -1,19 +1,23 @@
 use super::{Draft, ISynclan};
-use once_cell::sync::OnceCell;
+use tokio::sync::OnceCell;
 
 pub struct Config {
-    synclan_config: Draft<Box<ISynclan>>,
+    synclan_config: Draft<ISynclan>,
 }
 
 impl Config {
-    pub fn global() -> &'static Config {
-        static CONFIG: OnceCell<Config> = OnceCell::new();
-        CONFIG.get_or_init(|| Config {
-            synclan_config: Draft::from(Box::new(ISynclan::new())),
-        })
+    pub async fn global() -> &'static Self {
+        static CONFIG: OnceCell<Config> = OnceCell::const_new();
+        CONFIG
+            .get_or_init(|| async {
+                Self {
+                    synclan_config: Draft::new(ISynclan::new().await),
+                }
+            })
+            .await
     }
 
-    pub fn synclan() -> Draft<Box<ISynclan>> {
-        Self::global().synclan_config.clone()
+    pub async fn synclan() -> Draft<ISynclan> {
+        Self::global().await.synclan_config.clone()
     }
 }

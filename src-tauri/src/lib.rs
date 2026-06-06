@@ -7,57 +7,39 @@ mod process;
 mod server;
 mod utils;
 
-use core::handle;
-use process::AsyncHandler;
-use tokio::time::{timeout, Duration};
-use utils::{logging::Type, resolve};
+use crate::utils::resolve;
+use once_cell::sync::OnceCell;
+use tauri::{AppHandle, Manager};
+use utils::logging::Type;
+
+pub static APP_HANDLE: OnceCell<AppHandle> = OnceCell::new();
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     #[cfg(target_os = "linux")]
-    std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
+    utils::linux::workarounds::apply_nvidia_dmabuf_renderer_workaround();
+    #[cfg(target_os = "linux")]
+    utils::linux::workarounds::apply_wayland_webkit_fix();
 
-    #[cfg(debug_assertions)]
-    let devtools = tauri_plugin_devtools::init();
+    let _ = utils::dirs::init_portable_flag();
 
+    #[allow(unused_mut)]
     let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
-            logging!(info, Type::Setup, true, "开始应用初始化...");
+            APP_HANDLE
+                .set(app.app_handle().clone())
+                .expect("failed to set global app handle");
 
-            let app_handle = app.handle().clone();
-            AsyncHandler::spawn(move || async move {
-                logging!(info, Type::Setup, true, "异步执行应用设置...");
-                match timeout(
-                    Duration::from_secs(30),
-                    resolve::resolve_setup_async(&app_handle),
-                )
-                .await
-                {
-                    Ok(_) => {
-                        logging!(info, Type::Setup, true, "应用设置成功完成");
-                    }
-                    Err(_) => {
-                        logging!(
-                            error,
-                            Type::Setup,
-                            true,
-                            "应用设置超时(30秒)，继续执行后续流程"
-                        );
-                    }
-                }
-            });
+            resolve::init_work_dir_and_logger()?;
 
-            logging!(info, Type::Setup, true, "初始化核心句柄...");
-            handle::Handle::global().init(app.handle());
+            logging!(info, Type::Setup, "Starting application initialization...");
 
-            logging!(info, Type::Setup, true, "初始化配置...");
-            if let Err(e) = utils::init::init_config() {
-                logging!(error, Type::Setup, true, "初始化配置失败: {}", e);
-            }
+            resolve::resolve_setup_async();
+            resolve::resolve_server_setup_async();
 
-            logging!(info, Type::Setup, true, "初始化完成，继续执行");
+            logging!(info, Type::Setup, "初始化已启动");
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -78,9 +60,11 @@ pub fn run() {
             cmd::create_preview_window
         ]);
 
-    #[cfg(debug_assertions)]
+    // Devtools plugin only in debug mode with feature tauri-dev
+    // to avoid duplicated registering of logger since the devtools plugin also registers a logger
+    #[cfg(all(debug_assertions, not(feature = "tokio-trace"), feature = "tauri-dev"))]
     {
-        builder = builder.plugin(devtools);
+        builder = builder.plugin(tauri_plugin_devtools::init());
     }
 
     let app = builder

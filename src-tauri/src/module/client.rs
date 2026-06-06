@@ -1,5 +1,5 @@
 use crate::utils::db;
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
@@ -32,7 +32,7 @@ impl Client {
         let db_pool = db::get_db_pool()?;
         let client = sqlx::query_as::<_, Client>(
             r#"
-            INSERT INTO clients (id, name, avatar) 
+            INSERT INTO clients (id, name, avatar)
             VALUES ($1, $2, $3)
             RETURNING *
             "#,

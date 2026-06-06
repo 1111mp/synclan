@@ -1,6 +1,7 @@
 use crate::{
     config::{Config, ISynclan},
-    server,
+    logging,
+    utils::logging::Type,
 };
 use anyhow::Result;
 
@@ -12,8 +13,10 @@ enum UpdateFlags {
 }
 
 /// Patch Synclan Configuration
-pub async fn patch_config(patch: ISynclan, need_save_file: bool) -> Result<()> {
-    Config::synclan().draft_mut().patch_config(patch.clone());
+pub async fn patch_synclan(patch: &ISynclan, need_save_file: bool) -> Result<()> {
+    Config::synclan()
+        .await
+        .edit_draft(|s| s.patch_config(patch));
 
     let enable_encryption = patch.enable_encryption;
     let result: Result<()> = {
@@ -26,24 +29,25 @@ pub async fn patch_config(patch: ISynclan, need_save_file: bool) -> Result<()> {
 
         // Process updates based on flags
         if (update_flags & (UpdateFlags::RestartHttpServer as i32)) != 0 {
-            server::restart_http_server().await?;
+            // server::restart_http_server().await?;
         }
 
         <Result<()>>::Ok(())
     };
 
-    match result {
-        Ok(()) => {
-            Config::synclan().apply();
-            if need_save_file {
-                Config::synclan().data_mut().save_config()?;
-            }
-
-            Ok(())
-        }
-        Err(err) => {
-            Config::synclan().discard();
-            Err(err)
-        }
+    if let Err(err) = result {
+        Config::synclan().await.discard();
+        return Err(err);
     }
+    Config::synclan().await.apply();
+    if need_save_file {
+        let synclan_data = Config::synclan().await.data_arc();
+        logging!(
+            debug,
+            Type::Setup,
+            "Saving Synclan configuration to file..."
+        );
+        synclan_data.save_config().await?;
+    }
+    Ok(())
 }

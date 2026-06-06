@@ -1,11 +1,5 @@
-mod message;
-mod synclan;
-mod upload;
-mod user;
-
-use crate::server::guards::AuthGuard;
-
 use super::AppState;
+use crate::server::guards::AuthGuard;
 use axum::{
     http::StatusCode,
     middleware,
@@ -15,6 +9,11 @@ use serde::Serialize;
 use std::sync::Arc;
 use utoipa::ToSchema;
 use utoipa_axum::router::OpenApiRouter;
+
+mod message;
+mod synclan;
+mod upload;
+mod user;
 
 /**
  *  https://docs.rs/axum/latest/axum/middleware/index.html#ordering

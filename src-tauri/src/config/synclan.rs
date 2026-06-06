@@ -1,6 +1,7 @@
 use crate::{
     config::{deserialize_encrypted, serialize_encrypted},
-    utils::{dirs, help, i18n},
+    logging,
+    utils::{dirs, help, i18n, logging::Type},
 };
 use anyhow::Result;
 use log::LevelFilter;
@@ -11,8 +12,14 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]
 pub struct ISynclan {
     /// app log level
-    /// silent | error | warn | info | debug| trace
+    /// silent | error | warn | info | debug | trace
     pub app_log_level: Option<String>,
+
+    /// app log max size in KB
+    pub app_log_max_size: Option<u64>,
+
+    /// app log max count
+    pub app_log_max_count: Option<usize>,
 
     /// i18n
     pub locale: Option<String>,
@@ -97,11 +104,17 @@ impl ISynclan {
         }
     }
 
-    pub fn new() -> Self {
-        match dirs::synclan_path().and_then(|path| help::read_yaml(&path)) {
-            Ok(config) => config,
+    pub async fn new() -> Self {
+        match dirs::synclan_path() {
+            Ok(path) => match help::read_yaml::<Self>(&path).await {
+                Ok(config) => config,
+                Err(err) => {
+                    logging!(error, Type::Config, "{err}");
+                    Self::template()
+                }
+            },
             Err(err) => {
-                log::error!(target: "app", "{err}");
+                logging!(error, Type::Config, "{err}");
                 Self::template()
             }
         }
@@ -115,6 +128,8 @@ impl ISynclan {
             .unwrap_or(None);
 
         Self {
+            app_log_max_size: Some(128),
+            app_log_max_count: Some(8),
             locale: Some(Self::get_system_locale()),
             theme: Some("system".to_string()),
             enable_auto_launch: Some(false),
@@ -135,17 +150,17 @@ impl ISynclan {
     }
 
     /// Save SyncLan App Config
-    pub fn save_config(&self) -> Result<()> {
-        help::save_yaml(&dirs::synclan_path()?, &self, Some("# SyncLan Config File"))
+    pub async fn save_config(&self) -> Result<()> {
+        help::save_yaml(&dirs::synclan_path()?, &self, Some("# SyncLan Config File")).await
     }
 
     /// patch synclan config
     /// only save to file
-    pub fn patch_config(&mut self, patch: ISynclan) {
+    pub fn patch_config(&mut self, patch: &Self) {
         macro_rules! patch {
             ($key: tt) => {
                 if patch.$key.is_some() {
-                    self.$key = patch.$key;
+                    self.$key = patch.$key.clone();
                 }
             };
         }
@@ -182,45 +197,6 @@ impl ISynclan {
             }
         } else {
             LevelFilter::Info // default log level
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct ISynclanResponse {
-    pub app_log_level: Option<String>,
-    pub locale: Option<String>,
-    pub theme: Option<String>,
-    pub enable_auto_launch: Option<bool>,
-    pub enable_silent_start: Option<bool>,
-    pub auto_check_update: Option<bool>,
-    pub auto_log_clean: Option<i32>,
-    pub enable_authorized_access: Option<bool>,
-    pub authorized_access_code: Option<String>,
-    pub http_server_port: Option<u16>,
-    pub auto_file_clean: Option<i32>,
-    pub file_upload_dir: Option<String>,
-    pub enable_random_port: Option<bool>,
-    pub enable_encryption: Option<bool>,
-}
-
-impl From<ISynclan> for ISynclanResponse {
-    fn from(synclan: ISynclan) -> Self {
-        Self {
-            app_log_level: synclan.app_log_level,
-            locale: synclan.locale,
-            theme: synclan.theme,
-            enable_auto_launch: synclan.enable_auto_launch,
-            enable_silent_start: synclan.enable_silent_start,
-            auto_check_update: synclan.auto_check_update,
-            auto_log_clean: synclan.auto_log_clean,
-            enable_authorized_access: synclan.enable_authorized_access,
-            authorized_access_code: synclan.authorized_access_code,
-            http_server_port: synclan.http_server_port,
-            auto_file_clean: synclan.auto_file_clean,
-            file_upload_dir: synclan.file_upload_dir,
-            enable_random_port: synclan.enable_random_port,
-            enable_encryption: synclan.enable_encryption,
         }
     }
 }
