@@ -4,11 +4,9 @@ import {
   $createParagraphNode,
   $getSelection,
   $isRangeSelection,
-  $isTextNode,
   COMMAND_PRIORITY_HIGH,
   INSERT_PARAGRAPH_COMMAND,
   KEY_ENTER_COMMAND,
-  type LexicalNode,
 } from 'lexical';
 import { $createQuoteNode, $isQuoteNode } from '@lexical/rich-text';
 import {
@@ -57,92 +55,20 @@ function EnterPlugin({ onSend }: EnterPluginProps) {
             if ($isQuoteNode(topNode)) {
               event.preventDefault();
 
-              const anchorOffset = selection.anchor.offset;
               if (topNode.getChildrenSize() === 0) {
                 // If the content is empty we should exit the quote mode
                 const paragraph = $createParagraphNode();
                 topNode.replace(paragraph);
                 paragraph.select();
               } else {
-                const children = topNode.getChildren();
-                const index = children.findIndex(
-                  (c) => c.getKey() === anchorNode.getKey(),
-                );
-                if (index < 0) {
-                  const preHalf = children.slice(0, anchorOffset),
-                    nextHalf = children.slice(anchorOffset);
-
-                  if (preHalf.length > 0) {
-                    const quoteNode = $createQuoteNode();
-                    quoteNode.append(...preHalf);
-                    anchorNode.insertBefore(quoteNode);
-                  } else {
-                    const quoteNode = $createQuoteNode();
-                    anchorNode.insertBefore(quoteNode);
-                    quoteNode.select();
-                  }
-
-                  if (nextHalf.length > 0) {
-                    const quoteNode = $createQuoteNode();
-                    quoteNode.append(...nextHalf);
-                    anchorNode.insertBefore(quoteNode);
-
-                    if (preHalf.length > 0) {
-                      quoteNode.select(0, 0);
-                    }
-                  } else {
-                    const quoteNode = $createQuoteNode();
-                    anchorNode.insertBefore(quoteNode);
-                    quoteNode.select();
-                  }
-
-                  anchorNode.remove();
+                // Create a new QuoteNode for each line break
+                const newQuoteNode = $createQuoteNode();
+                if (selection.anchor.offset === 0) {
+                  topNode.insertBefore(newQuoteNode);
                 } else {
-                  const preHalf: LexicalNode[] = [],
-                    nextHalf: LexicalNode[] = [];
-                  children.forEach((child, i) => {
-                    if (i < index) {
-                      preHalf.push(child);
-                    } else if (i > index) {
-                      nextHalf.push(child);
-                    } else {
-                      if ($isTextNode(child)) {
-                        if (anchorOffset === 0) {
-                          nextHalf.push(child);
-                        } else {
-                          const [before, after] = child.splitText(anchorOffset);
-                          if (before) preHalf.push(before);
-                          if (after) nextHalf.push(after);
-                        }
-                      } else {
-                        if (anchorOffset === 0) {
-                          nextHalf.push(child);
-                        } else {
-                          preHalf.push(child);
-                        }
-                      }
-                    }
-                  });
-
-                  if (preHalf.length > 0) {
-                    const quoteNode = $createQuoteNode();
-                    quoteNode.append(...preHalf);
-                    topNode.insertBefore(quoteNode);
-                  }
-
-                  if (nextHalf.length > 0) {
-                    const quoteNode = $createQuoteNode();
-                    quoteNode.append(...nextHalf);
-                    topNode.insertBefore(quoteNode);
-                    quoteNode.select(0, 0);
-                  } else {
-                    const quoteNode = $createQuoteNode();
-                    topNode.insertBefore(quoteNode);
-                    quoteNode.select();
-                  }
-
-                  topNode.remove();
+                  topNode.insertAfter(newQuoteNode);
                 }
+                newQuoteNode.select();
               }
 
               return true;
@@ -150,16 +76,13 @@ function EnterPlugin({ onSend }: EnterPluginProps) {
 
             // For ListNode
             if ($isListNode(topNode)) {
-              event.preventDefault();
-
-              const anchorOffset = selection.anchor.offset;
-              console.log('selection', selection);
-              console.log('offset', anchorOffset);
+              console.log('selection', selection.anchor);
               console.log('anchorNode', anchorNode);
               if (
                 $isListItemNode(anchorNode) &&
                 anchorNode.getChildrenSize() === 0
               ) {
+                event.preventDefault();
                 const paragraph = $createParagraphNode();
                 topNode.insertBefore(paragraph);
                 paragraph
@@ -175,6 +98,7 @@ function EnterPlugin({ onSend }: EnterPluginProps) {
                   $isListItemNode(anchorNode.getParent())) &&
                 selection.anchor.offset === 0
               ) {
+                event.preventDefault();
                 console.log(11111111);
                 return true;
               }
@@ -185,6 +109,7 @@ function EnterPlugin({ onSend }: EnterPluginProps) {
 
               console.log(preListItem?.getChildren());
 
+              event.preventDefault();
               const listNode = $createListNode(),
                 listItem = $createListItemNode();
 
@@ -200,6 +125,7 @@ function EnterPlugin({ onSend }: EnterPluginProps) {
               return true;
             }
 
+            event.preventDefault();
             return editor.dispatchCommand(INSERT_PARAGRAPH_COMMAND, undefined);
           }
         }
