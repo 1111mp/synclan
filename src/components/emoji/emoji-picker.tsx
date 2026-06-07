@@ -197,6 +197,7 @@ function EmojiPicker({
   const debounceSearchChange = useMemo(
     () =>
       debounce((query: string) => {
+        console.log('query', query);
         setSearchText(query);
         rowVirtualizer.scrollToIndex(0, { align: 'start' });
       }, 200),

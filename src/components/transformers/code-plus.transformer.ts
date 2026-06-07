@@ -9,7 +9,6 @@ import type {
   ElementTransformer,
   MultilineElementTransformer,
 } from '@lexical/markdown';
-import { $matchLanguage } from '../plugins';
 
 const CODE_START_REGEX = /^[ \t]*```([\w-]+)?/;
 const CODE_END_REGEX = /[ \t]*```$/;
@@ -71,14 +70,14 @@ export const CODE_PLUS: MultilineElementTransformer = {
           code = startMatch[1] + linesInBetween[0];
         } else {
           // No end match. We should assume the language is next to the backticks and that code will be typed on the next line in the future
-          codeBlockNode = $createCodePlusNode($matchLanguage(startMatch[1]));
+          codeBlockNode = $createCodePlusNode(startMatch[1]);
           code = linesInBetween[0].startsWith(' ')
             ? linesInBetween[0].slice(1)
             : linesInBetween[0];
         }
       } else {
         // Treat multi-line code blocks as if they always have an end match
-        codeBlockNode = $createCodePlusNode($matchLanguage(startMatch[1]));
+        codeBlockNode = $createCodePlusNode(startMatch[1]);
 
         if (linesInBetween[0].trim().length === 0) {
           // Filter out all start and end lines that are length 0 until we find the first line with content
@@ -107,7 +106,7 @@ export const CODE_PLUS: MultilineElementTransformer = {
       rootNode.append(codeBlockNode);
     } else if (children) {
       createBlockNode((match) => {
-        return $createCodePlusNode($matchLanguage(match[1]));
+        return $createCodePlusNode(match ? match[1] : undefined);
       })(rootNode, children, startMatch, isImport);
     }
   },

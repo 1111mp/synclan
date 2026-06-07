@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { CaseSensitive, Maximize2 } from 'lucide-react';
 import {
   Button,
@@ -10,24 +10,14 @@ import {
   type CompositionInputRef,
 } from '@/components';
 import { AnimatePresence, motion } from 'motion/react';
-import { useLatestRef } from '@/hooks';
 import { cn } from '@/lib/utils';
 
-type Props = {
-  onLineOverflow?: () => void;
-};
-
-function Transmitter({ onLineOverflow }: Props) {
+function Transmitter() {
   const [isEmpty, setIsEmpty] = useState<boolean>(true);
   const [focused, setFocueed] = useState<boolean>(true);
   const [lineOverflow, setLineOverflow] = useState<boolean>(false);
 
   const compositionInputRef = useRef<CompositionInputRef>(null);
-  const latestonLineOverflow = useLatestRef(onLineOverflow);
-
-  useEffect(() => {
-    latestonLineOverflow.current?.();
-  }, [lineOverflow, latestonLineOverflow]);
 
   return (
     <div className='px-4 pb-5'>
@@ -63,7 +53,7 @@ function Transmitter({ onLineOverflow }: Props) {
                     setLineOverflow((o) => !o);
                   }}
                 >
-                  <CaseSensitive className='size-5.5 mt-0.5' />
+                  <CaseSensitive className='size-[22px] mt-0.5' />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>显示格式工具栏</TooltipContent>
@@ -87,7 +77,7 @@ function Transmitter({ onLineOverflow }: Props) {
                   size='xs'
                   variant='ghost'
                 >
-                  <Maximize2 className='size-4.5' strokeWidth={2.5} />
+                  <Maximize2 className='size-[18px]' strokeWidth={2.5} />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>展开</TooltipContent>

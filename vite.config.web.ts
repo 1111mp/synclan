@@ -9,13 +9,7 @@ export default defineConfig(async () => ({
   root: 'src-web',
   publicDir: '../public',
 
-  plugins: [
-    react({
-      babel: {
-        plugins: [['babel-plugin-react-compiler', { target: '19' }]],
-      },
-    }),
-  ],
+  plugins: [react()],
 
   build: {
     emptyOutDir: true,
