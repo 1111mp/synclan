@@ -244,8 +244,6 @@ export const dataByCategory = mapValues(
   (arr) => sortBy(arr, 'sort_order'),
 );
 
-console.log('dataByCategory', dataByCategory);
-
 data.forEach((emoji) => {
   const { short_name, short_names, skin_variations, image } = emoji;
 
@@ -266,12 +264,3 @@ data.forEach((emoji) => {
     });
   }
 });
-
-export const skinTonesData = [
-  'Default',
-  'Light',
-  'Medium-Light',
-  'Medium',
-  'Medium-Dark',
-  'Dark',
-];

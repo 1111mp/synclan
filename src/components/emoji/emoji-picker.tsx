@@ -10,7 +10,7 @@ import {
   EmojiCategory,
   type Props as EmojiCategoryProps,
 } from './emoji-category';
-import { dataByCategory, search, skinTonesData } from './lib';
+import { dataByCategory, search } from './lib';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Emoji } from './emoji';
 import { cn } from '@/lib/utils';
@@ -353,7 +353,14 @@ function EmojiPicker({
       </div>
       {!disableSkinTones && (
         <footer className='flex h-11 justify-center items-center'>
-          {skinTonesData.map((tone, index) => (
+          {[
+            'Default',
+            'Light',
+            'Medium-Light',
+            'Medium',
+            'Medium-Dark',
+            'Dark',
+          ].map((tone, index) => (
             <button
               key={tone}
               tabIndex={0}

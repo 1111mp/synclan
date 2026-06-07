@@ -251,25 +251,15 @@ function TextFormatFloatingToolbar({
           onClick={() => {
             editor.update(() => {
               const selection = $getSelection();
-              if (!$isRangeSelection(selection)) return;
-
-              const anchorNode = selection.anchor.getNode();
-              const topNode = anchorNode.getTopLevelElementOrThrow();
-              console.log('anchorNode', anchorNode);
-              console.log('topNode', topNode);
-
+              console.log(selection);
+              console.log(isBulletList);
+              console.log(isOrderedList);
+              const isList = isBulletList || isOrderedList;
               if (!isQuota) {
-                const quoteNode = $createQuoteNode();
-                quoteNode.append(...topNode.getChildren());
-                topNode.replace(quoteNode);
-                // quoteNode.append(topNode);
+                $warpBlockswith(selection, () => $createQuoteNode());
+              } else {
+                $setBlocksType(selection, () => $createParagraphNode());
               }
-
-              // if (!isQuota) {
-              //   $setBlocksType(selection, () => $createQuoteNode());
-              // } else {
-              //   $setBlocksType(selection, () => $createParagraphNode());
-              // }
             });
           }}
         >

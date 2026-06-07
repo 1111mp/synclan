@@ -15,6 +15,7 @@ import {
 } from '@lexical/markdown';
 import { ListNode, ListItemNode } from '@lexical/list';
 import { $generateHtmlFromNodes } from '@lexical/html';
+import { $createEmojiNode, EmojiNode, type EmojiPickerProps } from './emoji';
 import {
   LexicalComposer,
   type InitialConfigType,
@@ -37,7 +38,7 @@ import {
   CodeNodeToolbarPlugin,
   CodeBehaviorPlugin,
   EmojiPickerPlugin,
-  EnterBehaviorPlugin,
+  EnterPlugin,
   IsEmptyPlugin,
   IsFocusedPlugin,
   FloatingTextFormatToolbarPlugin,
@@ -51,12 +52,9 @@ import {
   $createSimpleListNode,
   CodePlusNode,
   SimpleListNode,
-  $createEmojiNode,
-  EmojiNode,
 } from './nodes';
 
 import type { EditorState, LexicalEditor } from 'lexical';
-import type { EmojiPickerProps } from './emoji';
 
 const URL_MATCHER =
   /((https?:\/\/(www\.)?)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/;
@@ -94,7 +92,7 @@ function CompositionInput({
       const selection = $getSelection();
       if (!$isRangeSelection(selection)) return;
 
-      // selection.insertNodes([$createEmojiNode(shortName, skinTone)]);
+      selection.insertNodes([$createEmojiNode(shortName, skinTone)]);
     });
   };
 
@@ -227,7 +225,7 @@ function CompositionInput({
         <IsEmptyPlugin onChange={onEmptyChange} />
         <IsFocusedPlugin onFocusChange={onFocusChange} />
         <OnChangePlugin onChange={onChange} />
-        <EnterBehaviorPlugin
+        <EnterPlugin
           onSend={() => {
             console.log('onSend');
           }}

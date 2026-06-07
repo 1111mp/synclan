@@ -6,27 +6,23 @@ import {
   $isRangeSelection,
   $isTextNode,
   COMMAND_PRIORITY_HIGH,
-  ElementNode,
   INSERT_PARAGRAPH_COMMAND,
   KEY_ENTER_COMMAND,
-  TextNode,
   type LexicalNode,
-  type RangeSelection,
 } from 'lexical';
-import { $createQuoteNode, $isQuoteNode, QuoteNode } from '@lexical/rich-text';
+import { $createQuoteNode, $isQuoteNode } from '@lexical/rich-text';
 import {
+  $createListItemNode,
+  $createListNode,
   $isListItemNode,
   $isListNode,
-  ListItemNode,
-  ListNode,
 } from '@lexical/list';
-import { $createNestedListWithDepth, $findNearestListItemNode } from './lib';
 
 type EnterPluginProps = {
   onSend?: () => void;
 };
 
-function EnterBehaviorPlugin({ onSend }: EnterPluginProps) {
+function EnterPlugin({ onSend }: EnterPluginProps) {
   const [editor] = useLexicalComposerContext();
 
   const onChangeRef = useRef<EnterPluginProps['onSend']>(null);
@@ -61,45 +57,149 @@ function EnterBehaviorPlugin({ onSend }: EnterPluginProps) {
             if ($isQuoteNode(topNode)) {
               event.preventDefault();
 
-              $quoteNodeShiftEnterBehavior(
-                topNode,
-                anchorNode,
-                selection,
-                selection.anchor.offset,
-              );
+              const anchorOffset = selection.anchor.offset;
+              if (topNode.getChildrenSize() === 0) {
+                // If the content is empty we should exit the quote mode
+                const paragraph = $createParagraphNode();
+                topNode.replace(paragraph);
+                paragraph.select();
+              } else {
+                const children = topNode.getChildren();
+                const index = children.findIndex(
+                  (c) => c.getKey() === anchorNode.getKey(),
+                );
+                if (index < 0) {
+                  const preHalf = children.slice(0, anchorOffset),
+                    nextHalf = children.slice(anchorOffset);
+
+                  if (preHalf.length > 0) {
+                    const quoteNode = $createQuoteNode();
+                    quoteNode.append(...preHalf);
+                    anchorNode.insertBefore(quoteNode);
+                  } else {
+                    const quoteNode = $createQuoteNode();
+                    anchorNode.insertBefore(quoteNode);
+                    quoteNode.select();
+                  }
+
+                  if (nextHalf.length > 0) {
+                    const quoteNode = $createQuoteNode();
+                    quoteNode.append(...nextHalf);
+                    anchorNode.insertBefore(quoteNode);
+
+                    if (preHalf.length > 0) {
+                      quoteNode.select(0, 0);
+                    }
+                  } else {
+                    const quoteNode = $createQuoteNode();
+                    anchorNode.insertBefore(quoteNode);
+                    quoteNode.select();
+                  }
+
+                  anchorNode.remove();
+                } else {
+                  const preHalf: LexicalNode[] = [],
+                    nextHalf: LexicalNode[] = [];
+                  children.forEach((child, i) => {
+                    if (i < index) {
+                      preHalf.push(child);
+                    } else if (i > index) {
+                      nextHalf.push(child);
+                    } else {
+                      if ($isTextNode(child)) {
+                        if (anchorOffset === 0) {
+                          nextHalf.push(child);
+                        } else {
+                          const [before, after] = child.splitText(anchorOffset);
+                          if (before) preHalf.push(before);
+                          if (after) nextHalf.push(after);
+                        }
+                      } else {
+                        if (anchorOffset === 0) {
+                          nextHalf.push(child);
+                        } else {
+                          preHalf.push(child);
+                        }
+                      }
+                    }
+                  });
+
+                  if (preHalf.length > 0) {
+                    const quoteNode = $createQuoteNode();
+                    quoteNode.append(...preHalf);
+                    topNode.insertBefore(quoteNode);
+                  }
+
+                  if (nextHalf.length > 0) {
+                    const quoteNode = $createQuoteNode();
+                    quoteNode.append(...nextHalf);
+                    topNode.insertBefore(quoteNode);
+                    quoteNode.select(0, 0);
+                  } else {
+                    const quoteNode = $createQuoteNode();
+                    topNode.insertBefore(quoteNode);
+                    quoteNode.select();
+                  }
+
+                  topNode.remove();
+                }
+              }
 
               return true;
             }
 
             // For ListNode
             if ($isListNode(topNode)) {
-              const nearestListItemNode = $findNearestListItemNode(anchorNode);
-              if (!$isListItemNode(nearestListItemNode)) return false;
-
-              const nearestListNode = nearestListItemNode.getParent<ListNode>();
-              if (!$isListNode(nearestListNode)) return false;
-
               event.preventDefault();
 
-              if (nearestListItemNode.getChildrenSize() === 0) {
-                return editor.dispatchCommand(
-                  INSERT_PARAGRAPH_COMMAND,
-                  undefined,
-                );
-              } else {
-                $listNodeShiftEnterBehavior(
-                  topNode,
-                  nearestListNode,
-                  nearestListItemNode,
-                  anchorNode,
-                  selection.anchor.offset,
-                );
+              const anchorOffset = selection.anchor.offset;
+              console.log('selection', selection);
+              console.log('offset', anchorOffset);
+              console.log('anchorNode', anchorNode);
+              if (
+                $isListItemNode(anchorNode) &&
+                anchorNode.getChildrenSize() === 0
+              ) {
+                const paragraph = $createParagraphNode();
+                topNode.insertBefore(paragraph);
+                paragraph
+                  .setTextStyle(selection.style)
+                  .setTextFormat(selection.format)
+                  .select();
+                topNode.remove();
+                return true;
+              }
+              if (
+                (($isListItemNode(anchorNode) &&
+                  anchorNode.getChildrenSize() > 0) ||
+                  $isListItemNode(anchorNode.getParent())) &&
+                selection.anchor.offset === 0
+              ) {
+                console.log(11111111);
+                return true;
               }
 
+              const preListItem = $isListItemNode(anchorNode)
+                ? anchorNode
+                : anchorNode.getParent();
+
+              console.log(preListItem?.getChildren());
+
+              const listNode = $createListNode(),
+                listItem = $createListItemNode();
+
+              listNode.setListType(topNode.getListType());
+              const preIndent = preListItem?.getIndent() ?? 0;
+
+              listNode.append(listItem);
+              topNode.insertAfter(listNode);
+
+              listItem.setIndent(preIndent);
+
+              listItem.select();
               return true;
             }
 
-            event.preventDefault();
             return editor.dispatchCommand(INSERT_PARAGRAPH_COMMAND, undefined);
           }
         }
@@ -113,167 +213,7 @@ function EnterBehaviorPlugin({ onSend }: EnterPluginProps) {
   return null;
 }
 
-function $quoteNodeShiftEnterBehavior(
-  quoteNode: QuoteNode,
-  anchorNode: TextNode | ElementNode,
-  selection: RangeSelection,
-  offset: number,
-) {
-  if (quoteNode.getChildrenSize() === 0) {
-    // If the content is empty we should exit the quote mode
-    const paragraph = $createParagraphNode();
-    quoteNode.replace(paragraph);
-    paragraph
-      .setTextStyle(selection.style)
-      .setTextFormat(selection.format)
-      .select();
-  } else {
-    const children = quoteNode.getChildren();
-    const index = children.findIndex((c) => c.getKey() === anchorNode.getKey());
-
-    let preHalf: LexicalNode[] = [],
-      nextHalf: LexicalNode[] = [];
-
-    if (index < 0) {
-      preHalf = children.slice(0, offset);
-      nextHalf = children.slice(offset);
-    } else {
-      children.forEach((child, i) => {
-        if (i < index) {
-          preHalf.push(child);
-        } else if (i > index) {
-          nextHalf.push(child);
-        } else {
-          if ($isTextNode(child)) {
-            if (offset === 0) {
-              nextHalf.push(child);
-            } else {
-              const [before, after] = child.splitText(offset);
-              if (before) preHalf.push(before);
-              if (after) nextHalf.push(after);
-            }
-          } else {
-            if (offset === 0) {
-              nextHalf.push(child);
-            } else {
-              preHalf.push(child);
-            }
-          }
-        }
-      });
-    }
-
-    if (preHalf.length > 0) {
-      const newQuoteNode = $createQuoteNode();
-      newQuoteNode.append(...preHalf);
-      quoteNode.insertBefore(newQuoteNode);
-    } else {
-      const newQuoteNode = $createQuoteNode();
-      quoteNode.insertBefore(newQuoteNode);
-      newQuoteNode.select();
-    }
-
-    if (nextHalf.length > 0) {
-      const newQuoteNode = $createQuoteNode();
-      newQuoteNode.append(...nextHalf);
-      quoteNode.insertBefore(newQuoteNode);
-
-      if (preHalf.length > 0) {
-        newQuoteNode.select(0, 0);
-      }
-    } else {
-      const newQuoteNode = $createQuoteNode();
-      quoteNode.insertBefore(newQuoteNode);
-      newQuoteNode.select();
-    }
-
-    quoteNode.remove();
-  }
-}
-
-function $listNodeShiftEnterBehavior(
-  topListNode: ListNode,
-  nearestListNode: ListNode,
-  nearestListItemNode: ListItemNode,
-  anchorNode: TextNode | ElementNode,
-  offset: number,
-) {
-  const children = nearestListItemNode.getChildren();
-  const index = children.findIndex((c) => c.getKey() === anchorNode.getKey());
-
-  let preHalf: LexicalNode[] = [],
-    nextHalf: LexicalNode[] = [];
-  if (index < 0) {
-    preHalf = children.slice(0, offset);
-    nextHalf = children.slice(offset);
-  } else {
-    children.forEach((child, i) => {
-      if (i < index) {
-        preHalf.push(child);
-      } else if (i > index) {
-        nextHalf.push(child);
-      } else {
-        if ($isTextNode(child)) {
-          if (offset === 0) {
-            nextHalf.push(child);
-          } else {
-            const [before, after] = child.splitText(offset);
-            if (before) preHalf.push(before);
-            if (after) nextHalf.push(after);
-          }
-        } else {
-          if (offset === 0) {
-            nextHalf.push(child);
-          } else {
-            preHalf.push(child);
-          }
-        }
-      }
-    });
-  }
-
-  const listType = nearestListNode.getListType(),
-    indent = nearestListItemNode.getIndent();
-
-  if (preHalf.length > 0) {
-    const { outerListNode: newListNode, innerListItemNode } =
-      $createNestedListWithDepth(listType, indent);
-
-    innerListItemNode.append(...preHalf);
-    topListNode.insertBefore(newListNode);
-  } else {
-    const { outerListNode: newListNode, innerListNode } =
-      $createNestedListWithDepth(listType, indent);
-
-    topListNode.insertBefore(newListNode);
-    innerListNode.select();
-  }
-
-  if (nextHalf.length > 0) {
-    const {
-      outerListNode: newListNode,
-      innerListNode,
-      innerListItemNode,
-    } = $createNestedListWithDepth(listType, indent);
-
-    innerListItemNode.append(...nextHalf);
-    topListNode.insertBefore(newListNode);
-
-    if (preHalf.length > 0) {
-      innerListNode.select(0, 0);
-    }
-  } else {
-    const { outerListNode: newListNode, innerListNode } =
-      $createNestedListWithDepth(listType, indent);
-
-    topListNode.insertBefore(newListNode);
-    innerListNode.select();
-  }
-
-  topListNode.remove();
-}
-
-export { EnterBehaviorPlugin };
+export { EnterPlugin };
 
 // import { useEffect, useRef } from 'react';
 // import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
