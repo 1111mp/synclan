@@ -1,16 +1,14 @@
 import { useMemo, useState } from 'react';
-import { $getSelection, $isRangeSelection, type TextNode } from 'lexical';
+import { createPortal } from 'react-dom';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import {
   LexicalTypeaheadMenuPlugin,
   MenuOption,
   useBasicTypeaheadTriggerMatch,
 } from '@lexical/react/LexicalTypeaheadMenuPlugin';
-import { FloatingPortal, offset, useFloating } from '@floating-ui/react';
-
 import { search } from '../emoji/lib';
-import { $createEmojiNode, Emoji } from '../emoji';
-import { cn } from '@/lib/utils';
+import type { TextNode } from 'lexical';
+import { Emoji } from '../emoji';
 
 class EmojiOption extends MenuOption {
   shortName: string;
@@ -25,20 +23,17 @@ function EmojiPickerPlugin() {
   const [queryString, setQueryString] = useState<string | null>(null);
 
   const [editor] = useLexicalComposerContext();
+
   const checkForTriggerMatch = useBasicTypeaheadTriggerMatch(':', {
     minLength: 0,
     punctuation: '\\.,\\+\\*\\?\\$\\@\\|#{}\\(\\)\\^\\[\\]\\\\/!%\'"~=<>:;', // allow _ and -
-  });
-
-  const { refs, x, y, strategy } = useFloating({
-    placement: 'top-start',
-    middleware: [offset(10)],
   });
 
   const options = useMemo(() => {
     if (!queryString) return [];
 
     const emojis = search(queryString, 10);
+    console.log('showEmojiResults', emojis);
 
     return emojis.map((emoji) => new EmojiOption(emoji.short_name));
   }, [queryString]);
@@ -47,20 +42,7 @@ function EmojiPickerPlugin() {
     selectedOption: EmojiOption,
     nodeToRemove: TextNode | null,
     closeMenu: () => void,
-  ) => {
-    editor.update(() => {
-      const selection = $getSelection();
-      if (!$isRangeSelection(selection) || selectedOption == null) return;
-
-      if (nodeToRemove) {
-        nodeToRemove.remove();
-      }
-
-      selection.insertNodes([$createEmojiNode(selectedOption.shortName)]);
-
-      closeMenu();
-    });
-  };
+  ) => {};
 
   return (
     <LexicalTypeaheadMenuPlugin
@@ -68,68 +50,26 @@ function EmojiPickerPlugin() {
       onSelectOption={onSelectOption}
       onQueryChange={setQueryString}
       triggerFn={checkForTriggerMatch}
-      onOpen={(r) => {
-        refs.setPositionReference({
-          getBoundingClientRect: r.getRect,
-        });
-
-        editor.__emojiMenuOpen = true;
-      }}
-      onClose={() => {
-        editor.__emojiMenuOpen = false;
-      }}
       menuRenderFn={(
         anchorElementRef,
-        { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex },
+        // { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex },
       ) => {
-        if (!anchorElementRef.current || !options.length) return null;
+        if (anchorElementRef.current == null || options.length === 0) {
+          return null;
+        }
 
-        return (
-          <FloatingPortal>
-            <div
-              ref={refs.setFloating}
-              className='min-w-52 py-2 rounded-lg bg-white shadow-lg'
-              style={{
-                position: strategy,
-                top: y ?? 0,
-                left: x ?? 0,
-              }}
-            >
-              <ul className='max-h-56 overflow-y-auto no-scrollbar'>
-                {options.map((emoji, index) => {
-                  const isSelected = selectedIndex === index;
-                  return (
-                    <li
-                      key={emoji.shortName}
-                      className={cn(
-                        'flex px-3 py-1 space-x-2 items-center cursor-pointer',
-                        isSelected && 'bg-gray-05',
-                      )}
-                      role='option'
-                      tabIndex={-1}
-                      aria-selected={isSelected}
-                      ref={(el) => {
-                        if (isSelected && el) {
-                          el.scrollIntoView({ block: 'nearest' });
-                        }
-                      }}
-                      onMouseEnter={() => {
-                        setHighlightedIndex(index);
-                      }}
-                      onClick={() => {
-                        setHighlightedIndex(index);
-                        selectOptionAndCleanUp(emoji);
-                      }}
-                    >
-                      <Emoji shortName={emoji.shortName} size={24} />
-                      <span>{emoji.shortName}</span>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          </FloatingPortal>
-        );
+        return anchorElementRef.current && options.length
+          ? createPortal(
+              <div>
+                <ul>
+                  {options.map((emoji) => (
+                    <Emoji shortName={emoji.shortName} />
+                  ))}
+                </ul>
+              </div>,
+              anchorElementRef.current,
+            )
+          : null;
       }}
     />
   );

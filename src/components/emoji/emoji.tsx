@@ -6,7 +6,6 @@ const variants = cva('', {
   variants: {
     size: {
       16: 'w-4 h-4',
-      18: 'w-[18px] h-[18px]',
       20: 'w-5 h-5',
       24: 'w-6 h-6',
       28: 'w-7 h-7',
@@ -29,15 +28,22 @@ function Emoji({ emoji, shortName, skinTone, size = 28 }: Props) {
     image = emojiToImage(emoji) || '';
   }
 
-  if (!image) return null;
-
   return (
-    <img
-      src={image}
-      aria-label={emoji}
-      title={emoji}
-      className={cn('transform-gpu align-baseline', variants({ size }))}
-    />
+    <span
+      className={cn(
+        'flex justify-center items-center text-transparent',
+        variants({ size }),
+      )}
+    >
+      {image && (
+        <img
+          src={image}
+          aria-label={emoji}
+          title={emoji}
+          className={cn('transform-gpu align-baseline', variants({ size }))}
+        />
+      )}
+    </span>
   );
 }
 

@@ -1,13 +1,15 @@
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { defineConfig } from 'vite';
+import { defineConfig, searchForWorkspaceRoot } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { createHtmlPlugin } from 'vite-plugin-html';
-import { viteStaticCopy } from 'vite-plugin-static-copy';
 
 const host = process.env.TAURI_DEV_HOST;
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+console.log(process.cwd());
+console.log(__dirname);
 
 // https://vitejs.dev/config/
 export default defineConfig(async ({ mode }) => ({
@@ -29,30 +31,19 @@ export default defineConfig(async ({ mode }) => ({
         },
         {
           entry: 'preview/main.tsx',
-          filename: 'preview.html',
-          template: 'preview.html',
+          filename: 'preview/index.html',
+          template: 'preview/index.html',
         },
       ],
     }),
     tailwindcss(),
-    viteStaticCopy({
-      targets: [
-        {
-          src: resolve(
-            __dirname,
-            'node_modules/emoji-datasource-apple/img/apple/64/',
-          ),
-          dest: 'emoji-datasource-apple/img/apple/64/',
-        },
-      ],
-    }),
   ],
 
   build: {
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'src/index.html'),
-        preview: resolve(__dirname, 'src/preview.html'),
+        preview: resolve(__dirname, 'src/preview/index.html'),
       },
     },
     emptyOutDir: true,
