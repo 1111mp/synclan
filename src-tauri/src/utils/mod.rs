@@ -5,4 +5,3 @@ pub mod i18n;
 pub mod init;
 pub mod logging;
 pub mod resolve;
-pub mod tls;

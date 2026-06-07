@@ -1,5 +1,7 @@
 export * from './loading-screen';
-export * from './qrcode-dialog';
+export * from './qrcode';
 export * from './tauri-drag-area';
 
-export * from './ui';
+export * from './ui/button';
+export * from './ui/dialog';
+export * from './ui/resizable';

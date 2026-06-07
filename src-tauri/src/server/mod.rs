@@ -1,16 +1,13 @@
 use crate::{
     logging, logging_error,
     process::AsyncHandler,
-    utils::{db, dirs, logging::Type, tls},
+    utils::{db, dirs, logging::Type},
 };
 use anyhow::Result;
 use api_doc::ApiDoc;
 use socketioxide::{handler::ConnectHandler, SocketIo};
 use sqlx::{Pool, Sqlite};
-use std::{
-    net::{IpAddr, SocketAddr},
-    sync::Arc,
-};
+use std::{net::SocketAddr, sync::Arc};
 use tower_http::services::ServeDir;
 use utoipa::OpenApi;
 use utoipa_axum::router::OpenApiRouter;
@@ -21,9 +18,6 @@ mod events;
 mod routes;
 
 async fn bootstrap(db_pool: Pool<Sqlite>) -> Result<()> {
-    let ip: IpAddr = "0.0.0.0".parse()?;
-    let config = tls::build_rustls_config_with_ip(&ip).await?;
-
     let app_state = Arc::new(AppState { db_pool });
 
     // build our application with a single route
@@ -52,13 +46,18 @@ async fn bootstrap(db_pool: Pool<Sqlite>) -> Result<()> {
 
     logging!(info, Type::Server, true, "Starting server...");
 
-    let addr = SocketAddr::from((ip, 53317));
+    let addr = SocketAddr::from(([0, 0, 0, 0], 53317));
+    let listener = tokio::net::TcpListener::bind(addr).await?;
 
-    logging!(info, Type::Server, true, "Listening on https://{}", addr);
+    logging!(
+        info,
+        Type::Server,
+        true,
+        "Listening on {}",
+        listener.local_addr()?
+    );
 
-    axum_server::bind_rustls(addr, config)
-        .serve(app.into_make_service())
-        .await?;
+    axum::serve(listener, app).await?;
 
     Ok(())
 }
