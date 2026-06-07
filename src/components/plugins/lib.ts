@@ -18,18 +18,17 @@ import {
   type RangeSelection,
   type TextNode,
 } from 'lexical';
-import { $isAtNodeEnd } from '@lexical/selection';
+import { $copyBlockFormatIndent, $isAtNodeEnd } from '@lexical/selection';
 import {
   $createListItemNode,
   $createListNode,
   $isListItemNode,
   $isListNode,
   ListItemNode,
-  ListNode,
+  type ListNode,
   type ListType,
 } from '@lexical/list';
 import { $findMatchingParent } from '@lexical/utils';
-import invariant from './invariant';
 
 declare global {
   interface Document {
@@ -134,6 +133,80 @@ export function $createNestedListWithDepth(listType: ListType, depth: number) {
   };
 }
 
+export function $warpBlockswith<T extends ElementNode>(
+  selection: BaseSelection | null,
+  $createElement: () => T,
+  // $afterCreateElement: (
+  //   prevNodeSrc: ElementNode,
+  //   newNodeDest: T,
+  // ) => void = $copyBlockFormatIndent,
+): void {
+  if (selection === null) {
+    return;
+  }
+  // Selections tend to not include their containing blocks so we effectively
+  // expand it here
+  const anchorAndFocus = selection.getStartEndPoints();
+  const blockMap = new Map<NodeKey, ElementNode>();
+  let newSelection: RangeSelection | null = null;
+  if (anchorAndFocus) {
+    const [anchor, focus] = anchorAndFocus;
+    newSelection = $createRangeSelection();
+    newSelection.anchor.set(anchor.key, anchor.offset, anchor.type);
+    newSelection.focus.set(focus.key, focus.offset, focus.type);
+    const anchorBlock = anchor.getNode().getTopLevelElement();
+    const focusBlock = focus.getNode().getTopLevelElement();
+    console.log('anchorBlock', anchorBlock);
+    console.log('focusBlock', focusBlock);
+    if ($isElementNode(anchorBlock)) {
+      blockMap.set(anchorBlock.getKey(), anchorBlock);
+    }
+    if ($isElementNode(focusBlock)) {
+      blockMap.set(focusBlock.getKey(), focusBlock);
+    }
+  }
+  console.log(selection.getNodes());
+  for (const node of selection.getNodes()) {
+    const topNode = node.getTopLevelElement();
+    if ($isElementNode(topNode)) {
+      blockMap.set(topNode.getKey(), topNode);
+    }
+    //  else if (anchorAndFocus === null) {
+    //   // const ancestorBlock = $getAncestor(node, INTERNAL_$isBlock);
+    //   if ($isElementNode(topNode)) {
+    //     blockMap.set(topNode.getKey(), topNode);
+    //   }
+    // }
+  }
+  console.log('blockMap', blockMap);
+  for (const [key, prevNode] of blockMap) {
+    const element = $createElement();
+    // $afterCreateElement(prevNode, element);
+    // prevNode.replace(element, true);
+    prevNode.insertBefore(element);
+    element.append(prevNode);
+    if (newSelection) {
+      if (key === newSelection.anchor.key) {
+        newSelection.anchor.set(
+          element.getKey(),
+          newSelection.anchor.offset,
+          newSelection.anchor.type,
+        );
+      }
+      if (key === newSelection.focus.key) {
+        newSelection.focus.set(
+          element.getKey(),
+          newSelection.focus.offset,
+          newSelection.focus.type,
+        );
+      }
+    }
+  }
+  if (newSelection && selection.is($getSelection())) {
+    $setSelection(newSelection);
+  }
+}
+
 export function $getAncestor<NodeType extends LexicalNode = LexicalNode>(
   node: LexicalNode,
   predicate: (ancestor: LexicalNode) => ancestor is NodeType,
@@ -204,64 +277,110 @@ export function $removeHighestEmptyListParent(
   emptyListPtr.remove();
 }
 
-export function $setBlocksTypeWith<T extends ElementNode>(
-  selection: BaseSelection | null,
-  $createElement: (node: ElementNode) => T | null,
-): void {
-  if (selection === null) {
+// invariant(condition, message) will refine types based on "condition", and
+// if "condition" is false will throw an error. This function is special-cased
+// in flow itself, so we can't name it anything else.
+export default function invariant(
+  cond?: boolean,
+  message?: string,
+  ...args: string[]
+): asserts cond {
+  if (cond) {
     return;
   }
-  // Selections tend to not include their containing blocks so we effectively
-  // expand it here
-  const anchorAndFocus = selection.getStartEndPoints();
-  const blockMap = new Map<NodeKey, ElementNode>();
-  let newSelection: RangeSelection | null = null;
-  if (anchorAndFocus) {
-    const [anchor, focus] = anchorAndFocus;
-    newSelection = $createRangeSelection();
-    newSelection.anchor.set(anchor.key, anchor.offset, anchor.type);
-    newSelection.focus.set(focus.key, focus.offset, focus.type);
-    const anchorBlock = $getAncestor(anchor.getNode(), INTERNAL_$isBlock);
-    const focusBlock = $getAncestor(focus.getNode(), INTERNAL_$isBlock);
-    if ($isElementNode(anchorBlock)) {
-      blockMap.set(anchorBlock.getKey(), anchorBlock);
-    }
-    if ($isElementNode(focusBlock)) {
-      blockMap.set(focusBlock.getKey(), focusBlock);
-    }
-  }
 
-  for (const node of selection.getNodes()) {
-    if ($isElementNode(node) && INTERNAL_$isBlock(node)) {
-      blockMap.set(node.getKey(), node);
-    } else if (anchorAndFocus === null) {
-      const ancestorBlock = $getAncestor(node, INTERNAL_$isBlock);
-      if ($isElementNode(ancestorBlock)) {
-        blockMap.set(ancestorBlock.getKey(), ancestorBlock);
-      }
-    }
-  }
-
-  for (const [key, prevNode] of blockMap) {
-    const element = $createElement(prevNode);
-    if (element && newSelection) {
-      if (key === newSelection.anchor.key) {
-        newSelection.anchor.set(
-          element.getKey(),
-          newSelection.anchor.offset,
-          newSelection.anchor.type,
-        );
-      }
-      if (key === newSelection.focus.key) {
-        newSelection.focus.set(
-          element.getKey(),
-          newSelection.focus.offset,
-          newSelection.focus.type,
-        );
-      }
-    }
-  }
-  if (newSelection && selection.is($getSelection())) {
-    $setSelection(newSelection);
-  }
+  throw new Error(
+    'Internal Lexical error: invariant() is meant to be replaced at compile ' +
+      'time. There is no runtime version. Error: ' +
+      message,
+  );
 }
+
+// import { useEffect, useRef } from 'react';
+// import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+// import {
+//   $createParagraphNode,
+//   $getSelection,
+//   $isRangeSelection,
+//   COMMAND_PRIORITY_HIGH,
+//   INSERT_PARAGRAPH_COMMAND,
+//   KEY_ENTER_COMMAND,
+// } from 'lexical';
+// import { $createQuoteNode, $isQuoteNode } from '@lexical/rich-text';
+
+// type EnterPluginProps = {
+//   onSend?: () => void;
+// };
+
+// function EnterPlugin({ onSend }: EnterPluginProps) {
+//   const [editor] = useLexicalComposerContext();
+
+//   const onChangeRef = useRef<EnterPluginProps['onSend']>(null);
+//   onChangeRef.current = onSend;
+
+//   useEffect(() => {
+//     return editor.registerCommand<KeyboardEvent | null>(
+//       KEY_ENTER_COMMAND,
+//       (event) => {
+//         const selection = $getSelection();
+//         if (!$isRangeSelection(selection)) {
+//           return false;
+//         }
+
+//         if (editor.__emojiMenuOpen) return false;
+
+//         // For QuoteNode
+//         const anchorNode = selection.anchor.getNode();
+//         const quoteNode = anchorNode.getTopLevelElementOrThrow();
+//         if ($isQuoteNode(quoteNode)) {
+//           // Enter
+//           if (event !== null && !event.shiftKey) {
+//             event.preventDefault();
+
+//             onChangeRef.current?.();
+//             return true;
+//           }
+
+//           // Enter + Shift
+//           if (event !== null && event.shiftKey) {
+//             event.preventDefault();
+
+//             if (quoteNode.getChildrenSize() === 0) {
+//               // If the content is empty we should exit the quote mode
+//               const paragraph = $createParagraphNode();
+//               quoteNode.replace(paragraph);
+//               paragraph.select();
+//             } else {
+//               // Create a new QuoteNode for each line break
+//               const newQuoteNode = $createQuoteNode();
+//               quoteNode.insertAfter(newQuoteNode);
+//               newQuoteNode.select();
+//             }
+
+//             return true;
+//           }
+
+//           return false;
+//         }
+
+//         if (event !== null) {
+//           event.preventDefault();
+
+//           if (event.shiftKey) {
+//             return editor.dispatchCommand(INSERT_PARAGRAPH_COMMAND, undefined);
+//           }
+
+//           onChangeRef.current?.();
+//           return true;
+//         }
+
+//         return false;
+//       },
+//       COMMAND_PRIORITY_HIGH,
+//     );
+//   }, [editor]);
+
+//   return null;
+// }
+
+// export { EnterPlugin };

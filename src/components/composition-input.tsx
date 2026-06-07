@@ -32,7 +32,7 @@ import { EditorRefPlugin } from '@lexical/react/LexicalEditorRefPlugin';
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
 import {
   AutoLinePlugin,
-  // ClearSelectionPlugin,
+  ClearSelectionPlugin,
   CodeHighlightShikiPlugin,
   CodeNodeToolbarPlugin,
   CodeBehaviorPlugin,
@@ -53,10 +53,6 @@ import {
   SimpleListNode,
   $createEmojiNode,
   EmojiNode,
-  SimpleListItemNode,
-  $createSimpleListItemNode,
-  SimpleQuoteNode,
-  $createSimpleQuoteNode,
 } from './nodes';
 
 import type { EditorState, LexicalEditor } from 'lexical';
@@ -98,7 +94,7 @@ function CompositionInput({
       const selection = $getSelection();
       if (!$isRangeSelection(selection)) return;
 
-      selection.insertNodes([$createEmojiNode(shortName, skinTone)]);
+      // selection.insertNodes([$createEmojiNode(shortName, skinTone)]);
     });
   };
 
@@ -114,21 +110,10 @@ function CompositionInput({
           $createSimpleListNode(node.getListType(), node.getStart()),
         withKlass: SimpleListNode,
       },
-      SimpleListItemNode,
-      {
-        replace: ListItemNode,
-        with: (node: ListItemNode) =>
-          $createSimpleListItemNode(node.getChecked()),
-        withKlass: SimpleListItemNode,
-      },
+      ListItemNode,
       ParagraphNode,
       HeadingNode,
-      SimpleQuoteNode,
-      {
-        replace: QuoteNode,
-        with: () => $createSimpleQuoteNode(),
-        withKlass: SimpleQuoteNode,
-      },
+      QuoteNode,
       CodePlusNode,
       {
         replace: CodeNode,
@@ -147,7 +132,7 @@ function CompositionInput({
       list: {
         ul: 'mt-0 mb-0 pl-0 list-outside indent-2 marker:text-blue-500',
         ulDepth: ['list-disc', 'list-[circle]', 'list-[square]'],
-        ol: 'mt-0 mb-0 pl-0 list-outside indent-2 marker:text-blue-500 ',
+        ol: 'list-inside indent-2 marker:text-blue-500 *:ml-0!',
         olDepth: ['list-decimal', 'list-[lower-alpha]', 'list-[lower-roman]'],
         listitem: 'mt-0 mb-0 ml-4',
         nested: {
@@ -227,7 +212,7 @@ function CompositionInput({
             ...ELEMENT_TRANSFORMERS,
             ...TEXT_FORMAT_TRANSFORMERS,
             ...TEXT_MATCH_TRANSFORMERS,
-            CODE_PLUS,
+            ...[CODE_PLUS],
           ]}
         />
         <CodeHighlightShikiPlugin />
@@ -236,7 +221,7 @@ function CompositionInput({
         <FloatingTextFormatToolbarPlugin />
         <ListPlugin hasStrictIndent={false} />
         <TabIndentationPlugin maxIndent={3} />
-        {/* <ClearSelectionPlugin /> */}
+        <ClearSelectionPlugin />
         <EmojiPickerPlugin />
         <AutoLinePlugin onLineChange={onLineChange} />
         <IsEmptyPlugin onChange={onEmptyChange} />

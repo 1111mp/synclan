@@ -16,7 +16,7 @@ export class SimpleListNode extends ListNode {
     });
   }
 
-  constructor(listType: ListType = 'number', start?: number, key?: NodeKey) {
+  constructor(listType: ListType = 'number', start: number = 1, key?: NodeKey) {
     super(listType, start, key);
   }
 }

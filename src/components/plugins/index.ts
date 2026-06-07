@@ -5,6 +5,6 @@ export * from './code-high-light-shiki-plugin';
 export * from './code-node-toolbar-pligin';
 export * from './emoji-picker-plugin';
 export * from './enter-behavior-plugin';
-export * from './floating-text-format-toolbar-plugin';
 export * from './is-empty-plugin';
 export * from './is-focused-plugin';
+export * from './floating-text-format-toolbar-plugin';

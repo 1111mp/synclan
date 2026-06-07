@@ -15,10 +15,12 @@ import { Emoji } from '../emoji';
 
 class EmojiOption extends MenuOption {
   shortName: string;
+  emojiText: string;
 
-  constructor(shortName: string) {
+  constructor(shortName: string, emojiText: string) {
     super(shortName);
     this.shortName = shortName;
+    this.emojiText = emojiText;
   }
 }
 
@@ -42,7 +44,13 @@ function EmojiPickerPlugin() {
     const emojis = search(queryString, 10);
     console.log('emojis', emojis);
 
-    return emojis.map((emoji) => new EmojiOption(emoji.short_name));
+    return emojis.map(
+      (emoji) =>
+        new EmojiOption(
+          emoji.short_name,
+          String.fromCodePoint(parseInt(emoji.unified, 16)),
+        ),
+    );
   }, [queryString]);
 
   const onSelectOption = (
@@ -58,7 +66,11 @@ function EmojiPickerPlugin() {
         nodeToRemove.remove();
       }
 
-      selection.insertNodes([$createEmojiNode(selectedOption.shortName)]);
+      console.log('selectedOption', selectedOption);
+
+      selection.insertNodes([
+        $createEmojiNode(selectedOption.shortName, selectedOption.emojiText),
+      ]);
 
       closeMenu();
     });

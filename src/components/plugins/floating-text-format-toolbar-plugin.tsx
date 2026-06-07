@@ -35,19 +35,15 @@ import {
   useFloating,
 } from '@floating-ui/react';
 import { mergeRegister } from '@lexical/utils';
-import {
-  $createNestedListWithDepth,
-  $getTopListNode,
-  $setBlocksTypeWith,
-  getSelectedNode,
-} from './lib';
+import { $warpBlockswith, getSelectedNode } from './lib';
 import { cn } from '@/lib/utils';
-import { $copyBlockFormatIndent, $setBlocksType } from '@lexical/selection';
+import { $setBlocksType } from '@lexical/selection';
 import { $createQuoteNode, $isQuoteNode } from '@lexical/rich-text';
 import {
   $isListItemNode,
   $isListNode,
   INSERT_ORDERED_LIST_COMMAND,
+  INSERT_UNORDERED_LIST_COMMAND,
   ListNode,
 } from '@lexical/list';
 
@@ -66,12 +62,6 @@ function findNearestListNode(node: LexicalNode | null): ListNode | null {
   if ($isListItemNode(node)) {
     const parent = node.getParent();
     return $isListNode(parent) ? parent : null;
-  }
-
-  const parent = node.getParent();
-  if ($isListItemNode(parent)) {
-    const listNode = parent.getParent();
-    return $isListNode(listNode) ? listNode : null;
   }
 
   return null;
@@ -241,54 +231,11 @@ function TextFormatFloatingToolbar({
           variant='ghost'
           size='xs'
           onClick={() => {
-            editor.update(() => {
-              const selection = $getSelection();
-              if (!$isRangeSelection(selection)) return;
-
-              if (!isBulletList) {
-                $setBlocksTypeWith(selection, (preNode) => {
-                  if ($isListItemNode(preNode)) {
-                    const parent = preNode.getParent<ListNode>();
-                    parent?.setListType('bullet');
-                    return null;
-                  }
-
-                  const preTopNode = preNode.getTopLevelElementOrThrow();
-                  if ($isQuoteNode(preTopNode)) {
-                    console.log(preTopNode.getChildren());
-                    const { outerListNode, innerListItemNode } =
-                      $createNestedListWithDepth('bullet', 0);
-                    innerListItemNode.append(...preTopNode.getChildren());
-                    preTopNode.append(outerListNode);
-                    return preTopNode;
-                  }
-
-                  const { outerListNode, innerListItemNode } =
-                    $createNestedListWithDepth('bullet', 0);
-                  innerListItemNode.append(...preTopNode.getChildren());
-                  preTopNode.replace(outerListNode);
-                  return outerListNode;
-                });
-              } else {
-                $setBlocksTypeWith(selection, (preNode) => {
-                  if (!$isListItemNode(preNode)) return null;
-
-                  const preTopNode = preNode.getTopLevelElementOrThrow();
-                  if (!$isListNode(preTopNode)) {
-                    const topListNode = $getTopListNode(preNode);
-                    preTopNode.append(...preNode.getChildren());
-                    topListNode.remove();
-                    return preTopNode;
-                  } else {
-                    const paragraph = $createParagraphNode();
-                    paragraph.append(...preNode.getChildren());
-                    preTopNode.insertBefore(paragraph);
-                    preTopNode.remove();
-                    return paragraph;
-                  }
-                });
-              }
-            });
+            if (!isBulletList) {
+              editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined);
+            } else {
+              formatParagraph(editor);
+            }
           }}
         >
           <List />
@@ -306,40 +253,23 @@ function TextFormatFloatingToolbar({
               const selection = $getSelection();
               if (!$isRangeSelection(selection)) return;
 
+              const anchorNode = selection.anchor.getNode();
+              const topNode = anchorNode.getTopLevelElementOrThrow();
+              console.log('anchorNode', anchorNode);
+              console.log('topNode', topNode);
+
               if (!isQuota) {
-                $setBlocksTypeWith(selection, (preNode) => {
-                  const preTopNode = preNode.getTopLevelElementOrThrow();
-                  if ($isQuoteNode(preTopNode)) return null;
-
-                  if ($isListItemNode(preNode) || $isListNode(preTopNode)) {
-                    const quoteNode = $createQuoteNode();
-                    preTopNode.insertBefore(quoteNode);
-                    quoteNode.append(preTopNode);
-                    return quoteNode;
-                  }
-
-                  const quoteNode = $createQuoteNode();
-                  $copyBlockFormatIndent(preTopNode, quoteNode);
-                  preTopNode.replace(quoteNode, true);
-                  return quoteNode;
-                });
-              } else {
-                $setBlocksTypeWith(selection, (preNode) => {
-                  const preTopNode = preNode.getTopLevelElementOrThrow();
-                  if (!$isQuoteNode(preTopNode)) return null;
-
-                  if ($isListItemNode(preNode)) {
-                    const listNode = $getTopListNode(preNode);
-                    preTopNode.replace(listNode);
-                    return listNode;
-                  }
-
-                  const paragraph = $createParagraphNode();
-                  $copyBlockFormatIndent(preTopNode, paragraph);
-                  preTopNode.replace(paragraph, true);
-                  return paragraph;
-                });
+                const quoteNode = $createQuoteNode();
+                quoteNode.append(...topNode.getChildren());
+                topNode.replace(quoteNode);
+                // quoteNode.append(topNode);
               }
+
+              // if (!isQuota) {
+              //   $setBlocksType(selection, () => $createQuoteNode());
+              // } else {
+              //   $setBlocksType(selection, () => $createParagraphNode());
+              // }
             });
           }}
         >
@@ -425,9 +355,7 @@ function FloatingTextFormatToolbarPlugin(): JSX.Element | null {
         !$isCodeHighlightNode(anchorNode) &&
         selection.getTextContent() !== ''
       ) {
-        setIsText(
-          $isTextNode(node) || $isParagraphNode(node) || $isListItemNode(node),
-        );
+        setIsText($isTextNode(node) || $isParagraphNode(node));
       } else {
         setIsText(false);
       }
