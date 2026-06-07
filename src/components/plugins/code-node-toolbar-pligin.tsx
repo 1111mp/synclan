@@ -20,11 +20,10 @@ import {
   size,
   useFloating,
 } from '@floating-ui/react';
-import { toast } from 'sonner';
 import { $isCodePlusNode, CodePlusNode } from '../nodes';
-import { $getNodeByKey, $getSelection, $setSelection } from 'lexical';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { cn } from '@/lib/utils';
+import { $getNodeByKey } from 'lexical';
 
 function CodeNodeToolbarPlugin(): JSX.Element | null {
   const [keys, setKeys] = useState<string[]>([]);
@@ -52,8 +51,8 @@ function CodeNodeToolbarPlugin(): JSX.Element | null {
 
   return (
     <>
-      {keys.map((key) =>
-        createPortal(<CodeToolbar key={key} nodeKey={key} />, document.body),
+      {keys.map((key, index) =>
+        createPortal(<CodeToolbar key={index} nodeKey={key} />, document.body),
       )}
     </>
   );
@@ -145,7 +144,7 @@ function CodeToolbar({ nodeKey }: { nodeKey: string }) {
   const [language, setLanguage] = useState<string>();
   const [editor] = useLexicalComposerContext();
 
-  const { refs, floatingStyles, update } = useFloating({
+  const { refs, floatingStyles } = useFloating({
     placement: 'top-start',
     middleware: [
       offset(-28),
@@ -159,12 +158,6 @@ function CodeToolbar({ nodeKey }: { nodeKey: string }) {
     ],
     whileElementsMounted: autoUpdate,
   });
-
-  useEffect(() => {
-    return editor.registerTextContentListener(() => {
-      update();
-    });
-  }, [editor, update]);
 
   useEffect(() => {
     const node = editor.getElementByKey(nodeKey);
@@ -197,36 +190,11 @@ function CodeToolbar({ nodeKey }: { nodeKey: string }) {
     setOpen(false);
   };
 
-  const onCopyCode = async () => {
-    let content = '';
-    editor.update(() => {
-      const node = $getNodeByKey(nodeKey);
-      if ($isCodePlusNode(node)) {
-        content = node.getTextContent();
-      }
-
-      const selection = $getSelection();
-      $setSelection(selection);
-    });
-
-    try {
-      await navigator.clipboard.writeText(content);
-      toast.success('复制成功');
-    } catch (err) {
-      toast.error('复制失败');
-    }
-  };
-
   return (
     <FloatingPortal
       root={document.getElementById('synclan-composition-scroll-wrapper')}
     >
-      <div
-        data-node-key={nodeKey}
-        ref={refs.setFloating}
-        className='px-2'
-        style={floatingStyles}
-      >
+      <div ref={refs.setFloating} className='px-2' style={floatingStyles}>
         <div className='flex justify-between items-center'>
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
@@ -276,7 +244,6 @@ function CodeToolbar({ nodeKey }: { nodeKey: string }) {
               className='flex items-center font-light text-muted-foreground hover:text-muted-foreground hover:bg-gray-75'
               variant='ghost'
               size='xxs'
-              onClick={onCopyCode}
             >
               <BookCopy />
               复制

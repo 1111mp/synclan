@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { $getSelection, $isRangeSelection, getDOMSelection } from 'lexical';
+import { $getSelection, $isRangeSelection } from 'lexical';
 
 type AutoLinePluginProps = {
   onLineChange?: (changed: boolean) => void;
@@ -33,24 +33,22 @@ function AutoLinePlugin({ onLineChange }: AutoLinePluginProps) {
         const rootElement = editor.getRootElement();
         if (!rootElement) return false;
 
-        const nativeSelection = getDOMSelection(editor._window);
-        if (!nativeSelection || nativeSelection.rangeCount === 0) return false;
+        const domSelection = window.getSelection();
+        if (!domSelection || domSelection.rangeCount === 0) return false;
 
-        const range = nativeSelection.getRangeAt(0);
-        // if (!range.collapsed) return false;
+        const range = domSelection.getRangeAt(0);
+        if (!range.collapsed) return false;
 
         const rootRect = rootElement.getBoundingClientRect();
-        const selectionRect = range.getBoundingClientRect();
 
         if (
           rootInitialSizeRef.current &&
-          (rootRect.height > rootInitialSizeRef.current.height ||
-            selectionRect.width > rootInitialSizeRef.current.width)
+          rootRect.height > rootInitialSizeRef.current.height
         ) {
           onLineChangeRef.current?.(true);
-          return false;
         }
 
+        const selectionRect = range.getBoundingClientRect();
         const left = selectionRect.left - rootRect.left;
         if (
           rootInitialSizeRef.current &&

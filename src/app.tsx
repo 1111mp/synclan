@@ -26,12 +26,7 @@ function App() {
   //   initialization();
   // }, []);
 
-  return (
-    <>
-      <RouterProvider router={router} />
-      <LoadingScreen />
-    </>
-  );
+  return <RouterProvider router={router} />;
 }
 
 export default App;

@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import { TauriDragArea } from './tauri-drag-area';
 
-export function LoadingScreen({ loading = false }: { loading?: boolean }) {
+export function LoadingScreen({ loading = true }: { loading?: boolean }) {
   return (
     <AnimatePresence initial={false}>
       {loading && (
