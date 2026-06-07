@@ -31,39 +31,38 @@ type EmitEvents = Record<
   (message: IMessage, cb: (resp: AckResponse) => void) => void
 >;
 
-export type UseSocketOptions = Partial<
+type Options = Partial<
   ManagerOptions &
     SocketOptions & {
       onMessage: (message: IMessage) => void;
     }
 >;
 
-export type SendMessage = (
-  message: IMessage,
-  timeout: number,
-) => Promise<AckResponse>;
+export type UseSocketOptions = Options & {
+  url: string;
+};
 
-export function useSocketIO(url: string, options: UseSocketOptions = {}) {
-  const [state, setState] = useState<ReadyState>(
+export function useSocketIO({ url, ...options }: UseSocketOptions) {
+  const [readyState, setReadyState] = useState<ReadyState>(
     () => ReadyState.UNINSTANTIATED,
   );
 
   const socketRef = useRef<Socket<ListenEvents, EmitEvents>>(null);
-  const optionsRef = useRef<UseSocketOptions>(options);
+  const optionsRef = useRef<Options>(options);
   optionsRef.current = options;
 
   useEffect(() => {
     if (url) {
       const socket = SocketIO(url, optionsRef.current);
-      setState(ReadyState.CONNECTING);
+      setReadyState(ReadyState.CONNECTING);
       socketRef.current = socket;
 
       function onConnect() {
-        setState(ReadyState.CONNECTED);
+        setReadyState(ReadyState.CONNECTED);
       }
 
       function onDisconnect() {
-        setState(ReadyState.DISCONNECT);
+        setReadyState(ReadyState.DISCONNECT);
       }
 
       socket.on('connect', onConnect);
@@ -88,13 +87,11 @@ export function useSocketIO(url: string, options: UseSocketOptions = {}) {
         if (optionsRef.current?.onMessage && onMessage) {
           socket.off('on-message', onMessage);
         }
-
-        socket.close();
       };
     }
   }, [url]);
 
-  const sendMessage = useCallback<SendMessage>(
+  const sendMessage = useCallback(
     (
       message: IMessage,
       timeout: number = 10000, // Message sending timeout (millisecond)
@@ -121,7 +118,7 @@ export function useSocketIO(url: string, options: UseSocketOptions = {}) {
   );
 
   return {
-    state,
+    readyState,
     sendMessage,
   };
 }
