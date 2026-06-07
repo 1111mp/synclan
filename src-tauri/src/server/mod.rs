@@ -26,7 +26,6 @@ mod dtos;
 mod events;
 mod exception;
 mod extractors;
-mod guards;
 mod routes;
 mod status_code_serde;
 

@@ -1,11 +1,10 @@
 use anyhow::Result;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
 
 use crate::utils::db;
 
-#[derive(Debug, Deserialize, Serialize, sqlx::FromRow, ToSchema)]
+#[derive(Debug, Deserialize, Serialize, sqlx::FromRow)]
 #[serde(rename_all = "camelCase")]
 pub struct Message {
     pub id: Option<i32>,
@@ -15,9 +14,7 @@ pub struct Message {
     pub msg_type: MessageType,
     pub content: Option<String>,
     pub extra: Option<String>,
-    #[schema(value_type = String, format = "date-time")]
     pub created_at: Option<NaiveDateTime>,
-    #[schema(value_type = String, format = "date-time")]
     pub updated_at: Option<NaiveDateTime>,
 }
 
@@ -154,14 +151,11 @@ impl MessageAck {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, ToSchema)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct PaginatedMessages {
     pub messages: Vec<Message>,
-    #[schema(default = 0)]
     pub total: i64,
-    #[schema(default = 1)]
     pub current: u32,
-    #[schema(default = 10)]
     pub page_size: u32,
 }
 
@@ -172,7 +166,7 @@ pub enum MessageStatus {
     Readed,
 }
 
-#[derive(Debug, Deserialize, Serialize, sqlx::Type, ToSchema)]
+#[derive(Debug, Deserialize, Serialize, sqlx::Type)]
 #[serde(rename_all = "lowercase")]
 pub enum MessageType {
     Text,

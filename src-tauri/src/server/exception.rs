@@ -163,17 +163,7 @@ impl IntoResponse for HttpException {
 impl From<std::io::Error> for HttpException {
     fn from(err: std::io::Error) -> Self {
         logging_error!(Type::Server, true, "{}", err);
-        Self::InternalServerErrorException(Some(err.to_string()))
-    }
-}
-
-impl From<anyhow::Error> for HttpException {
-    fn from(err: anyhow::Error) -> Self {
-        logging_error!(Type::Server, true, "{}", err);
-        Self::InternalServerErrorException(Some(format!(
-            "Something went wrong: {}",
-            err.to_string()
-        )))
+        HttpException::InternalServerErrorException(Some(err.to_string()))
     }
 }
 

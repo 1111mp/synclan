@@ -1,17 +1,16 @@
 // use crate::guards::APP_AUTH_KEY;
 use utoipa::{
-    openapi::security::{HttpAuthScheme, HttpBuilder, SecurityScheme},
+    openapi::security::{ApiKey, ApiKeyValue, SecurityScheme},
     Modify, OpenApi,
 };
 
 pub const SYNCLAN_TAG: &str = "Synclan";
 pub const USER_TAG: &str = "User";
 pub const UPLOAD_TAG: &str = "Upload";
-pub const MESSAGE_TAG: &str = "Message";
 
 #[derive(OpenApi)]
 #[openapi(
-	info(title = "Synclan", description = "Synclan api docs"),
+	info(description = "App api docs"),
   servers(
     (url = "http://127.0.0.1:53317", description = "Local dev server"),
 		(url = "http://{domain}:{port}", description = "remote api", 
@@ -25,8 +24,7 @@ pub const MESSAGE_TAG: &str = "Message";
   tags(
     (name = SYNCLAN_TAG, description = "Synclan application API endpoints"),
     (name = USER_TAG, description = "User API endpoints"),
-    (name = UPLOAD_TAG, description = "Upload API endpoints"),
-    (name = MESSAGE_TAG, description = "Message API endpoints")
+    (name = UPLOAD_TAG, description = "Upload API endpoints")
   )
 )]
 pub struct ApiDoc;
@@ -36,10 +34,16 @@ pub struct SecurityAddon;
 impl Modify for SecurityAddon {
     fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
         if let Some(components) = openapi.components.as_mut() {
-            components.add_security_schemes_from_iter([(
-                "bearer_auth",
-                SecurityScheme::Http(HttpBuilder::new().scheme(HttpAuthScheme::Bearer).build()),
-            )]);
+            components.add_security_schemes_from_iter([
+                // (
+                //     "cookie_security",
+                //     SecurityScheme::ApiKey(ApiKey::Cookie(ApiKeyValue::new(APP_AUTH_KEY.as_str()))),
+                // ),
+                (
+                    "header_security",
+                    SecurityScheme::ApiKey(ApiKey::Header(ApiKeyValue::new("PRIVATE-TOKEN"))),
+                ),
+            ]);
         }
     }
 }
