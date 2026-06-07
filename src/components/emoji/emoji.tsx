@@ -5,12 +5,12 @@ import { cn } from '@/lib/utils';
 const variants = cva('', {
   variants: {
     size: {
-      16: 'size-4',
-      18: 'size-[18px]',
-      20: 'size-5',
-      24: 'size-6',
-      28: 'size-7',
-      32: 'size-8',
+      16: 'w-4 h-4',
+      18: 'w-[18px] h-[18px]',
+      20: 'w-5 h-5',
+      24: 'w-6 h-6',
+      28: 'w-7 h-7',
+      32: 'w-8 h-8',
     },
   },
 });
@@ -21,7 +21,7 @@ type Props = {
   skinTone?: SkinToneKey | number;
 } & VariantProps<typeof variants>;
 
-function Emoji({ emoji, shortName, skinTone = 0, size = 28 }: Props) {
+function Emoji({ emoji, shortName, skinTone, size = 28 }: Props) {
   let image = '';
   if (shortName) {
     image = getImagePath(shortName, skinTone);
@@ -36,7 +36,6 @@ function Emoji({ emoji, shortName, skinTone = 0, size = 28 }: Props) {
       src={image}
       aria-label={emoji}
       title={emoji}
-      data-tone={skinTone}
       data-short-name={shortName}
       className={cn('transform-gpu align-baseline', variants({ size }))}
     />

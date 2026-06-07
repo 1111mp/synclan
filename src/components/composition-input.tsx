@@ -1,12 +1,11 @@
-import { useImperativeHandle, useRef, type Ref } from 'react';
-import { $getSelection, $isRangeSelection, ParagraphNode } from 'lexical';
+import { ParagraphNode } from 'lexical';
 import { CodeNode } from '@lexical/code';
 import { HeadingNode, QuoteNode } from '@lexical/rich-text';
 import { AutoLinkNode, LinkNode } from '@lexical/link';
 import { TRANSFORMERS } from '@lexical/markdown';
 import { ListNode, ListItemNode } from '@lexical/list';
 import { $generateHtmlFromNodes } from '@lexical/html';
-import { $createEmojiNode, EmojiNode, type EmojiPickerProps } from './emoji';
+import { EmojiNode } from './emoji';
 import {
   LexicalComposer,
   type InitialConfigType,
@@ -20,7 +19,6 @@ import { ListPlugin } from '@lexical/react/LexicalListPlugin';
 import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
 import { TabIndentationPlugin } from '@lexical/react/LexicalTabIndentationPlugin';
 import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
-import { EditorRefPlugin } from '@lexical/react/LexicalEditorRefPlugin';
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
 import {
   AutoLinePlugin,
@@ -39,43 +37,17 @@ import type { EditorState, LexicalEditor } from 'lexical';
 const URL_MATCHER =
   /((https?:\/\/(www\.)?)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/;
 
-type CompositionInputProps = {
-  ref?: Ref<CompositionInputRef>;
+type Props = {
   onEmptyChange?: IsEmptyPluginProps['onChange'];
   onFocusChange?: IsFocusedPluginProps['onFocusChange'];
   onLineChange?: AutoLinePluginProps['onLineChange'];
 };
 
-type CompositionInputRef = {
-  onPickEmoji: EmojiPickerProps['onPickEmoji'];
-};
-
 function CompositionInput({
-  ref,
   onEmptyChange,
   onFocusChange,
   onLineChange,
-}: CompositionInputProps) {
-  const editorRef = useRef<LexicalEditor>(null);
-
-  useImperativeHandle(ref, () => ({
-    onPickEmoji: onPickEmojiHandle,
-  }));
-
-  const onPickEmojiHandle: EmojiPickerProps['onPickEmoji'] = ({
-    shortName,
-    skinTone,
-  }) => {
-    if (!editorRef.current) return;
-
-    editorRef.current.update(() => {
-      const selection = $getSelection();
-      if (!$isRangeSelection(selection)) return;
-
-      selection.insertNodes([$createEmojiNode(shortName, skinTone)]);
-    });
-  };
-
+}: Props) {
   const initialConfig: InitialConfigType = {
     namespace: 'synclan-editor',
     nodes: [
@@ -91,7 +63,7 @@ function CompositionInput({
     ],
     theme: {
       paragraph: 'mt-0 mb-0',
-      link: 'font-light text-blue-500 no-underline',
+      link: 'text-blue-500',
       list: {
         ul: 'mt-0 mb-0 pl-0 list-outside marker:text-blue-500',
         ulDepth: ['list-disc', 'list-[circle]', 'list-[square]'],
@@ -132,7 +104,6 @@ function CompositionInput({
           }
           ErrorBoundary={LexicalErrorBoundary}
         />
-        <EditorRefPlugin editorRef={editorRef} />
         <HistoryPlugin />
         <AutoFocusPlugin />
         <AutoLinkPlugin
@@ -178,8 +149,4 @@ function CompositionInput({
   );
 }
 
-export {
-  CompositionInput,
-  type CompositionInputProps,
-  type CompositionInputRef,
-};
+export { CompositionInput };
