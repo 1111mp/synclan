@@ -1,13 +1,9 @@
 import { useImperativeHandle, useRef, type Ref } from 'react';
 import { $getSelection, $isRangeSelection, ParagraphNode } from 'lexical';
-import { CodeHighlightNode, CodeNode } from '@lexical/code';
+import { CodeNode } from '@lexical/code';
 import { HeadingNode, QuoteNode } from '@lexical/rich-text';
 import { AutoLinkNode, LinkNode } from '@lexical/link';
-import {
-  ELEMENT_TRANSFORMERS,
-  TEXT_FORMAT_TRANSFORMERS,
-  TEXT_MATCH_TRANSFORMERS,
-} from '@lexical/markdown';
+import { TRANSFORMERS } from '@lexical/markdown';
 import { ListNode, ListItemNode } from '@lexical/list';
 import { $generateHtmlFromNodes } from '@lexical/html';
 import { $createEmojiNode, EmojiNode, type EmojiPickerProps } from './emoji';
@@ -29,8 +25,6 @@ import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
 import {
   AutoLinePlugin,
   ClearSelectionPlugin,
-  CodeHighlightShikiPlugin,
-  CodeNodeToolbarPlugin,
   EmojiPickerPlugin,
   EnterPlugin,
   IsEmptyPlugin,
@@ -39,8 +33,6 @@ import {
   type IsEmptyPluginProps,
   type IsFocusedPluginProps,
 } from './plugins';
-import { CODE_PLUS } from './transformers';
-import { $createCodePlusNode, CodePlusNode } from './nodes';
 
 import type { EditorState, LexicalEditor } from 'lexical';
 
@@ -94,18 +86,10 @@ function CompositionInput({
       ParagraphNode,
       HeadingNode,
       QuoteNode,
-      CodePlusNode,
-      {
-        replace: CodeNode,
-        with: (node: CodeNode) =>
-          $createCodePlusNode(node.getLanguage(), node.getTheme()),
-        withKlass: CodePlusNode,
-      },
-      CodeHighlightNode,
+      CodeNode,
       EmojiNode,
     ],
     theme: {
-      code: 'block relative pt-7 pb-4 pl-[72px] pr-2 border rounded-md bg-muted! text-muted-foreground! before:absolute before:top-0 before:left-0 before:content-[attr(data-gutter)] before:p-2 before:pt-[29px] before:pl-8 before:min-w-6 before:font-thin',
       paragraph: 'mt-0 mb-0',
       link: 'font-light text-blue-500 no-underline',
       list: {
@@ -133,14 +117,11 @@ function CompositionInput({
 
   return (
     <LexicalComposer initialConfig={initialConfig}>
-      <div
-        id='synclan-composition-scroll-wrapper'
-        className='relative px-3 max-h-56 overflow-y-auto scrollbar-color dark:scrollbar-color'
-      >
+      <div className='relative px-3 max-h-56 overflow-y-auto scrollbar-color dark:scrollbar-color'>
         <RichTextPlugin
           contentEditable={
             <ContentEditable
-              className='w-full max-w-none text-sm leading-5 text-foreground outline-none focus:outline-none'
+              className='prose w-full max-w-none text-sm leading-5 text-foreground outline-none focus:outline-none'
               aria-placeholder='Enter Message'
               placeholder={
                 <p className='inline-block absolute top-0 text-sm text-muted-foreground select-none pointer-events-none'>
@@ -178,18 +159,9 @@ function CompositionInput({
             },
           ]}
         />
-        <MarkdownShortcutPlugin
-          transformers={[
-            ...ELEMENT_TRANSFORMERS,
-            ...TEXT_FORMAT_TRANSFORMERS,
-            ...TEXT_MATCH_TRANSFORMERS,
-            ...[CODE_PLUS],
-          ]}
-        />
-        <CodeHighlightShikiPlugin />
-        <CodeNodeToolbarPlugin />
         <ListPlugin hasStrictIndent={false} />
         <TabIndentationPlugin maxIndent={3} />
+        <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
         <ClearSelectionPlugin />
         <EmojiPickerPlugin />
         <AutoLinePlugin onLineChange={onLineChange} />
