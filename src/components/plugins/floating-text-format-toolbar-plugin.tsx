@@ -11,11 +11,9 @@ import {
   $isParagraphNode,
   $isRangeSelection,
   $isTextNode,
-  COMMAND_PRIORITY_CRITICAL,
   COMMAND_PRIORITY_LOW,
   FORMAT_TEXT_COMMAND,
   getDOMSelection,
-  KEY_ESCAPE_COMMAND,
   SELECTION_CHANGE_COMMAND,
   type LexicalEditor,
   type LexicalNode,
@@ -44,9 +42,7 @@ import {
   FloatingPortal,
   offset,
   shift,
-  useDismiss,
   useFloating,
-  useInteractions,
 } from '@floating-ui/react';
 import {
   $createNestedListWithDepth,
@@ -101,18 +97,13 @@ function TextFormatFloatingToolbar({
 }) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
 
-  const { refs, floatingStyles, context } = useFloating({
+  const { refs, floatingStyles } = useFloating({
     open: isOpen,
     onOpenChange: setIsOpen,
     placement: 'top-start',
     middleware: [offset(10), flip(), shift()],
     whileElementsMounted: autoUpdate,
   });
-
-  const dismiss = useDismiss(context, {
-    escapeKey: false,
-  });
-  const { getFloatingProps } = useInteractions([dismiss]);
 
   const $updateTextFormatFloatingToolbar = useCallback(() => {
     const selection = $getSelection();
@@ -156,21 +147,8 @@ function TextFormatFloatingToolbar({
         },
         COMMAND_PRIORITY_LOW,
       ),
-
-      editor.registerCommand(
-        KEY_ESCAPE_COMMAND,
-        (event) => {
-          if (isOpen) {
-            event.preventDefault();
-            return true;
-          }
-
-          return false;
-        },
-        COMMAND_PRIORITY_CRITICAL,
-      ),
     );
-  }, [editor, isOpen, $updateTextFormatFloatingToolbar]);
+  }, [editor, $updateTextFormatFloatingToolbar]);
 
   if (!isOpen) return null;
 
@@ -180,7 +158,6 @@ function TextFormatFloatingToolbar({
         ref={refs.setFloating}
         className='flex items-center p-2 rounded-md border bg-popover text-popover-foreground'
         style={floatingStyles}
-        {...getFloatingProps()}
       >
         <Button
           className={cn(
