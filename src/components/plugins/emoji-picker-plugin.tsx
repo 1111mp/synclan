@@ -74,7 +74,7 @@ function EmojiPickerPlugin() {
         refs.setPositionReference({
           getBoundingClientRect: r.getRect,
         });
-        // oxlint-disable-next-line react-compiler/react-compiler
+        // eslint-disable-next-line react-compiler/react-compiler
         editor.__emojiMenuOpen = true;
       }}
       onClose={() => {

@@ -136,7 +136,7 @@ function TextFormatFloatingToolbar({
       refs.setPositionReference(virtualEl);
       setIsOpen(true);
     }
-  }, [editor, refs]);
+  }, [editor]);
 
   useEffect(() => {
     editor.getEditorState().read(() => {

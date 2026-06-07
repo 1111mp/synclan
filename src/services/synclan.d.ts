@@ -1,5 +1,5 @@
 interface ISynclanConfig {
-  app_log_level?: 'trace' | 'debug' | 'info' | 'warn' | 'error';
+  app_log_level?: 'trace' | 'debug' | 'info' | 'warn' | 'error' | string;
   locale?: string;
   theme?: 'light' | 'dark' | 'system';
   enable_auto_launch?: boolean;

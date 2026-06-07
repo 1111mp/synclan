@@ -212,7 +212,7 @@ function CodeToolbar({ nodeKey }: { nodeKey: string }) {
     try {
       await navigator.clipboard.writeText(content);
       toast.success('复制成功');
-    } catch {
+    } catch (err) {
       toast.error('复制失败');
     }
   };

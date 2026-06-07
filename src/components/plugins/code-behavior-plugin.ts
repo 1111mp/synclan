@@ -103,10 +103,10 @@ function isSelectedAll(root: RootNode, selection: RangeSelection) {
   const selected = new Set();
   const nodes = selection.getNodes();
   for (const n of nodes) {
-    const top = n.getTopLevelElement();
-    if (top) {
+    try {
+      const top = n.getTopLevelElementOrThrow();
       selected.add(top.getKey());
-    }
+    } catch {}
   }
 
   return root.getChildrenSize() === selected.size;

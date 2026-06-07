@@ -15,7 +15,7 @@ function App() {
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;
-    void listen<PreviewContext>('synclan://update-preview-data', (event) => {
+    listen<PreviewContext>('synclan://update-preview-data', (event) => {
       console.log('子窗口收到事件:', event);
       // setList(event.payload);
     }).then((fn) => (unlisten = fn));

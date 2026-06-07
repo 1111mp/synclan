@@ -157,7 +157,7 @@ function RoomPage() {
     const getScrollOffset = virtualizer.getScrollOffset;
 
     // @ts-expect-error Overriding private method.
-    // oxlint-disable-next-line react-compiler/react-compiler
+    // eslint-disable-next-line react-compiler/react-compiler
     virtualizer.getScrollOffset = () => Math.abs(getScrollOffset());
   }, [virtualizer]);
 
@@ -172,7 +172,7 @@ function RoomPage() {
   useEffect(() => {
     if (!mounted.current || !loaderInView.inView || isFetchingNextPage) return;
 
-    void fetchNextPage();
+    fetchNextPage();
   }, [fetchNextPage, isFetchingNextPage, loaderInView.inView]);
 
   const items = virtualizer.getVirtualItems();

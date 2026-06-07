@@ -418,7 +418,7 @@ function LinkPlugin({
         ref={refs.setFloating}
         className='py-3 px-4 space-y-3 border rounded-md bg-popover text-popover-foreground'
         style={floatingStyles}
-        {...getFloatingProps()}
+        {...getFloatingProps}
       >
         {activedLinkNode === null ? (
           <>
@@ -833,10 +833,10 @@ function caretFromPoint(
       node: range.startContainer,
       offset: range.startOffset,
     };
-    // oxlint-disable-next-line @typescript-eslint/ban-ts-comment
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
   } else if (document.caretPositionFromPoint !== 'undefined') {
-    // oxlint-disable-next-line @typescript-eslint/ban-ts-comment
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore FF - no types
     const range = document.caretPositionFromPoint(x, y);
     if (range === null) {
