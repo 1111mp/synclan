@@ -57,8 +57,8 @@ function MessageWrapper({
             'relative w-fit max-w-4/5 px-2 py-3 text-base leading-6 rounded-md shadow-md bg-gray-05 dark:bg-gray-75',
             'before:absolute before:top-3.5 before:border-6 before:border-solid before:border-transparent',
             position === 'left'
-              ? 'before:right-full before:border-r-gray-05 dark:before:border-r-gray-75'
-              : 'before:left-full before:border-l-gray-05 dark:before:border-l-gray-75',
+              ? 'before:right-full before:border-r-gray-05'
+              : 'before:left-full before:border-l-gray-05',
           )}
         >
           {renderMessage()}

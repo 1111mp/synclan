@@ -143,6 +143,7 @@
 }
 
 @layer base {
+
   html,
   body {
     width: 100%;
@@ -179,11 +180,11 @@
   }
 
   .scrollbar-color {
-    scrollbar-color: var(--color-neutral-500) rgba(0, 0, 0, 0.1);
+    scrollbar-color: var(--color-neutral-500) rgba(0, 0, 0, .1);
   }
 
   .dark .scrollbar-color {
-    scrollbar-color: var(--color-neutral-500) rgba(255, 255, 255, 0.1);
+    scrollbar-color: var(--color-neutral-500) rgba(255, 255, 255, .1);
   }
 
   /* Hide scrollbar for Chrome, Safari and Opera */
