@@ -73,9 +73,7 @@ pub fn run() {
             // client
             cmd::get_client_by_id,
             cmd::create_client,
-            cmd::patch_client,
-            // preview window
-            cmd::create_preview_window
+            cmd::patch_client
         ]);
 
     #[cfg(debug_assertions)]

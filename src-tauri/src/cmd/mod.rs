@@ -8,11 +8,9 @@ pub mod client;
 pub mod server;
 pub mod synclan;
 pub mod system;
-pub mod webview_window;
 
 pub use app::*;
 pub use client::*;
 pub use server::*;
 pub use synclan::*;
 pub use system::*;
-pub use webview_window::*;
