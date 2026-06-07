@@ -36,7 +36,6 @@ import { $copyBlockFormatIndent } from '@lexical/selection';
 import { $createQuoteNode, $isQuoteNode } from '@lexical/rich-text';
 import { $isListItemNode, $isListNode, ListNode } from '@lexical/list';
 import { $isCodeHighlightNode } from '@lexical/code';
-import { $isLinkNode } from '@lexical/link';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { mergeRegister } from '@lexical/utils';
 import {
@@ -434,7 +433,7 @@ function TextFormatFloatingToolbar({
         <Button
           variant='ghost'
           size='xs'
-          disabled={isOrderedList || isBulletList || isQuota || isLink}
+          disabled={isOrderedList || isBulletList || isQuota}
         >
           <Braces />
         </Button>
@@ -512,12 +511,6 @@ function FloatingTextFormatToolbarPlugin({
       }
 
       // Update links
-      const parent = node.getParent();
-      if ($isLinkNode(parent) || $isLinkNode(node)) {
-        setIsLink(true);
-      } else {
-        setIsLink(false);
-      }
 
       if (
         !$isCodeHighlightNode(anchorNode) &&

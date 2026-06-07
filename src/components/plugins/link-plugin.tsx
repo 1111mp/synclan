@@ -14,12 +14,11 @@ import {
   createCommand,
   getDOMSelection,
   type LexicalEditor,
+  type BaseSelection,
   type LexicalCommand,
   type LexicalNode,
   type NodeKey,
   type Point,
-  $getNodeByKey,
-  $createTextNode,
 } from 'lexical';
 import {
   $createLinkNode,
@@ -77,15 +76,13 @@ function LinkPlugin({
 }: Props): JSX.Element | null {
   const [linkUrl, setLinkUrl] = useState<string>('');
   const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [lastSelection, setLastSelection] = useState<BaseSelection | null>(
+    null,
+  );
   const [activedLinkNode, setActivedLinkNode] = useState<LinkNodeInfo | null>(
     null,
   );
-  const [isEdit, setIsEdit] = useState<boolean>(false);
-  const [nodeText, setNodeText] = useState<string>('');
-  const [nodeUrl, setNodeUrl] = useState<string>('');
-
   const inputRef = useRef<HTMLInputElement>(null);
-  const pendingLinkNodes = useRef<NodeKey[]>([]);
 
   const [editor] = useLexicalComposerContext();
 
@@ -113,7 +110,6 @@ function LinkPlugin({
       if (
         isOpen &&
         activedLinkNode !== null &&
-        !isEdit &&
         target.closest('#synclan-composition-scroll-wrapper a')
       ) {
         return false;
@@ -124,16 +120,17 @@ function LinkPlugin({
 
   const { getFloatingProps } = useInteractions([dismiss]);
 
-  const updatePendingLinkNodes = (key: NodeKey) => {
-    pendingLinkNodes.current.push(key);
-  };
-
   useEffect(() => {
     if (!editor.hasNodes([LinkNode])) {
       throw new Error('LinkPlugin: LinkNode not registered on editor');
     }
 
     const showEditor = () => {
+      const selection = $getSelection();
+      if (selection) {
+        setLastSelection(selection.clone());
+      }
+
       const nativeSelection = getDOMSelection(editor._window);
       if (nativeSelection && nativeSelection.rangeCount > 0) {
         const range = nativeSelection.getRangeAt(0),
@@ -162,8 +159,10 @@ function LinkPlugin({
       editor.registerCommand(
         TOGGLE_LINK_CREATE_COMMAND,
         (payload) => {
+          const selection = $getSelection();
+
           if (payload === null) {
-            $toggleLink(editor, payload, {}, updatePendingLinkNodes);
+            $toggleLink(editor, selection, payload);
             return true;
           } else if (typeof payload === 'string') {
             if (
@@ -171,24 +170,19 @@ function LinkPlugin({
               validateUrl === undefined ||
               validateUrl(payload)
             ) {
-              $toggleLink(editor, payload, attributes, updatePendingLinkNodes);
+              $toggleLink(editor, selection, payload, attributes);
               showEditor();
               return true;
             }
             return false;
           } else {
             const { url, target, rel, title } = payload;
-            $toggleLink(
-              editor,
-              url,
-              {
-                ...attributes,
-                rel,
-                target,
-                title,
-              },
-              updatePendingLinkNodes,
-            );
+            $toggleLink(editor, selection, url, {
+              ...attributes,
+              rel,
+              target,
+              title,
+            });
             showEditor();
             return true;
           }
@@ -212,6 +206,8 @@ function LinkPlugin({
             if (event.metaKey || event.ctrlKey) {
               window.open(linkNode.getURL(), '_blank');
             } else {
+              console.log('click', linkNode);
+
               const element = editor.getElementByKey(linkNode.getKey());
               if (!element) return true;
 
@@ -286,20 +282,12 @@ function LinkPlugin({
     });
 
     editor.update(() => {
-      pendingLinkNodes.current.forEach((key) => {
-        const linkNode = $getNodeByKey(key);
-        if ($isLinkNode(linkNode)) {
-          // Unwrap LinkNode, we already have one or it's an AutoLinkNode
-          for (const child of linkNode.getChildren()) {
-            linkNode.insertBefore(child);
-          }
-          linkNode.remove();
-        }
-      });
+      if (lastSelection) {
+        $toggleLink(editor, lastSelection, null);
+      }
 
-      const selection = $getSelection();
-      if ($isRangeSelection(selection)) {
-        const parent = getSelectedNode(selection).getParent();
+      if ($isRangeSelection(lastSelection)) {
+        const parent = getSelectedNode(lastSelection).getParent();
         if ($isAutoLinkNode(parent)) {
           const linkNode = $createLinkNode(parent.getURL(), {
             rel: parent.__rel,
@@ -310,14 +298,10 @@ function LinkPlugin({
         }
       }
     });
-    pendingLinkNodes.current = [];
 
     setLinkUrl('');
-
-    setIsEdit(false);
-    setNodeUrl('');
-    setNodeText('');
     setActivedLinkNode(null);
+    setLastSelection(null);
   };
 
   const handleLinkSubmission = (
@@ -333,24 +317,20 @@ function LinkPlugin({
     });
 
     editor.update(() => {
-      pendingLinkNodes.current.forEach((key) => {
-        const linkNode = $getNodeByKey(key);
-        if ($isLinkNode(linkNode)) {
-          updateLinkNodeInfo(
-            linkNode,
-            linkUrl,
-            hasLinkAttributes
-              ? { rel: 'noopener noreferrer', target: '_blank' }
-              : void 0,
-          );
-          $updateLinkNodeTransition(editor, key, true);
-          linkNode.select();
-        }
-      });
+      $toggleLink(
+        editor,
+        lastSelection,
+        linkUrl,
+        hasLinkAttributes
+          ? {
+              rel: 'noopener noreferrer',
+              target: '_blank',
+            }
+          : void 0,
+      );
 
-      const selection = $getSelection();
-      if ($isRangeSelection(selection)) {
-        const parent = getSelectedNode(selection).getParent();
+      if ($isRangeSelection(lastSelection)) {
+        const parent = getSelectedNode(lastSelection).getParent();
         if ($isAutoLinkNode(parent)) {
           const linkNode = $createLinkNode(parent.getURL(), {
             rel: parent.__rel,
@@ -362,52 +342,8 @@ function LinkPlugin({
       }
     });
 
-    pendingLinkNodes.current = [];
-
     setLinkUrl('');
-  };
-
-  const handleLinkInfoSubmission = (
-    event:
-      | React.KeyboardEvent<HTMLInputElement>
-      | React.MouseEvent<HTMLElement>,
-  ) => {
-    event.preventDefault();
-
-    if (activedLinkNode === null) return;
-
-    // delayed close
-    setTimeout(() => {
-      setIsOpen(false);
-    });
-
-    if (validateUrl(nodeUrl) && nodeText.trim() !== '') {
-      editor.update(() => {
-        const linkNode = $getNodeByKey(activedLinkNode?.key);
-        if ($isLinkNode(linkNode)) {
-          linkNode.setURL(nodeUrl);
-
-          const children = linkNode.getChildren();
-          if (children.length > 0) {
-            children[0].replace($createTextNode(nodeText));
-            for (let i = 1; i < children.length; i++) {
-              children[i].remove();
-            }
-          } else {
-            linkNode.append($createTextNode(nodeText));
-          }
-
-          linkNode.selectEnd();
-        }
-      });
-    }
-
-    pendingLinkNodes.current = [];
-
-    setIsEdit(false);
-    setNodeUrl('');
-    setNodeText('');
-    setActivedLinkNode(null);
+    setLastSelection(null);
   };
 
   if (!isOpen) return null;
@@ -464,114 +400,29 @@ function LinkPlugin({
           <div className='space-y-3'>
             <div className='flex items-center space-x-2'>
               <Label className='font-light'>文本：</Label>
-              {isEdit ? (
-                <Input
-                  autoFocus
-                  className='w-56 h-7'
-                  value={nodeText}
-                  onChange={(event) => {
-                    setNodeText(event.target.value);
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') {
-                      handleLinkInfoSubmission(event);
-                    }
-                  }}
-                />
-              ) : (
-                <p className='w-56 truncate'>{activedLinkNode.text}</p>
-              )}
+              <p className='w-56 truncate'>{activedLinkNode.text}</p>
             </div>
             <div className='flex items-center space-x-2'>
               <Label className='font-light'>链接：</Label>
-              {isEdit ? (
-                <Input
-                  className='w-56 h-7'
-                  value={nodeUrl}
-                  onChange={(event) => {
-                    setNodeUrl(event.target.value);
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') {
-                      handleLinkInfoSubmission(event);
-                    }
-                  }}
-                />
-              ) : (
-                <p>
-                  <span
-                    className='inline-block max-w-56 truncate cursor-pointer hover:underline text-blue-500'
-                    onClick={() => {
-                      window.open(activedLinkNode.url, '_blank');
-                    }}
-                  >
-                    {activedLinkNode.url}
-                  </span>
-                </p>
-              )}
+              <p
+                className='w-56 text-blue-500 truncate cursor-pointer hover:underline'
+                onClick={() => {
+                  window.open(activedLinkNode.url, '_blank');
+                }}
+              >
+                {activedLinkNode.url}
+              </p>
             </div>
             <div className='flex justify-end'>
-              {isEdit ? (
-                <div className='flex item-center space-x-2'>
-                  <Button
-                    size='xxs'
-                    variant='outline'
-                    onClick={() => {
-                      onAfterCloseHandle();
-                      editor?.focus();
-                    }}
-                  >
-                    取消
-                  </Button>
-                  <Button
-                    size='xxs'
-                    className='text-popover-foreground'
-                    disabled={!validateUrl(nodeUrl)}
-                    onClick={handleLinkInfoSubmission}
-                  >
-                    确认
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  className='font-light'
-                  variant='outline'
-                  size='xxs'
-                  onClick={() => {
-                    setIsEdit(true);
-                    setNodeUrl(activedLinkNode.url);
-                    setNodeText(activedLinkNode.text);
-                  }}
-                >
-                  编辑链接
-                </Button>
-              )}
+              <Button className='font-light' variant='outline' size='xxs'>
+                编辑链接
+              </Button>
             </div>
           </div>
         )}
       </div>
     </FloatingPortal>
   );
-}
-
-function updateLinkNodeInfo(
-  linkNode: LinkNode,
-  url: string,
-  attributes: LinkAttributes = {},
-) {
-  const { target, title } = attributes;
-  const rel = attributes.rel === undefined ? 'noreferrer' : attributes.rel;
-
-  linkNode.setURL(url);
-  if (target !== undefined) {
-    linkNode.setTarget(target);
-  }
-  if (rel !== undefined) {
-    linkNode.setRel(rel);
-  }
-  if (title !== undefined) {
-    linkNode.setTitle(title);
-  }
 }
 
 /**
@@ -582,14 +433,12 @@ function updateLinkNodeInfo(
  */
 export function $toggleLink(
   editor: LexicalEditor,
-  // selection: BaseSelection | null,
+  selection: BaseSelection | null,
   url: null | string,
   attributes: LinkAttributes = {},
-  updatePendingLinkNodes?: (key: NodeKey) => void,
 ): void {
   const { target, title } = attributes;
   const rel = attributes.rel === undefined ? 'noreferrer' : attributes.rel;
-  const selection = $getSelection();
   if (
     selection === null ||
     (!$isRangeSelection(selection) && !$isNodeSelection(selection))
@@ -633,11 +482,8 @@ export function $toggleLink(
           if (rel !== undefined) {
             existingLink.setRel(rel);
           }
-          $updateLinkNodeTransition(editor, existingLink.getKey(), true);
         } else {
           const linkNode = $createLinkNode(url, { rel, target });
-          updatePendingLinkNodes?.(linkNode.getKey());
-          $updateLinkNodeTransition(editor, linkNode.getKey());
           node.insertBefore(linkNode);
           linkNode.append(node);
         }
@@ -669,7 +515,26 @@ export function $toggleLink(
     });
     return;
   }
+  const updatedNodes = new Set<NodeKey>();
+  const updateLinkNode = (linkNode: LinkNode) => {
+    if (updatedNodes.has(linkNode.getKey())) {
+      return;
+    }
+    updatedNodes.add(linkNode.getKey());
+    linkNode.setURL(url);
+    if (target !== undefined) {
+      linkNode.setTarget(target);
+    }
+    if (rel !== undefined) {
+      linkNode.setRel(rel);
+    }
+    if (title !== undefined) {
+      linkNode.setTitle(title);
+    }
 
+    linkNode?.select();
+    $updateLinkNodeTransition(editor, linkNode.getKey(), true);
+  };
   // Add or merge LinkNodes
   if (nodes.length === 1) {
     const firstNode = nodes[0];
@@ -677,8 +542,7 @@ export function $toggleLink(
     // parent is a LinkNode, we update the URL, target and rel.
     const linkNode = $getAncestor(firstNode, $isLinkNode);
     if (linkNode !== null) {
-      // return updateLinkNode(linkNode);
-      return;
+      return updateLinkNode(linkNode);
     }
   }
 
@@ -690,11 +554,13 @@ export function $toggleLink(
       }
 
       if ($isEmojiNode(node)) {
+        linkNode = null;
         continue;
       }
 
       const parentLinkNode = $getAncestor(node, $isLinkNode);
       if (parentLinkNode) {
+        updateLinkNode(parentLinkNode);
         continue;
       }
       if ($isElementNode(node)) {
@@ -710,6 +576,7 @@ export function $toggleLink(
             !$isAutoLinkNode(node) &&
             (linkNode === null || !linkNode.getParentOrThrow().isParentOf(node))
           ) {
+            updateLinkNode(node);
             linkNode = node;
             continue;
           }
@@ -727,7 +594,6 @@ export function $toggleLink(
         continue;
       }
       linkNode = $createLinkNode(url, { rel, target, title });
-      updatePendingLinkNodes?.(linkNode.getKey());
       $updateLinkNodeTransition(editor, linkNode.getKey());
       node.insertAfter(linkNode);
       linkNode.append(node);
