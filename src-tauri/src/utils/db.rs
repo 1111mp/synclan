@@ -1,5 +1,4 @@
 use anyhow::{anyhow, Result};
-use apalis_sql::sqlite::SqliteStorage;
 use once_cell::sync::OnceCell;
 use parking_lot::RwLock;
 use sqlx::{
@@ -69,15 +68,6 @@ impl DBManager {
                 true,
                 migrate::Migrator::new(migration_dir)
                     .await?
-                    .set_ignore_missing(true)
-                    .run(&db_pool)
-                    .await
-            );
-            logging_error!(
-                Type::Server,
-                true,
-                SqliteStorage::migrations()
-                    .set_ignore_missing(true)
                     .run(&db_pool)
                     .await
             );

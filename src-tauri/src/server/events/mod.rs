@@ -9,6 +9,6 @@ pub mod store;
 #[serde(rename_all = "camelCase")]
 pub struct AckResponse {
     #[serde(with = "status_code_serde")]
-    pub status_code: StatusCode,
-    pub message: Option<String>,
+    status_code: StatusCode,
+    message: Option<String>,
 }

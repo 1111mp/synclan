@@ -1,73 +1,11 @@
-use crate::{
-    server::events::{store::Clients, AckResponse},
-    utils::db,
-};
 use anyhow::Result;
-use axum::http::StatusCode;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
-use socketioxide::SocketIo;
-use std::time::Duration;
 use utoipa::ToSchema;
 
-/// `MessageJob`
-///
-/// Represents the context for delivering a message to a client through Socket.IO.
-///
-/// Responsibilities:
-/// - Holds a [`SocketIo`] instance for accessing sockets.
-/// - Holds the active clients map for locating the target receiver.
-/// - Provides [`MessageJob::job_fn`] to send a message with ACK support.
-#[derive(Debug)]
-pub struct MessageJob {
-    /// Global Socket.IO instance used to look up sockets and emit events.
-    io: SocketIo,
+use crate::utils::db;
 
-    /// Active client registry mapping user IDs to connected sockets.
-    clients: Clients,
-}
-
-impl MessageJob {
-    pub fn new(io: SocketIo, clients: Clients) -> Self {
-        Self { io, clients }
-    }
-
-    /// Executes a single message delivery job.
-    ///
-    /// # Behavior
-    /// - Checks whether the receiver is online.
-    /// - If online, retrieves the corresponding socket.
-    /// - Emits an `"on-message"` event with a 6-second timeout.
-    /// - Waits for an ACK response from the client.
-    /// - If the response status is `200 OK`, marks the message as received.
-    ///
-    /// # Arguments
-    /// * `message` - The message to be delivered.
-    ///
-    /// # Returns
-    /// * `Ok(())` if the job completed successfully.
-    /// * `Err` if the message could not be delivered or ACK failed.
-    pub async fn job_fn(&self, message: Message) -> Result<()> {
-        if let Some(client) = self.clients.get(&message.receiver) {
-            // online
-            if let Some(socket) = self.io.get_socket(client.socket_id) {
-                let response = socket
-                    .timeout(Duration::from_secs(6))
-                    .emit_with_ack::<_, AckResponse>("on-message", &message)?
-                    .await?;
-                if response.status_code == StatusCode::OK {
-                    MessageAck::new(message.receiver, message.id)
-                        .received()
-                        .await?;
-                }
-            }
-        }
-
-        Ok(())
-    }
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, sqlx::FromRow, ToSchema)]
+#[derive(Debug, Deserialize, Serialize, sqlx::FromRow, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct Message {
     pub id: Option<i32>,
@@ -234,7 +172,7 @@ pub enum MessageStatus {
     Readed,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, sqlx::Type, ToSchema)]
+#[derive(Debug, Deserialize, Serialize, sqlx::Type, ToSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum MessageType {
     Text,

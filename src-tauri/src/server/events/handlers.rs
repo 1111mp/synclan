@@ -2,41 +2,58 @@ use super::{
     store::{Client, Clients},
     AckResponse,
 };
-use crate::{
-    module::{client, message::Message},
-    server::AppState,
+use crate::module::{
+    client,
+    message::{Message, MessageAck},
 };
 use anyhow::{anyhow, Result};
-use apalis::prelude::Storage;
 use axum::http::StatusCode;
 use serde::Deserialize;
-use socketioxide::extract::{AckSender, Data, Extension, SocketRef, State};
-use std::sync::Arc;
+use socketioxide::{
+    extract::{AckSender, Data, Extension, SocketRef, State},
+    SocketIo,
+};
+use std::{sync::Arc, time::Duration};
 
-async fn message_handler(app_state: &Arc<AppState>, payload: &Message) -> Result<()> {
+async fn message_handler(io: &SocketIo, payload: &Message, clients: &Clients) -> Result<()> {
     let message = payload.create().await?;
-    let mut storage = app_state.message_storage.clone();
-    storage.push(message).await?;
+
+    if let Some(client) = clients.get(&message.receiver) {
+        // online
+        if let Some(socket) = io.get_socket(client.socket_id) {
+            // TODO Pushing messages through the task queue
+            // Maybe we don't need it because the message concurrency is not high
+            let response = socket
+                .timeout(Duration::from_secs(6))
+                .emit_with_ack::<_, AckResponse>("on-message", &message)?
+                .await?;
+            if response.status_code == StatusCode::OK {
+                MessageAck::new(message.receiver, message.id)
+                    .received()
+                    .await?;
+            }
+        }
+    }
 
     Ok(())
 }
 
-pub async fn on_connection(socket: SocketRef) {
-    socket.on(
-        "synclan://message",
-        async |Data(payload): Data<Message>, State::<Arc<AppState>>(app_state), ack: AckSender| {
-            let resp = match message_handler(&app_state, &payload).await {
-                Ok(_) => AckResponse {
-                    status_code: StatusCode::OK,
-                    message: None,
-                },
-                Err(err) => AckResponse {
-                    status_code: StatusCode::INTERNAL_SERVER_ERROR,
-                    message: Some(format!("Message processing failed: {}", err)),
-                },
-            };
+pub async fn on_connection(socket: SocketRef, State(clients): State<Clients>) {
+    eprintln!("clients: {:?}", clients);
 
-            ack.send(&resp).ok();
+    socket.on(
+        "message",
+        async |io: SocketIo,
+               Data(payload): Data<Message>,
+               State::<Clients>(clients),
+               ack: AckSender| {
+            if let Err(err) = message_handler(&io, &payload, &clients).await {
+                ack.send(&AckResponse {
+                    status_code: StatusCode::INTERNAL_SERVER_ERROR,
+                    message: Some(format!("Failed to create message: {}", err)),
+                })
+                .ok();
+            }
         },
     );
 

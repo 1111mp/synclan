@@ -8,7 +8,7 @@ use crate::{
 };
 
 pub async fn resolve_setup_async(app_handle: &AppHandle) {
-    logging!(info, Type::Setup, true, "开始执行异步设置任务...");
+    logging!(info, Type::Setup, true, "执行异步设置任务...");
 
     #[cfg(target_os = "macos")]
     let _ = app_handle.set_activation_policy(tauri::ActivationPolicy::Regular);
@@ -23,22 +23,8 @@ pub async fn resolve_setup_async(app_handle: &AppHandle) {
 }
 
 pub fn create_window() -> Result<()> {
-    logging!(
-        info,
-        Type::Window,
-        true,
-        "Start creating and displaying the main window."
-    );
-
     if let Some(app_handle) = handle::Handle::global().app_handle() {
         if let Some(window) = app_handle.get_webview_window("main") {
-            logging!(
-                info,
-                Type::Window,
-                true,
-                "The main window already exists, the existing window will be displayed."
-            );
-
             let _ = window.show();
             let _ = window.set_focus();
             return Ok(());
@@ -68,8 +54,6 @@ pub fn create_window() -> Result<()> {
 
     match builder.build() {
         Ok(window) => {
-            logging!(debug, Type::Window, true, "主窗口实例创建成功");
-
             tauri::async_runtime::spawn(async move {
                 // Attempt to show and focus the window first.
                 let _ = window.show();
