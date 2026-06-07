@@ -27,7 +27,7 @@ import {
   LinkNode,
   type LinkAttributes,
 } from '@lexical/link';
-import { Button, Input, Label } from '../ui';
+import { Button, Input } from '../ui';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import {
   autoUpdate,
@@ -64,12 +64,6 @@ type Props = {
   validateUrl?: (url: string) => boolean;
 };
 
-type LinkNodeInfo = {
-  key: string;
-  url: string;
-  text: string;
-};
-
 function LinkPlugin({
   hasLinkAttributes = false,
   validateUrl = validateUrlHandle,
@@ -77,9 +71,6 @@ function LinkPlugin({
   const [linkUrl, setLinkUrl] = useState<string>('');
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [lastSelection, setLastSelection] = useState<BaseSelection | null>(
-    null,
-  );
-  const [activedLinkNode, setActivedLinkNode] = useState<LinkNodeInfo | null>(
     null,
   );
   const inputRef = useRef<HTMLInputElement>(null);
@@ -103,20 +94,7 @@ function LinkPlugin({
     whileElementsMounted: autoUpdate,
   });
 
-  const dismiss = useDismiss(context, {
-    outsidePressEvent: activedLinkNode !== null ? 'click' : 'mousedown',
-    outsidePress: (event) => {
-      const target = event.target as HTMLElement;
-      if (
-        isOpen &&
-        activedLinkNode !== null &&
-        target.closest('#synclan-composition-scroll-wrapper a')
-      ) {
-        return false;
-      }
-      return true;
-    },
-  });
+  const dismiss = useDismiss(context);
 
   const { getFloatingProps } = useInteractions([dismiss]);
 
@@ -198,34 +176,14 @@ function LinkPlugin({
 
           const linkNode = $findMatchingParent(node, $isLinkNode);
           if ($isLinkNode(linkNode)) {
-            event.preventDefault();
-
-            if (!linkNode.getURL() || !validateUrl(linkNode.getURL()))
-              return false;
-
-            if (event.metaKey || event.ctrlKey) {
-              window.open(linkNode.getURL(), '_blank');
-            } else {
-              console.log('click', linkNode);
-
-              const element = editor.getElementByKey(linkNode.getKey());
-              if (!element) return true;
-
-              const virtualEl = {
-                getBoundingClientRect: () => element.getBoundingClientRect(),
-                getClientRects: () => element.getClientRects(),
-              };
-
-              refs.setPositionReference(virtualEl);
-
-              setActivedLinkNode({
-                key: linkNode.getKey(),
-                url: linkNode.getURL(),
-                text: linkNode.getTextContent(),
-              });
-              setIsOpen(true);
+            if ($isLinkNode(linkNode)) {
+              if (event.metaKey || event.ctrlKey) {
+                window.open(linkNode.getURL(), '_blank');
+              } else {
+                console.log('click', linkNode);
+              }
+              return true;
             }
-            return true;
           }
 
           return false;
@@ -233,7 +191,7 @@ function LinkPlugin({
         COMMAND_PRIORITY_LOW,
       ),
     );
-  }, [editor, refs, hasLinkAttributes, validateUrl, setIsOpen]);
+  }, [editor, refs, hasLinkAttributes, validateUrl]);
 
   // Restore selection from cursor pointer
   useEffect(() => {
@@ -300,7 +258,6 @@ function LinkPlugin({
     });
 
     setLinkUrl('');
-    setActivedLinkNode(null);
     setLastSelection(null);
   };
 
@@ -356,70 +313,43 @@ function LinkPlugin({
         style={floatingStyles}
         {...getFloatingProps}
       >
-        {activedLinkNode === null ? (
-          <>
-            <div className='flex items-center space-x-3'>
-              <span className='inline-block w-8 text-xs'>链接</span>
-              <Input
-                ref={inputRef}
-                value={linkUrl}
-                className='w-56 h-7'
-                placeholder='粘贴或输入一个链接'
-                onChange={(event) => {
-                  setLinkUrl(event.target.value);
-                }}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' && validateUrlHandle(linkUrl)) {
-                    handleLinkSubmission(event);
-                  }
-                }}
-              />
-            </div>
-            <div className='flex justify-end items-center space-x-2'>
-              <Button
-                size='xxs'
-                variant='outline'
-                onClick={() => {
-                  onAfterCloseHandle();
-                  editor.focus();
-                }}
-              >
-                取消
-              </Button>
-              <Button
-                size='xxs'
-                className='text-popover-foreground'
-                disabled={!validateUrl(linkUrl)}
-                onClick={handleLinkSubmission}
-              >
-                确认
-              </Button>
-            </div>
-          </>
-        ) : (
-          <div className='space-y-3'>
-            <div className='flex items-center space-x-2'>
-              <Label className='font-light'>文本：</Label>
-              <p className='w-56 truncate'>{activedLinkNode.text}</p>
-            </div>
-            <div className='flex items-center space-x-2'>
-              <Label className='font-light'>链接：</Label>
-              <p
-                className='w-56 text-blue-500 truncate cursor-pointer hover:underline'
-                onClick={() => {
-                  window.open(activedLinkNode.url, '_blank');
-                }}
-              >
-                {activedLinkNode.url}
-              </p>
-            </div>
-            <div className='flex justify-end'>
-              <Button className='font-light' variant='outline' size='xxs'>
-                编辑链接
-              </Button>
-            </div>
-          </div>
-        )}
+        <div className='flex items-center space-x-3'>
+          <span className='inline-block w-8 text-xs'>链接</span>
+          <Input
+            ref={inputRef}
+            value={linkUrl}
+            className='w-56 h-7'
+            placeholder='粘贴或输入一个链接'
+            onChange={(event) => {
+              setLinkUrl(event.target.value);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' && validateUrlHandle(linkUrl)) {
+                handleLinkSubmission(event);
+              }
+            }}
+          />
+        </div>
+        <div className='flex justify-end items-center space-x-2'>
+          <Button
+            size='xxs'
+            variant='outline'
+            onClick={() => {
+              onAfterCloseHandle();
+              editor.focus();
+            }}
+          >
+            取消
+          </Button>
+          <Button
+            size='xxs'
+            className='text-popover-foreground'
+            disabled={!validateUrl(linkUrl)}
+            onClick={handleLinkSubmission}
+          >
+            确认
+          </Button>
+        </div>
       </div>
     </FloatingPortal>
   );
@@ -609,12 +539,7 @@ function $updateLinkNodeTransition(
   setTimeout(() => {
     const element = editor.getElementByKey(key);
     if (!element) return;
-    const classNames = [
-      'bg-input',
-      'text-foreground',
-      'cursor-text!',
-      'hover:no-underline!',
-    ];
+    const classNames = ['bg-input', 'text-foreground', 'cursor-text!'];
     if (isRemove) {
       element.classList.remove(...classNames);
     } else {
