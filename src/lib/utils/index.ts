@@ -1,4 +1,3 @@
-export * from './client.util';
-export * from './fingerprint.util';
-export * from './side-bar-width.util';
+export * from './fingerprint';
+export * from './side-bar-width';
 export * from './ts-cn';
