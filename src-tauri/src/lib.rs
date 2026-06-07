@@ -1,7 +1,6 @@
 mod cmd;
 mod config;
 mod core;
-mod feat;
 mod process;
 mod server;
 mod utils;
@@ -10,6 +9,12 @@ use core::handle;
 use process::AsyncHandler;
 use tokio::time::{timeout, Duration};
 use utils::{logging::Type, resolve};
+
+// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
+#[tauri::command]
+fn greet(name: &str) -> String {
+    format!("Hello, {}! You've been greeted from Rust!", name)
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -59,9 +64,7 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            // synclan
-            cmd::get_synclan_config,
-            cmd::patch_synclan_config,
+            greet,
             // system
             cmd::get_local_ip
         ]);

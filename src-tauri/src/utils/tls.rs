@@ -1,4 +1,4 @@
-use crate::config::{Config, ISynclan};
+use crate::config::Config;
 use anyhow::Result;
 use axum_server::tls_rustls::RustlsConfig;
 use rcgen::{CertificateParams, DistinguishedName, DnType, KeyPair, SanType};
@@ -31,12 +31,9 @@ pub async fn build_rustls_config_with_ip(ip: &IpAddr) -> Result<RustlsConfig> {
     let signing_key_pem = signing_key.serialize_pem();
 
     // save to config
-    let patch = ISynclan {
-        cert_pem: Some(cert_pem.clone()),
-        signing_key_pem: Some(signing_key_pem.clone()),
-        ..ISynclan::default()
-    };
-    Config::synclan().draft().patch_config(patch);
+    Config::synclan()
+        .draft()
+        .update_certificate_info(cert_pem.clone(), signing_key_pem.clone())?;
 
     match RustlsConfig::from_pem(cert_pem.into_bytes(), signing_key_pem.into_bytes()).await {
         Ok(config) => {
