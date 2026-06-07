@@ -13,7 +13,6 @@ import {
   COMMAND_PRIORITY_LOW,
   createCommand,
   getDOMSelection,
-  type LexicalEditor,
   type BaseSelection,
   type LexicalCommand,
   type LexicalNode,
@@ -62,11 +61,13 @@ export const TOGGLE_LINK_CREATE_COMMAND: LexicalCommand<
 type Props = {
   hasLinkAttributes?: boolean;
   validateUrl?: (url: string) => boolean;
+  onOpenChange?: (isOpen: boolean) => void;
 };
 
 function LinkPlugin({
   hasLinkAttributes = false,
   validateUrl = validateUrlHandle,
+  onOpenChange,
 }: Props): JSX.Element | null {
   const [linkUrl, setLinkUrl] = useState<string>('');
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -88,6 +89,8 @@ function LinkPlugin({
           editor?.focus();
         }
       }
+
+      onOpenChange?.(nextOpen);
     },
     placement: 'top-start',
     middleware: [offset(10), flip(), shift(), inline()],
@@ -98,40 +101,17 @@ function LinkPlugin({
 
   const { getFloatingProps } = useInteractions([dismiss]);
 
+  const attributes = hasLinkAttributes
+    ? {
+        rel: 'noopener noreferrer',
+        target: '_blank',
+      }
+    : void 0;
+
   useEffect(() => {
     if (!editor.hasNodes([LinkNode])) {
       throw new Error('LinkPlugin: LinkNode not registered on editor');
     }
-
-    const showEditor = () => {
-      const selection = $getSelection();
-      if (selection) {
-        setLastSelection(selection.clone());
-      }
-
-      const nativeSelection = getDOMSelection(editor._window);
-      if (nativeSelection && nativeSelection.rangeCount > 0) {
-        const range = nativeSelection.getRangeAt(0),
-          boundingClientRect = range.getBoundingClientRect(),
-          clientRects = range.getClientRects();
-        const virtualEl = {
-          getBoundingClientRect: () => boundingClientRect,
-          getClientRects: () => clientRects,
-        };
-
-        refs.setPositionReference(virtualEl);
-        setIsOpen(true);
-      }
-
-      $setSelection(null);
-    };
-
-    const attributes = hasLinkAttributes
-      ? {
-          rel: 'noopener noreferrer',
-          target: '_blank',
-        }
-      : void 0;
 
     return mergeRegister(
       editor.registerCommand(
@@ -140,7 +120,7 @@ function LinkPlugin({
           const selection = $getSelection();
 
           if (payload === null) {
-            $toggleLink(editor, selection, payload);
+            $toggleLink(selection, payload);
             return true;
           } else if (typeof payload === 'string') {
             if (
@@ -148,14 +128,14 @@ function LinkPlugin({
               validateUrl === undefined ||
               validateUrl(payload)
             ) {
-              $toggleLink(editor, selection, payload, attributes);
+              $toggleLink(selection, payload, attributes);
               showEditor();
               return true;
             }
             return false;
           } else {
             const { url, target, rel, title } = payload;
-            $toggleLink(editor, selection, url, {
+            $toggleLink(selection, url, {
               ...attributes,
               rel,
               target,
@@ -191,7 +171,7 @@ function LinkPlugin({
         COMMAND_PRIORITY_LOW,
       ),
     );
-  }, [editor, refs, hasLinkAttributes, validateUrl]);
+  }, [editor]);
 
   // Restore selection from cursor pointer
   useEffect(() => {
@@ -233,6 +213,30 @@ function LinkPlugin({
     }
   }, [isOpen]);
 
+  const showEditor = () => {
+    const selection = $getSelection();
+    if (selection) {
+      setLastSelection(selection.clone());
+    }
+
+    const nativeSelection = getDOMSelection(editor._window);
+    if (nativeSelection && nativeSelection.rangeCount > 0) {
+      const range = nativeSelection.getRangeAt(0),
+        boundingClientRect = range.getBoundingClientRect(),
+        clientRects = range.getClientRects();
+      const virtualEl = {
+        getBoundingClientRect: () => boundingClientRect,
+        getClientRects: () => clientRects,
+      };
+
+      refs.setPositionReference(virtualEl);
+      setIsOpen(true);
+      onOpenChange?.(true);
+    }
+
+    $setSelection(null);
+  };
+
   const onAfterCloseHandle = () => {
     // delayed close
     setTimeout(() => {
@@ -241,7 +245,7 @@ function LinkPlugin({
 
     editor.update(() => {
       if (lastSelection) {
-        $toggleLink(editor, lastSelection, null);
+        $toggleLink(lastSelection, null);
       }
 
       if ($isRangeSelection(lastSelection)) {
@@ -259,6 +263,7 @@ function LinkPlugin({
 
     setLinkUrl('');
     setLastSelection(null);
+    onOpenChange?.(false);
   };
 
   const handleLinkSubmission = (
@@ -274,17 +279,7 @@ function LinkPlugin({
     });
 
     editor.update(() => {
-      $toggleLink(
-        editor,
-        lastSelection,
-        linkUrl,
-        hasLinkAttributes
-          ? {
-              rel: 'noopener noreferrer',
-              target: '_blank',
-            }
-          : void 0,
-      );
+      $toggleLink(lastSelection, linkUrl, attributes);
 
       if ($isRangeSelection(lastSelection)) {
         const parent = getSelectedNode(lastSelection).getParent();
@@ -301,6 +296,7 @@ function LinkPlugin({
 
     setLinkUrl('');
     setLastSelection(null);
+    onOpenChange?.(false);
   };
 
   if (!isOpen) return null;
@@ -362,7 +358,6 @@ function LinkPlugin({
  * @param attributes - Optional HTML a tag attributes. \\{ target, rel, title \\}
  */
 export function $toggleLink(
-  editor: LexicalEditor,
   selection: BaseSelection | null,
   url: null | string,
   attributes: LinkAttributes = {},
@@ -463,7 +458,6 @@ export function $toggleLink(
     }
 
     linkNode?.select();
-    $updateLinkNodeTransition(editor, linkNode.getKey(), true);
   };
   // Add or merge LinkNodes
   if (nodes.length === 1) {
@@ -480,11 +474,6 @@ export function $toggleLink(
     let linkNode: LinkNode | null = null;
     for (const node of nodes) {
       if (!node.isAttached()) {
-        continue;
-      }
-
-      if ($isEmojiNode(node)) {
-        linkNode = null;
         continue;
       }
 
@@ -524,26 +513,8 @@ export function $toggleLink(
         continue;
       }
       linkNode = $createLinkNode(url, { rel, target, title });
-      $updateLinkNodeTransition(editor, linkNode.getKey());
       node.insertAfter(linkNode);
       linkNode.append(node);
-    }
-  });
-}
-
-function $updateLinkNodeTransition(
-  editor: LexicalEditor,
-  key: string,
-  isRemove: boolean = false,
-): void {
-  setTimeout(() => {
-    const element = editor.getElementByKey(key);
-    if (!element) return;
-    const classNames = ['bg-input', 'text-foreground', 'cursor-text!'];
-    if (isRemove) {
-      element.classList.remove(...classNames);
-    } else {
-      element.classList.add(...classNames);
     }
   });
 }
@@ -624,10 +595,8 @@ function caretFromPoint(
       node: range.startContainer,
       offset: range.startOffset,
     };
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
   } else if (document.caretPositionFromPoint !== 'undefined') {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore FF - no types
     const range = document.caretPositionFromPoint(x, y);
     if (range === null) {
