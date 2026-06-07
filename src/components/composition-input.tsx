@@ -59,11 +59,11 @@ import {
   $createSimpleListItemNode,
   SimpleQuoteNode,
   $createSimpleQuoteNode,
+  PreLinkNode,
 } from './nodes';
 
 import type { EditorState, LexicalEditor } from 'lexical';
 import type { EmojiPickerProps } from './emoji';
-import { cn } from '@/lib/utils';
 
 const URL_MATCHER =
   /((https?:\/\/(www\.)?)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/;
@@ -85,7 +85,6 @@ function CompositionInput({
   onFocusChange,
   onLineChange,
 }: CompositionInputProps) {
-  const [linkEditorOpen, setLinkEditorOpen] = useState<boolean>(false);
   const [isLinkEditMode, setIsLinkEditMode] = useState<boolean>(false);
 
   const editorRef = useRef<LexicalEditor>(null);
@@ -113,6 +112,7 @@ function CompositionInput({
     nodes: [
       AutoLinkNode,
       LinkNode,
+      PreLinkNode,
       SimpleListNode,
       {
         replace: ListNode,
@@ -190,10 +190,7 @@ function CompositionInput({
         <RichTextPlugin
           contentEditable={
             <ContentEditable
-              className={cn(
-                'w-full max-w-none text-sm leading-5 text-foreground outline-none focus:outline-none',
-                linkEditorOpen && '[&_a]:bg-input [&_a]:text-foreground',
-              )}
+              className='w-full max-w-none text-sm leading-5 text-foreground outline-none focus:outline-none'
               aria-placeholder='Enter Message'
               placeholder={
                 <p className='inline-block absolute top-0 text-sm text-muted-foreground select-none pointer-events-none'>
@@ -231,12 +228,7 @@ function CompositionInput({
             },
           ]}
         />
-        <LinkPlugin
-          hasLinkAttributes={true}
-          onOpenChange={(isOpen) => {
-            setLinkEditorOpen(isOpen);
-          }}
-        />
+        <LinkPlugin hasLinkAttributes={true} />
         <MarkdownShortcutPlugin
           transformers={[
             ...ELEMENT_TRANSFORMERS,
@@ -251,10 +243,10 @@ function CompositionInput({
         <FloatingTextFormatToolbarPlugin
           setIsLinkEditMode={setIsLinkEditMode}
         />
-        <FloatingLinkEditorPlugin
+        {/* <FloatingLinkEditorPlugin
           isLinkEditMode={isLinkEditMode}
           setIsLinkEditMode={setIsLinkEditMode}
-        />
+        /> */}
         <ListPlugin hasStrictIndent={false} />
         <TabIndentationPlugin maxIndent={3} />
         {/* <ClearSelectionPlugin /> */}

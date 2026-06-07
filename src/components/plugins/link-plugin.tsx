@@ -1,14 +1,13 @@
 import { useEffect, useRef, useState, type JSX } from 'react';
 import {
   $createRangeSelection,
-  $getNearestNodeFromDOMNode,
   $getSelection,
   $isElementNode,
   $isNodeSelection,
   $isRangeSelection,
   $normalizeSelection__EXPERIMENTAL,
   $setSelection,
-  COMMAND_PRIORITY_HIGH,
+  COMMAND_PRIORITY_LOW,
   createCommand,
   getDOMSelection,
   type BaseSelection,
@@ -16,6 +15,7 @@ import {
   type LexicalNode,
   type NodeKey,
   type Point,
+  type RangeSelection,
 } from 'lexical';
 import {
   $createLinkNode,
@@ -37,6 +37,7 @@ import {
   useFloating,
   useInteractions,
 } from '@floating-ui/react';
+import { $createPreLinkNode, $isPreLinkNode, PreLinkNode } from '../nodes';
 import { $findMatchingParent } from '@lexical/utils';
 import { $getAncestor } from './lib';
 import invariant from './invariant';
@@ -45,10 +46,10 @@ import invariant from './invariant';
 const urlRegExp = new RegExp(
   /((([A-Za-z]{3,9}:(?:\/\/)?)(?:[-;:&=+$,\w]+@)?[A-Za-z0-9.-]+|(?:www.|[-;:&=+$,\w]+@)[A-Za-z0-9.-]+)((?:\/[+~%/.\w-_]*)?\??(?:[-+=&;%@.\w_]*)#?(?:[\w]*))?)/,
 );
-export function validateUrlHandle(url: string): boolean {
+export function validateUrl(url: string): boolean {
   // TODO Fix UI for link insertion; it should never default to an invalid URL such as https://.
   // Maybe show a dialog where they user can type the URL before inserting it.
-  return url === 'https://' || urlRegExp.test(url);
+  return url !== '' && urlRegExp.test(url);
 }
 
 export const TOGGLE_LINK_CREATE_COMMAND: LexicalCommand<
@@ -57,34 +58,37 @@ export const TOGGLE_LINK_CREATE_COMMAND: LexicalCommand<
 
 type Props = {
   hasLinkAttributes?: boolean;
-  validateUrl?: (url: string) => boolean;
-  onOpenChange?: (isOpen: boolean) => void;
 };
 
-function LinkPlugin({
-  hasLinkAttributes = false,
-  validateUrl = validateUrlHandle,
-  onOpenChange,
-}: Props): JSX.Element | null {
+function LinkPlugin({ hasLinkAttributes = false }: Props): JSX.Element | null {
   const [linkUrl, setLinkUrl] = useState<string>('');
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  const [lastSelection, setLastSelection] = useState<BaseSelection | null>(
-    null,
-  );
+  const [lastSelection, setLastSelection] = useState<Pick<
+    RangeSelection,
+    'anchor' | 'focus'
+  > | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [editor] = useLexicalComposerContext();
 
   const { context, refs, floatingStyles } = useFloating({
     open: isOpen,
-    onOpenChange: (nextOpen) => {
-      if (nextOpen) {
-        setIsOpen(nextOpen);
-      } else {
-        onAfterCloseHandle();
-      }
+    onOpenChange: (nextOpen, _event, reason) => {
+      setIsOpen(nextOpen);
 
-      onOpenChange?.(nextOpen);
+      // hide
+      if (!nextOpen) {
+        setLinkUrl('');
+        setLastSelection(null);
+
+        if (reason === 'escape-key') {
+          onAfterCloseHandle();
+        } else {
+          setTimeout(() => {
+            onAfterCloseHandle();
+          });
+        }
+      }
     },
     placement: 'top-start',
     middleware: [offset(10), flip(), shift(), inline()],
@@ -96,87 +100,47 @@ function LinkPlugin({
   const { getFloatingProps } = useInteractions([dismiss]);
 
   useEffect(() => {
-    if (!editor.hasNodes([LinkNode])) {
-      throw new Error('LinkPlugin: LinkNode not registered on editor');
-    }
-
     return editor.registerCommand(
       TOGGLE_LINK_CREATE_COMMAND,
-      (payload) => {
-        console.log('payload', payload);
+      () => {
         const selection = $getSelection();
+        const nativeSelection = getDOMSelection(editor._window);
+        const rootElement = editor.getRootElement();
 
-        if (payload === null) {
-          $toggleLink(selection, payload);
-          return true;
-        } else if (typeof payload === 'string') {
-          if (validateUrl === undefined || payload === '') {
-            $toggleLink(
-              selection,
-              payload,
-              hasLinkAttributes
-                ? {
-                    rel: 'noopener noreferrer',
-                    target: '_blank',
-                  }
-                : void 0,
-            );
-            showEditor();
-            return true;
+        if (
+          selection !== null &&
+          nativeSelection !== null &&
+          rootElement !== null &&
+          editor.isEditable() &&
+          rootElement.contains(nativeSelection.anchorNode) &&
+          nativeSelection.rangeCount > 0
+        ) {
+          if ($isRangeSelection(selection)) {
+            setLastSelection({
+              anchor: selection.anchor,
+              focus: selection.focus,
+            });
           }
-          return false;
-        } else {
-          const { url, target, rel, title } = payload;
-          $toggleLink(selection, url, {
-            ...(hasLinkAttributes
-              ? {
-                  rel: 'noopener noreferrer',
-                  target: '_blank',
-                }
-              : void 0),
-            rel,
-            target,
-            title,
-          });
-          showEditor();
-          return true;
+
+          const range = nativeSelection.getRangeAt(0),
+            boundingClientRect = range.getBoundingClientRect(),
+            clientRects = range.getClientRects();
+          const virtualEl = {
+            getBoundingClientRect: () => boundingClientRect,
+            getClientRects: () => clientRects,
+          };
+
+          refs.setPositionReference(virtualEl);
+          console.log('7878787887878');
+          setIsOpen(true);
+          $togglePreLink(selection);
         }
+
+        return true;
       },
-      COMMAND_PRIORITY_HIGH,
+      COMMAND_PRIORITY_LOW,
     );
   }, [editor]);
-
-  // Restore selection from cursor pointer
-  useEffect(() => {
-    const root = editor.getRootElement();
-    if (!root || !isOpen) return;
-
-    const handler = (event: MouseEvent) => {
-      editor.update(() => {
-        // Get the cursor position corresponding to the click coordinates
-        const caret = caretFromPoint(event.clientX, event.clientY);
-        if (!caret) return;
-
-        // Convert to Lexical Node
-        const node = $getNearestNodeFromDOMNode(caret.node);
-        if (!node) return;
-
-        // Create a RangeSelection with the cursor positioned at the click location
-        const selection = $createRangeSelection();
-        selection.anchor.set(node.getKey(), caret.offset, 'text');
-        selection.focus.set(node.getKey(), caret.offset, 'text');
-
-        // Set editor selection
-        $setSelection(selection);
-      });
-    };
-
-    root.addEventListener('mousedown', handler);
-
-    return () => {
-      root.removeEventListener('mousedown', handler);
-    };
-  }, [editor, isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -186,42 +150,24 @@ function LinkPlugin({
     }
   }, [isOpen]);
 
-  const showEditor = () => {
-    const selection = $getSelection();
-    if (selection) {
-      setLastSelection(selection.clone());
-    }
-
-    const nativeSelection = getDOMSelection(editor._window);
-    if (nativeSelection && nativeSelection.rangeCount > 0) {
-      const range = nativeSelection.getRangeAt(0),
-        boundingClientRect = range.getBoundingClientRect(),
-        clientRects = range.getClientRects();
-      const virtualEl = {
-        getBoundingClientRect: () => boundingClientRect,
-        getClientRects: () => clientRects,
-      };
-
-      refs.setPositionReference(virtualEl);
-      setIsOpen(true);
-      onOpenChange?.(true);
-    }
-
-    $setSelection(null);
-  };
-
   const onAfterCloseHandle = () => {
-    // delayed close
-    setTimeout(() => {
-      setIsOpen(false);
-    });
-
-    setLinkUrl('');
-    setLastSelection(null);
-
     editor.update(() => {
-      if (lastSelection) {
-        $toggleLink(lastSelection, null);
+      if (!lastSelection) return;
+
+      const rangeSelection = $createRangeSelection();
+      rangeSelection.anchor.set(
+        lastSelection.anchor.key,
+        lastSelection.anchor.offset,
+        lastSelection.anchor.type,
+      );
+      rangeSelection.focus.set(
+        lastSelection.focus.key,
+        lastSelection.focus.offset,
+        lastSelection.focus.type,
+      );
+
+      if (rangeSelection) {
+        $togglePreLink(rangeSelection, true);
       }
     });
   };
@@ -253,18 +199,48 @@ function LinkPlugin({
             size='xxs'
             variant='outline'
             onClick={() => {
+              setIsOpen(false);
               onAfterCloseHandle();
-              editor.focus();
             }}
           >
             取消
           </Button>
           <Button
             size='xxs'
-            className='text-popover-foreground'
-            // disabled={!validateUrl(linkUrl)}
+            disabled={!validateUrl(linkUrl)}
             onClick={() => {
-              // setIsOpen(false);
+              setIsOpen(false);
+
+              setTimeout(() => {
+                editor.update(() => {
+                  if (!lastSelection) return;
+
+                  const rangeSelection = $createRangeSelection();
+                  rangeSelection.anchor.set(
+                    lastSelection.anchor.key,
+                    lastSelection.anchor.offset,
+                    lastSelection.anchor.type,
+                  );
+                  rangeSelection.focus.set(
+                    lastSelection.focus.key,
+                    lastSelection.focus.offset,
+                    lastSelection.focus.type,
+                  );
+
+                  if (rangeSelection) {
+                    $toggleLink(
+                      rangeSelection,
+                      linkUrl,
+                      hasLinkAttributes
+                        ? {
+                            rel: 'noopener noreferrer',
+                            target: '_blank',
+                          }
+                        : undefined,
+                    );
+                  }
+                });
+              });
             }}
           >
             确认
@@ -275,19 +251,15 @@ function LinkPlugin({
   );
 }
 
-/**
- * Generates or updates a LinkNode. It can also delete a LinkNode if the URL is null,
- * but saves any children and brings them up to the parent node.
- * @param url - The URL the link directs to.
- * @param attributes - Optional HTML a tag attributes. \\{ target, rel, title \\}
- */
-export function $toggleLink(
+function $toggleLink(
   selection: BaseSelection | null,
   url: null | string,
   attributes: LinkAttributes = {},
 ): void {
   const { target, title } = attributes;
   const rel = attributes.rel === undefined ? 'noreferrer' : attributes.rel;
+  // const selection = $getSelection();
+
   if (
     selection === null ||
     (!$isRangeSelection(selection) && !$isNodeSelection(selection))
@@ -343,7 +315,7 @@ export function $toggleLink(
 
   // Handle RangeSelection
   const nodes = selection.extract();
-  console.log('nodes', nodes);
+
   if (url === null) {
     // Remove LinkNodes
     nodes.forEach((node) => {
@@ -353,7 +325,6 @@ export function $toggleLink(
           !$isAutoLinkNode(parent) && $isLinkNode(parent),
       );
 
-      console.log('parentLink', parentLink);
       if (parentLink) {
         const children = parentLink.getChildren();
 
@@ -442,6 +413,109 @@ export function $toggleLink(
   });
 }
 
+function $togglePreLink(
+  selection: BaseSelection | null,
+  isRemove: boolean = false,
+): void {
+  if (
+    selection === null ||
+    !$isRangeSelection(selection) ||
+    $isNodeSelection(selection)
+  ) {
+    return;
+  }
+
+  // Handle RangeSelection
+  const nodes = selection.extract();
+
+  if (isRemove) {
+    // Remove LinkNodes
+    nodes.forEach((node) => {
+      const parentPreLink = $findMatchingParent(
+        node,
+        (parent): parent is PreLinkNode =>
+          !$isAutoLinkNode(parent) && $isPreLinkNode(parent),
+      );
+
+      if (parentPreLink) {
+        const children = parentPreLink.getChildren();
+
+        for (let i = 0; i < children.length; i++) {
+          parentPreLink.insertBefore(children[i]);
+        }
+
+        parentPreLink.remove();
+      }
+    });
+    return;
+  }
+  const updatedNodes = new Set<NodeKey>();
+  const updateLinkNode = (linkNode: PreLinkNode) => {
+    if (updatedNodes.has(linkNode.getKey())) {
+      return;
+    }
+    updatedNodes.add(linkNode.getKey());
+  };
+  // Add or merge LinkNodes
+  if (nodes.length === 1) {
+    const firstNode = nodes[0];
+    // if the first node is a LinkNode or if its
+    // parent is a LinkNode, we update the URL, target and rel.
+    const linkNode = $getAncestor(firstNode, $isPreLinkNode);
+    if (linkNode !== null) {
+      return updateLinkNode(linkNode);
+    }
+  }
+
+  $withSelectedNodes(() => {
+    let preLinkNode: PreLinkNode | null = null;
+    for (const node of nodes) {
+      if (!node.isAttached()) {
+        continue;
+      }
+      const parentLinkNode = $getAncestor(node, $isPreLinkNode);
+      if (parentLinkNode) {
+        updateLinkNode(parentLinkNode);
+        continue;
+      }
+      if ($isElementNode(node)) {
+        if (!node.isInline()) {
+          // Ignore block nodes, if there are any children we will see them
+          // later and wrap in a new LinkNode
+          continue;
+        }
+        if ($isPreLinkNode(node)) {
+          // If it's not an autolink node and we don't already have a LinkNode
+          // in this block then we can update it and re-use it
+          if (
+            !$isAutoLinkNode(node) &&
+            (preLinkNode === null ||
+              !preLinkNode.getParentOrThrow().isParentOf(node))
+          ) {
+            updateLinkNode(node);
+            preLinkNode = node;
+            continue;
+          }
+          // Unwrap LinkNode, we already have one or it's an AutoLinkNode
+          for (const child of node.getChildren()) {
+            node.insertBefore(child);
+          }
+          node.remove();
+          continue;
+        }
+      }
+      const prevLinkNode = node.getPreviousSibling();
+      if ($isPreLinkNode(prevLinkNode) && prevLinkNode.is(preLinkNode)) {
+        prevLinkNode.append(node);
+        continue;
+      }
+      preLinkNode = $createPreLinkNode();
+      node.insertAfter(preLinkNode);
+      preLinkNode.append(node);
+    }
+  });
+}
+
 /**
  * Preserve the logical start/end of a RangeSelection in situations where
  * the point is an element that may be reparented in the callback.
@@ -500,39 +574,6 @@ function $getPointNode(point: Point, offset: number): LexicalNode | null {
     return childNode || null;
   }
   return null;
-}
-
-function caretFromPoint(
-  x: number,
-  y: number,
-): null | {
-  offset: number;
-  node: Node;
-} {
-  if (typeof document.caretRangeFromPoint !== 'undefined') {
-    const range = document.caretRangeFromPoint(x, y);
-    if (range === null) {
-      return null;
-    }
-    return {
-      node: range.startContainer,
-      offset: range.startOffset,
-    };
-    // @ts-ignore
-  } else if (document.caretPositionFromPoint !== 'undefined') {
-    // @ts-ignore FF - no types
-    const range = document.caretPositionFromPoint(x, y);
-    if (range === null) {
-      return null;
-    }
-    return {
-      node: range.offsetNode,
-      offset: range.offset,
-    };
-  } else {
-    // Gracefully handle IE
-    return null;
-  }
 }
 
 export { LinkPlugin };
