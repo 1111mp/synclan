@@ -1,10 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useState,
-  type Dispatch,
-  type JSX,
-} from 'react';
+import { useCallback, useEffect, useState, type JSX } from 'react';
 import {
   $createParagraphNode,
   $getSelection,
@@ -30,12 +24,8 @@ import {
   Strikethrough,
   Underline,
 } from 'lucide-react';
-import { $copyBlockFormatIndent } from '@lexical/selection';
-import { $createQuoteNode, $isQuoteNode } from '@lexical/rich-text';
-import { $isListItemNode, $isListNode, ListNode } from '@lexical/list';
-import { $isCodeHighlightNode } from '@lexical/code';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { mergeRegister } from '@lexical/utils';
+import { $isCodeHighlightNode } from '@lexical/code';
 import {
   autoUpdate,
   flip,
@@ -44,6 +34,7 @@ import {
   shift,
   useFloating,
 } from '@floating-ui/react';
+import { mergeRegister } from '@lexical/utils';
 import {
   $createNestedListWithDepth,
   $getTopListNode,
@@ -51,7 +42,21 @@ import {
   getSelectedNode,
 } from './lib';
 import { cn } from '@/lib/utils';
-import { TOGGLE_LINK_CREATE_COMMAND } from './link-plugin';
+import { $copyBlockFormatIndent, $setBlocksType } from '@lexical/selection';
+import { $createQuoteNode, $isQuoteNode } from '@lexical/rich-text';
+import {
+  $isListItemNode,
+  $isListNode,
+  INSERT_ORDERED_LIST_COMMAND,
+  ListNode,
+} from '@lexical/list';
+
+function formatParagraph(editor: LexicalEditor) {
+  editor.update(() => {
+    const selection = $getSelection();
+    $setBlocksType(selection, () => $createParagraphNode());
+  });
+}
 
 function findNearestListNode(node: LexicalNode | null): ListNode | null {
   if (!node) return null;
@@ -81,8 +86,6 @@ function TextFormatFloatingToolbar({
   isOrderedList,
   isBulletList,
   isQuota,
-  isLink,
-  setIsLinkEditMode,
 }: {
   editor: LexicalEditor;
   isBold: boolean;
@@ -92,8 +95,6 @@ function TextFormatFloatingToolbar({
   isOrderedList: boolean;
   isBulletList: boolean;
   isQuota: boolean;
-  isLink: boolean;
-  setIsLinkEditMode: Dispatch<boolean>;
 }) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
 
@@ -115,15 +116,13 @@ function TextFormatFloatingToolbar({
       !selection.isCollapsed() &&
       nativeSelection !== null &&
       rootElement !== null &&
-      rootElement.contains(nativeSelection.anchorNode) &&
-      nativeSelection.rangeCount > 0
+      rootElement.contains(nativeSelection.anchorNode)
     ) {
-      const range = nativeSelection.getRangeAt(0);
-      const virtualEl = {
-        getBoundingClientRect: () => range.getBoundingClientRect(),
-        getClientRects: () => range.getClientRects(),
-      };
-      refs.setPositionReference(virtualEl);
+      const node = getSelectedNode(selection);
+      const topNode = node.getTopLevelElementOrThrow();
+      const element = editor.getElementByKey(topNode.getKey());
+
+      refs.setReference(element);
       setIsOpen(true);
     }
   }, [editor]);
@@ -224,53 +223,11 @@ function TextFormatFloatingToolbar({
           variant='ghost'
           size='xs'
           onClick={() => {
-            editor.update(() => {
-              const selection = $getSelection();
-              if (!$isRangeSelection(selection)) return;
-
-              if (!isOrderedList) {
-                $setBlocksTypeWith(selection, (preNode) => {
-                  if ($isListItemNode(preNode)) {
-                    const parent = preNode.getParent<ListNode>();
-                    parent?.setListType('number');
-                    return null;
-                  }
-
-                  const preTopNode = preNode.getTopLevelElementOrThrow();
-                  if ($isQuoteNode(preTopNode)) {
-                    const { outerListNode, innerListItemNode } =
-                      $createNestedListWithDepth('number', 0);
-                    innerListItemNode.append(...preTopNode.getChildren());
-                    preTopNode.append(outerListNode);
-                    return preTopNode;
-                  }
-
-                  const { outerListNode, innerListItemNode } =
-                    $createNestedListWithDepth('number', 0);
-                  innerListItemNode.append(...preTopNode.getChildren());
-                  preTopNode.replace(outerListNode);
-                  return outerListNode;
-                });
-              } else {
-                $setBlocksTypeWith(selection, (preNode) => {
-                  if (!$isListItemNode(preNode)) return null;
-
-                  const preTopNode = preNode.getTopLevelElementOrThrow();
-                  if (!$isListNode(preTopNode)) {
-                    const topListNode = $getTopListNode(preNode);
-                    preTopNode.append(...preNode.getChildren());
-                    topListNode.remove();
-                    return preTopNode;
-                  } else {
-                    const paragraph = $createParagraphNode();
-                    paragraph.append(...preNode.getChildren());
-                    preTopNode.insertBefore(paragraph);
-                    preTopNode.remove();
-                    return paragraph;
-                  }
-                });
-              }
-            });
+            if (!isOrderedList) {
+              editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined);
+            } else {
+              formatParagraph(editor);
+            }
           }}
         >
           <ListOrdered />
@@ -298,6 +255,7 @@ function TextFormatFloatingToolbar({
 
                   const preTopNode = preNode.getTopLevelElementOrThrow();
                   if ($isQuoteNode(preTopNode)) {
+                    console.log(preTopNode.getChildren());
                     const { outerListNode, innerListItemNode } =
                       $createNestedListWithDepth('bullet', 0);
                     innerListItemNode.append(...preTopNode.getChildren());
@@ -387,31 +345,10 @@ function TextFormatFloatingToolbar({
         >
           <Quote />
         </Button>
-        <Button
-          className={cn(
-            'transition-colors duration-300',
-            isLink &&
-              'bg-blue-500/20 text-blue-500 hover:bg-blue-500/20 hover:text-blue-500',
-          )}
-          variant='ghost'
-          size='xs'
-          onClick={() => {
-            if (!isLink) {
-              setIsLinkEditMode(true);
-              editor.dispatchCommand(TOGGLE_LINK_CREATE_COMMAND, 'https://');
-            } else {
-              setIsLinkEditMode(false);
-              editor.dispatchCommand(TOGGLE_LINK_CREATE_COMMAND, null);
-            }
-          }}
-        >
+        <Button variant='ghost' size='xs'>
           <Link />
         </Button>
-        <Button
-          variant='ghost'
-          size='xs'
-          disabled={isOrderedList || isBulletList || isQuota}
-        >
+        <Button variant='ghost' size='xs'>
           <Braces />
         </Button>
       </div>
@@ -419,11 +356,7 @@ function TextFormatFloatingToolbar({
   );
 }
 
-function FloatingTextFormatToolbarPlugin({
-  setIsLinkEditMode,
-}: {
-  setIsLinkEditMode: Dispatch<boolean>;
-}): JSX.Element | null {
+function FloatingTextFormatToolbarPlugin(): JSX.Element | null {
   const [isText, setIsText] = useState<boolean>(false);
   const [isBold, setIsBold] = useState<boolean>(false);
   const [isStrikethrough, setIsStrikethrough] = useState<boolean>(false);
@@ -432,7 +365,6 @@ function FloatingTextFormatToolbarPlugin({
   const [isOrderedList, setIsOrderedList] = useState<boolean>(false);
   const [isBulletList, setIsBulletList] = useState<boolean>(false);
   const [isQuote, setIsQuote] = useState<boolean>(false);
-  const [isLink, setIsLink] = useState<boolean>(false);
 
   const [editor] = useLexicalComposerContext();
 
@@ -542,8 +474,6 @@ function FloatingTextFormatToolbarPlugin({
       isOrderedList={isOrderedList}
       isBulletList={isBulletList}
       isQuota={isQuote}
-      isLink={isLink}
-      setIsLinkEditMode={setIsLinkEditMode}
     />
   );
 }
