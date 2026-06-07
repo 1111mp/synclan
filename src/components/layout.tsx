@@ -1,11 +1,13 @@
 import { NavSidebar } from './nav-side-bar';
 
-function Layout({ children }: { children?: React.ReactNode }) {
+function Layout() {
   return (
-    <div className='w-full h-full flex overflow-hidden'>
-      <NavSidebar>{children}</NavSidebar>
-      <main className='flex-1'></main>
-    </div>
+    <main className='w-full h-full flex overflow-hidden'>
+      <NavSidebar>
+        <div></div>
+      </NavSidebar>
+      <div className='flex-1'></div>
+    </main>
   );
 }
 
