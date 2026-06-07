@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import {
   $getSelection,
@@ -20,9 +20,6 @@ type EnterPluginProps = {
 
 function EnterPlugin({ onSend }: EnterPluginProps) {
   const [editor] = useLexicalComposerContext();
-
-  const onChangeRef = useRef<EnterPluginProps['onSend']>(null);
-  onChangeRef.current = onSend;
 
   useEffect(() => {
     return editor.registerCommand<KeyboardEvent | null>(
@@ -56,7 +53,7 @@ function EnterPlugin({ onSend }: EnterPluginProps) {
             return editor.dispatchCommand(INSERT_PARAGRAPH_COMMAND, undefined);
           }
 
-          onChangeRef.current?.();
+          onSend?.();
           return true;
         }
 
@@ -64,7 +61,7 @@ function EnterPlugin({ onSend }: EnterPluginProps) {
       },
       COMMAND_PRIORITY_HIGH,
     );
-  }, [editor]);
+  }, [editor, onSend]);
 
   return null;
 }

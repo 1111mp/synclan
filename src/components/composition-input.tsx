@@ -25,11 +25,6 @@ import {
   ClearSelectionPlugin,
   EmojiPickerPlugin,
   EnterPlugin,
-  IsEmptyPlugin,
-  IsFocusedPlugin,
-  type AutoLinePluginProps,
-  type IsEmptyPluginProps,
-  type IsFocusedPluginProps,
 } from './plugins';
 
 import type { EditorState, LexicalEditor } from 'lexical';
@@ -37,17 +32,7 @@ import type { EditorState, LexicalEditor } from 'lexical';
 const URL_MATCHER =
   /((https?:\/\/(www\.)?)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/;
 
-type Props = {
-  onEmptyChange?: IsEmptyPluginProps['onChange'];
-  onFocusChange?: IsFocusedPluginProps['onFocusChange'];
-  onLineChange?: AutoLinePluginProps['onLineChange'];
-};
-
-function CompositionInput({
-  onEmptyChange,
-  onFocusChange,
-  onLineChange,
-}: Props) {
+function CompositionInput() {
   const initialConfig: InitialConfigType = {
     namespace: 'synclan-editor',
     nodes: [
@@ -135,9 +120,7 @@ function CompositionInput({
         <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
         <ClearSelectionPlugin />
         <EmojiPickerPlugin />
-        <AutoLinePlugin onLineChange={onLineChange} />
-        <IsEmptyPlugin onChange={onEmptyChange} />
-        <IsFocusedPlugin onFocusChange={onFocusChange} />
+        <AutoLinePlugin />
         <OnChangePlugin onChange={onChange} />
         <EnterPlugin
           onSend={() => {

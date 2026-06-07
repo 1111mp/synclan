@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { CaseSensitive, Maximize2 } from 'lucide-react';
 import {
   Button,
@@ -8,36 +7,15 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components';
-import { AnimatePresence, motion } from 'motion/react';
-import { cn } from '@/lib/utils';
 
 function Transmitter() {
-  const [isEmpty, setIsEmpty] = useState<boolean>(true);
-  const [focused, setFocueed] = useState<boolean>(true);
-  const [lineOverflow, setLineOverflow] = useState<boolean>(false);
-
   return (
-    <div className='px-4 pb-5'>
-      <div
-        className={cn(
-          'flex items-center px-3 py-2 border rounded-lg bg-card',
-          lineOverflow && 'flex-col space-y-3',
-        )}
-      >
-        <div className='w-full'>
-          <CompositionInput
-            onLineChange={(changed) => {
-              setLineOverflow(changed);
-            }}
-            onEmptyChange={(empty) => {
-              setIsEmpty(empty);
-            }}
-            onFocusChange={(focus) => {
-              setFocueed(focus);
-            }}
-          />
+    <div className='px-4 pb-4'>
+      <div className='flex items-center p-3 border rounded-lg'>
+        <div className='flex-1'>
+          <CompositionInput />
         </div>
-        <ul className={cn('flex items-center self-end pl-4 space-x-1')}>
+        <ul className='flex items-center pl-4 space-x-1'>
           <li className='flex items-center'>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -45,9 +23,6 @@ function Transmitter() {
                   className='text-muted-foreground hover:text-muted-foreground'
                   size='xs'
                   variant='ghost'
-                  onClick={() => {
-                    setLineOverflow((o) => !o);
-                  }}
                 >
                   <CaseSensitive className='size-[22px] mt-0.5' />
                 </Button>
@@ -76,19 +51,12 @@ function Transmitter() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  disabled={isEmpty}
-                  className={cn(
-                    'transition-all duration-300',
-                    !isEmpty && 'bg-primary/30 hover:bg-primary/30',
-                  )}
+                  className='bg-primary/30 hover:bg-primary/30'
                   size='xs'
                   variant='ghost'
                 >
                   <svg
-                    className={cn(
-                      'size-6 transition-all duration-300',
-                      isEmpty ? 'text-input' : 'text-primary',
-                    )}
+                    className='size-6 text-primary'
                     xmlns='http://www.w3.org/2000/svg'
                     viewBox='0 0 24 24'
                     fill='currentColor'
@@ -103,18 +71,6 @@ function Transmitter() {
           </li>
         </ul>
       </div>
-      <AnimatePresence>
-        {!isEmpty && focused && (
-          <motion.p
-            className='absolute bottom-1 text-[10px] right-4'
-            animate={{ opacity: 1 }}
-            initial={{ opacity: 0 }}
-            exit={{ opacity: 0 }}
-          >
-            Shift + Enter 换行
-          </motion.p>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

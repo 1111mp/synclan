@@ -1,13 +1,13 @@
 'use no memo';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useParams } from 'react-router';
 import { MessageWrapper } from '@/components';
 import { Transmitter } from './transmitter';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import { useInView } from 'react-intersection-observer';
 import { faker } from '@faker-js/faker';
-import { useInView, InView } from 'react-intersection-observer';
 
 function loader() {}
 
@@ -106,7 +106,6 @@ function RoomPage() {
   const contentRef = useRef<HTMLDivElement>(null);
   const hasInitScroll = useRef<boolean>(false);
   const preLength = useRef<number>(0);
-  const lastMessageInViewRef = useRef<boolean>(false);
 
   const {
     status,
@@ -136,6 +135,13 @@ function RoomPage() {
     return data?.pages?.flatMap((p) => p.data) ?? [];
   }, [data]);
 
+  useEffect(() => {
+    if (!hasInitScroll.current && messages.length > 0) {
+      virtualizer.scrollToIndex(messages.length - 1, { align: 'end' });
+      hasInitScroll.current = true;
+    }
+  }, [messages.length]);
+
   const virtualizer = useVirtualizer({
     count: messages.length,
     overscan: 10,
@@ -147,20 +153,12 @@ function RoomPage() {
     getItemKey: useCallback((index: number) => messages[index].id, [messages]),
   });
 
-  useEffect(() => {
-    if (!hasInitScroll.current && messages.length > 0) {
-      virtualizer.scrollToIndex(messages.length - 1, { align: 'end' });
-      hasInitScroll.current = true;
-    }
-  }, [messages.length, virtualizer]);
-
   const items = virtualizer.getVirtualItems();
 
   const need = messages.length > preLength.current && hasInitScroll.current;
   if (need) {
     const offset =
       (virtualizer.scrollOffset ?? 0) + (data?.pages[0].data ?? []).length * 45;
-    // eslint-disable-next-line react-compiler/react-compiler
     virtualizer.scrollOffset = offset;
     virtualizer.calculateRange();
     virtualizer.scrollToOffset(offset, { align: 'start' });
@@ -173,7 +171,7 @@ function RoomPage() {
     return (
       <div
         ref={contentRef}
-        className='w-full flex-1 overflow-y-auto contain-strict scrollbar-color dark:scrollbar-color'
+        className='w-full h-full overflow-y-auto contain-strict'
       >
         {hasInitScroll.current && (
           <div ref={loaderInView.ref} className='bg-red-400 absolute top-20'>
@@ -198,30 +196,7 @@ function RoomPage() {
             {items.map((row) => {
               const message = messages[row.index],
                 previousMessage = messages[row.index - 1] || void 0,
-                left = row.index % 2 === 0,
-                isLast = row.index === messages.length - 1;
-
-              if (isLast)
-                return (
-                  <div
-                    key={row.key}
-                    data-index={row.index}
-                    ref={virtualizer.measureElement}
-                  >
-                    <InView
-                      as='div'
-                      onChange={(inView) => {
-                        lastMessageInViewRef.current = inView;
-                      }}
-                    >
-                      <MessageWrapper
-                        message={message}
-                        previousMessage={previousMessage}
-                        position={left ? 'left' : 'right'}
-                      />
-                    </InView>
-                  </div>
-                );
+                left = row.index % 2 === 0;
 
               return (
                 <div
@@ -245,20 +220,11 @@ function RoomPage() {
 
   return (
     <div className='h-full flex flex-col'>
-      <header className='w-full h-14 flex items-center px-3 border-b border-solid border-black/16 dark:border-white/16  shadow-sm overflow-hidden'>
-        <h1
-          onClick={() => {
-            console.log('lastMessageInView', lastMessageInViewRef.current);
-            if (lastMessageInViewRef.current) {
-              virtualizer.scrollToIndex(messages.length - 1, { align: 'end' });
-            }
-          }}
-        >
-          Room Page: {params.id}
-        </h1>
+      <header className='h-14 flex items-center px-3 border-b border-solid border-black/16 dark:border-white/16  shadow-sm'>
+        <h1>Room Page: {params.id}</h1>
       </header>
       {renderMessageList()}
-      <footer className='w-full'>
+      <footer>
         <Transmitter />
       </footer>
     </div>
