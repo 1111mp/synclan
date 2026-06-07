@@ -1,11 +1,9 @@
 declare global {
   interface Window {
-    __SYNCLAN__PREVIEW__INIT_DATA__?: PreviewContext;
-  }
-
-  interface PreviewContext {
-    current: number;
-    list: Array<PreviewCore>;
+    __SYNCLAN__PREVIEW__INIT_DATA__?: {
+      current: number;
+      list: Array<PreviewCore>;
+    };
   }
 
   interface PreviewCore {

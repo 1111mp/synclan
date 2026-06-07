@@ -1,9 +1,7 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
-@plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
-@custom-variant mouse-mode (&:is(.mouse-mode *));
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
@@ -159,20 +157,5 @@
 
   a {
     -webkit-user-drag: none;
-  }
-}
-
-@layer utilities {
-  .emoji-button {
-    width: 28px;
-    height: 28px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border: none;
-    border-radius: 8px;
-    padding: 0;
-    cursor: pointer;
-    transition: background-color 0.3s;
   }
 }

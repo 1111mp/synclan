@@ -74,9 +74,7 @@ pub struct Message {
     pub uuid: String,
     pub sender: String,
     pub receiver: String,
-    #[serde(rename = "type")]
-    #[sqlx(rename = "type")]
-    pub r#type: MessageType,
+    pub msg_type: MessageType,
     pub content: Option<String>,
     pub extra: Option<String>,
     #[schema(value_type = String, format = "date-time")]
@@ -98,7 +96,7 @@ impl Message {
         .bind(&self.uuid)
         .bind(&self.sender)
         .bind(&self.receiver)
-        .bind(&self.r#type)
+        .bind(&self.msg_type)
         .bind(&self.content)
         .bind(&self.extra)
         .fetch_one(&db_pool)

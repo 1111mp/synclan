@@ -10,7 +10,7 @@ CREATE TABLE
 		-- message receiver
 		receiver TEXT NOT NULL,
 		-- message type
-		type TEXT NOT NULL,
+		msg_type TEXT NOT NULL,
 		content TEXT,
 		extra TEXT,
 		created_at DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),

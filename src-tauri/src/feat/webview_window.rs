@@ -1,7 +1,7 @@
 use crate::module::message::MessageType;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use tauri::{utils::config::WindowConfig, Emitter, Manager, WebviewUrl, WebviewWindowBuilder};
+use tauri::{utils::config::WindowConfig, WebviewUrl, WebviewWindowBuilder};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct PreviewContext {
@@ -23,28 +23,21 @@ pub fn create_preview_window(
     config: WindowConfig,
     context: PreviewContext,
 ) -> Result<()> {
-    if let Some(preview) = app_handle.get_webview_window("preview") {
-        preview.emit_to("preview", "synclan://update-preview-data", &context)?;
-
-        let _ = preview.show();
-        let _ = preview.set_focus();
-    } else {
-        WebviewWindowBuilder::from_config(
-            app_handle,
-            &WindowConfig {
-                label: "preview".into(),
-                url: WebviewUrl::App("preview/index.html".into()),
-                ..config
-            },
-        )?
-        .initialization_script(format!(
-            "window.__SYNCLAN__PREVIEW__INIT_DATA__ = {};",
-            serde_json::to_string(&context)?
-        ))
-        .center()
-        .visible(true)
-        .build()?;
-    }
+    WebviewWindowBuilder::from_config(
+        app_handle,
+        &WindowConfig {
+            label: "preview".into(),
+            url: WebviewUrl::App("preview/index.html".into()),
+            ..config
+        },
+    )?
+    .initialization_script(format!(
+        "window.__SYNCLAN__PREVIEW__INIT_DATA__ = {};",
+        serde_json::to_string(&context)?
+    ))
+    .center()
+    .visible(true)
+    .build()?;
 
     Ok(())
 }

@@ -1,6 +1,6 @@
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { defineConfig, searchForWorkspaceRoot } from 'vite';
+import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { createHtmlPlugin } from 'vite-plugin-html';
@@ -8,11 +8,8 @@ import { createHtmlPlugin } from 'vite-plugin-html';
 const host = process.env.TAURI_DEV_HOST;
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-console.log(process.cwd());
-console.log(__dirname);
-
 // https://vitejs.dev/config/
-export default defineConfig(async ({ mode }) => ({
+export default defineConfig(async () => ({
   root: 'src',
   publicDir: '../public',
 
@@ -25,14 +22,14 @@ export default defineConfig(async ({ mode }) => ({
     createHtmlPlugin({
       pages: [
         {
-          entry: 'main.tsx',
+          entry: './main.tsx',
           filename: 'index.html',
-          template: 'index.html',
+          template: './index.html',
         },
         {
-          entry: 'preview/main.tsx',
-          filename: 'preview/index.html',
-          template: 'preview/index.html',
+          entry: './preview/main.tsx',
+          filename: 'index.html',
+          template: './preview/index.html',
         },
       ],
     }),
@@ -53,10 +50,6 @@ export default defineConfig(async ({ mode }) => ({
   define: {
     OS_ARCH: `"${process.arch}"`,
     OS_PLATFORM: `"${process.platform}"`,
-    EMOJI_ROOT_PATH:
-      mode === 'production'
-        ? `""`
-        : `"/@fs/${resolve(__dirname, 'node_modules')}"`,
   },
 
   resolve: {
