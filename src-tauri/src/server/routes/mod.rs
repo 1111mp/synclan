@@ -1,4 +1,3 @@
-mod synclan;
 mod upload;
 mod user;
 
@@ -40,7 +39,6 @@ use utoipa_axum::router::OpenApiRouter;
 
 pub fn router() -> OpenApiRouter<Arc<AppState>> {
     let api_v1_router = OpenApiRouter::new()
-        .merge(synclan::public_route())
         .merge(user::public_route())
         .merge(upload::public_route());
 
@@ -78,28 +76,7 @@ impl<T: Serialize> IntoResponse for HttpResponse<T> {
 #[derive(Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 struct JsonResponse<T> {
-    #[schema(example = 200)]
     status_code: u16,
     payload: T,
     message: Option<String>,
-}
-
-#[derive(Serialize, ToSchema)]
-#[serde(rename_all = "camelCase")]
-struct EmptyPayload;
-
-#[macro_export]
-macro_rules! json_response {
-    ($payload:expr) => {
-        return Ok(HttpResponse::Json {
-            payload: $payload,
-            message: None,
-        })
-    };
-    ($payload:expr, $message:expr) => {
-        return Ok(HttpResponse::Json {
-            payload: $payload,
-            message: Some($message.to_string()),
-        })
-    };
 }
