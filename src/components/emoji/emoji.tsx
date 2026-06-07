@@ -36,7 +36,6 @@ function Emoji({ emoji, shortName, skinTone, size = 28 }: Props) {
       src={image}
       aria-label={emoji}
       title={emoji}
-      data-short-name={shortName}
       className={cn('transform-gpu align-baseline', variants({ size }))}
     />
   );

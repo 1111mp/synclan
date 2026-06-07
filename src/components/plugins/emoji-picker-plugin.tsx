@@ -88,7 +88,7 @@ function EmojiPickerPlugin() {
           <FloatingPortal>
             <div
               ref={refs.setFloating}
-              className='min-w-52 py-2 rounded-lg bg-popover shadow-lg'
+              className='min-w-52 py-2 rounded-lg bg-white shadow-lg'
               style={{
                 position: strategy,
                 top: y ?? 0,
@@ -103,7 +103,7 @@ function EmojiPickerPlugin() {
                       key={emoji.shortName}
                       className={cn(
                         'flex px-3 py-1 space-x-2 items-center cursor-pointer',
-                        isSelected && 'bg-gray-05 dark:bg-gray-60/30',
+                        isSelected && 'bg-gray-05',
                       )}
                       role='option'
                       tabIndex={-1}

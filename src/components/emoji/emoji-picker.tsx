@@ -305,12 +305,10 @@ function EmojiPicker({
                 <Fragment key={row.key}>
                   {columnVirtualizer.getVirtualItems().map((column) => {
                     const shortName = emojiGrid[row.index][column.index];
-                    if (!shortName) return null;
-
                     return (
                       <div
                         key={column.key}
-                        className='absolute top-0 left-0 flex justify-center items-center rounded-md hover:bg-gray-05 dark:hover:bg-gray-80 cursor-pointer'
+                        className='absolute top-0 left-0 flex justify-center items-center'
                         style={{
                           width: `${column.size}px`,
                           height: `${row.size}px`,

@@ -56,12 +56,7 @@ function Transmitter() {
             </Tooltip>
           </li>
           <li className='flex items-center'>
-            <EmojiButton
-              onPickEmoji={({ skinTone, shortName }) => {
-                console.log('skinTone', skinTone);
-                console.log('shortName', shortName);
-              }}
-            />
+            <EmojiButton />
           </li>
           <li className='flex items-center'>
             <Tooltip>
