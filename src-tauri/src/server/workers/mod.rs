@@ -1,7 +1,4 @@
-use crate::{
-    logging, module::message::Message, server::events::store::Clients, singleton,
-    utils::logging::Type,
-};
+use crate::{logging, module::message::Message, server::events::store::Clients, singleton, utils::logging::Type};
 use apalis::{
     layers::{
         WorkerBuilderExt as _,
@@ -37,12 +34,7 @@ impl WorkerMonitor {
         }
     }
 
-    pub async fn run(
-        &self,
-        message_backend: MessageBackend,
-        io: SocketIo,
-        clients: Clients,
-    ) -> anyhow::Result<()> {
+    pub async fn run(&self, message_backend: MessageBackend, io: SocketIo, clients: Clients) -> anyhow::Result<()> {
         let token = CancellationToken::new();
         *self.shutdown_token.lock() = Some(token.clone());
 
@@ -78,9 +70,9 @@ impl WorkerMonitor {
                     Event::Start => logging!(info, Type::Server, "Worker \"{name}\" started"),
                     Event::Error(err) => {
                         logging!(error, Type::Server, "Worker \"{name}\" error: {err}")
-                    }
+                    },
                     Event::Stop => logging!(info, Type::Server, "Worker \"{name}\" stopped"),
-                    _ => {}
+                    _ => {},
                 }
             })
             // Define when a worker should restart

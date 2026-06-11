@@ -12,14 +12,14 @@ fn get_locales_dir() -> Option<PathBuf> {
 pub fn get_supported_languages() -> Vec<String> {
     let mut languages = Vec::new();
 
-    if let Some(locales_dir) = get_locales_dir() {
-        if let Ok(entries) = fs::read_dir(locales_dir) {
-            for entry in entries.flatten() {
-                if let Some(file_name) = entry.file_name().to_str() {
-                    if let Some(lang) = file_name.strip_suffix(".json") {
-                        languages.push(lang.to_string());
-                    }
-                }
+    if let Some(locales_dir) = get_locales_dir()
+        && let Ok(entries) = fs::read_dir(locales_dir)
+    {
+        for entry in entries.flatten() {
+            if let Some(file_name) = entry.file_name().to_str()
+                && let Some(lang) = file_name.strip_suffix(".json")
+            {
+                languages.push(lang.to_string());
             }
         }
     }

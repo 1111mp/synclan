@@ -46,13 +46,9 @@ pub fn app_home_dir() -> Result<PathBuf> {
     match app_handle.path().data_dir() {
         Ok(dir) => Ok(dir.join(APP_ID)),
         Err(e) => {
-            logging!(
-                error,
-                Type::File,
-                "Failed to get the app home directory: {e}"
-            );
+            logging!(error, Type::File, "Failed to get the app home directory: {e}");
             Err(anyhow::anyhow!("Failed to get the app homedirectory"))
-        }
+        },
     }
 }
 
@@ -64,13 +60,9 @@ pub fn app_resources_dir() -> Result<PathBuf> {
     match app_handle.path().resource_dir() {
         Ok(dir) => Ok(dir.join("resources")),
         Err(err) => {
-            logging!(
-                error,
-                Type::File,
-                "Failed to get the resource directory: {err}"
-            );
+            logging!(error, Type::File, "Failed to get the resource directory: {err}");
             Err(anyhow::anyhow!("Failed to get the resource directory"))
-        }
+        },
     }
 }
 
@@ -87,6 +79,11 @@ pub fn file_upload_dir() -> Result<PathBuf> {
 /// sqlite db dir
 pub fn app_db_dir() -> Result<PathBuf> {
     Ok(app_home_dir()?.join("db"))
+}
+
+/// db migration dir
+pub fn db_migration_dir() -> Result<PathBuf> {
+    Ok(app_resources_dir()?.join("migrations"))
 }
 
 /// `synclan.yaml` file path
@@ -108,16 +105,15 @@ pub fn get_encryption_key() -> Result<Vec<u8>> {
 
         // Ensure directory exists
         if let Some(parent) = key_path.parent() {
-            fs::create_dir_all(parent)
-                .map_err(|e| anyhow::anyhow!("Failed to create key directory: {}", e))?;
+            fs::create_dir_all(parent).map_err(|e| anyhow::anyhow!("Failed to create key directory: {}", e))?;
         }
         // Save key
-        fs::write(&key_path, &key)
-            .map_err(|e| anyhow::anyhow!("Failed to save encryption key: {}", e))?;
+        fs::write(&key_path, &key).map_err(|e| anyhow::anyhow!("Failed to save encryption key: {}", e))?;
         Ok(key)
     }
 }
 
+#[allow(unused)]
 #[async_trait]
 pub trait PathBufExec {
     async fn remove_if_exists(&self) -> Result<()>;

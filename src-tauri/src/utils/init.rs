@@ -14,9 +14,9 @@ async fn ensure_directories() -> Result<()> {
 
     for (name, dir) in directories {
         if !dir.exists() {
-            tokio::fs::create_dir_all(&dir).await.map_err(|e| {
-                anyhow::anyhow!("Failed to create {} directory {:?}: {}", name, dir, e)
-            })?;
+            tokio::fs::create_dir_all(&dir)
+                .await
+                .map_err(|e| anyhow::anyhow!("Failed to create {} directory {:?}: {}", name, dir, e))?;
             logging!(info, Type::Setup, "Created {} directory: {:?}", name, dir);
         }
     }

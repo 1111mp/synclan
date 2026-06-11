@@ -10,10 +10,10 @@ use std::sync::Arc;
 use utoipa::ToSchema;
 use utoipa_axum::router::OpenApiRouter;
 
+mod device;
 mod message;
 mod synclan;
 mod upload;
-mod user;
 
 /**
  *  https://docs.rs/axum/latest/axum/middleware/index.html#ordering
@@ -40,27 +40,23 @@ mod user;
  *                 v
  *             responses
  */
-
 pub fn router() -> OpenApiRouter<Arc<AppState>> {
     let api_v1_router = OpenApiRouter::new()
+        .merge(device::protected_route())
         .merge(message::protected_route())
         .merge(upload::protected_route())
         .route_layer(middleware::from_extractor::<AuthGuard>())
         .merge(synclan::public_route())
-        .merge(user::public_route());
+        .merge(device::public_route());
 
     OpenApiRouter::new().nest("/v1", api_v1_router)
 }
 
+#[allow(unused)]
 enum HttpResponse<T> {
-    Json {
-        payload: Option<T>,
-        message: Option<String>,
-    },
+    Json { payload: T, message: Option<String> },
 
-    RedirectTo {
-        uri: String,
-    },
+    RedirectTo { uri: String },
 }
 
 impl<T: Serialize> IntoResponse for HttpResponse<T> {
@@ -74,7 +70,7 @@ impl<T: Serialize> IntoResponse for HttpResponse<T> {
                     message,
                 };
                 (status, axum::Json(body)).into_response()
-            }
+            },
             HttpResponse::RedirectTo { uri } => Redirect::temporary(&uri).into_response(),
         }
     }

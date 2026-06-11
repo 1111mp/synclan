@@ -30,9 +30,9 @@ declare global {
   /**
    * defines in `vite.config.ts`
    */
-  declare const OS_ARCH: Architecture;
-  declare const OS_PLATFORM: Platform;
-  declare const EMOJI_ROOT_PATH: string;
+  const OS_ARCH: Architecture;
+  const OS_PLATFORM: Platform;
+  const EMOJI_ROOT_PATH: string;
 }
 
 export {};

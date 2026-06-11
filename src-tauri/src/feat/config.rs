@@ -5,6 +5,7 @@ use crate::{
 };
 use anyhow::Result;
 
+#[allow(unused)]
 #[derive(Clone, Copy)]
 enum UpdateFlags {
     None = 0,
@@ -14,9 +15,7 @@ enum UpdateFlags {
 
 /// Patch Synclan Configuration
 pub async fn patch_synclan(patch: &ISynclan, need_save_file: bool) -> Result<()> {
-    Config::synclan()
-        .await
-        .edit_draft(|s| s.patch_config(patch));
+    Config::synclan().await.edit_draft(|s| s.patch_config(patch));
 
     let enable_encryption = patch.enable_encryption;
     let result: Result<()> = {
@@ -42,11 +41,7 @@ pub async fn patch_synclan(patch: &ISynclan, need_save_file: bool) -> Result<()>
     Config::synclan().await.apply();
     if need_save_file {
         let synclan_data = Config::synclan().await.data_arc();
-        logging!(
-            debug,
-            Type::Setup,
-            "Saving Synclan configuration to file..."
-        );
+        logging!(debug, Type::Setup, "Saving Synclan configuration to file...");
         synclan_data.save_config().await?;
     }
     Ok(())

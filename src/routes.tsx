@@ -1,26 +1,26 @@
 import { createMemoryRouter } from 'react-router';
+
 import HomePage from '@/pages/home';
-import ConversationPage from '@/pages/conversation';
+import WelcomePage from '@/pages/welcome';
 
 export const router = createMemoryRouter(
   [
     {
+      path: '/',
       Component: HomePage,
       children: [
         {
-          path: '/conversation',
-          element: <ConversationPage />,
-          children: [
-            {
-              path: ':id',
-              lazy: () => import('@/pages/room'),
-            },
-          ],
+          path: 'welcome',
+          Component: WelcomePage,
+        },
+        {
+          path: 'device/:id',
+          lazy: () => import('@/pages/device'),
         },
       ],
     },
   ],
   {
-    initialEntries: ['/conversation'],
+    initialEntries: ['/welcome'],
   },
 );

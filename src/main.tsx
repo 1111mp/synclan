@@ -1,17 +1,40 @@
-import './global.css';
 import '@/lib/i18n';
-
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+import './global.css';
+
+import { isWeb } from '@/lib/constant';
+import { applyTheme } from '@/lib/utils';
+import { getAppInitialData } from '@/services/init';
+
 import App from './app';
 
-const queryClient = new QueryClient();
+if (isWeb) {
+  const queryClient = new QueryClient();
 
-ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
-  <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <App />
-    </QueryClientProvider>
-  </React.StrictMode>,
-);
+  ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+    <React.StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <App />
+      </QueryClientProvider>
+    </React.StrictMode>,
+  );
+} else {
+  void (async () => {
+    const [config, sysTheme] = await getAppInitialData();
+    // Set the theme in advance to prevent flickering.
+    applyTheme(config.theme !== 'system' ? config.theme : sysTheme, false);
+
+    const queryClient = new QueryClient();
+
+    ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+      <React.StrictMode>
+        <QueryClientProvider client={queryClient}>
+          <App />
+        </QueryClientProvider>
+      </React.StrictMode>,
+    );
+  })();
+}

@@ -156,7 +156,7 @@ const data = {
 function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible='icon' variant='floating' {...props}>
-      <SidebarHeader className='pt-7'>
+      <SidebarHeader data-tauri-drag-region className='pt-7'>
         <DeviceSwitcher devices={data.devices} />
       </SidebarHeader>
       <SidebarContent>

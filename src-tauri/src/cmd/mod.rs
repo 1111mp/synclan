@@ -4,19 +4,20 @@ use anyhow::Result;
 pub type CmdResult<T = ()> = Result<T, String>;
 
 pub mod app;
-pub mod client;
+pub mod device;
 pub mod server;
 pub mod synclan;
 pub mod system;
 pub mod webview_window;
 
-pub use app::*;
-pub use client::*;
+// pub use app::*;
+pub use device::*;
 pub use server::*;
 pub use synclan::*;
 pub use system::*;
 pub use webview_window::*;
 
+#[allow(unused)]
 pub trait StringifyErr<T> {
     fn stringify_err(self) -> CmdResult<T>;
     fn stringify_err_log<F>(self, log_fn: F) -> CmdResult<T>
@@ -26,7 +27,7 @@ pub trait StringifyErr<T> {
 
 impl<T, E: std::fmt::Display> StringifyErr<T> for Result<T, E> {
     fn stringify_err(self) -> CmdResult<T> {
-        self.map_err(|e| e.to_string().into())
+        self.map_err(|e| e.to_string())
     }
 
     fn stringify_err_log<F>(self, log_fn: F) -> CmdResult<T>
@@ -34,7 +35,7 @@ impl<T, E: std::fmt::Display> StringifyErr<T> for Result<T, E> {
         F: Fn(&str),
     {
         self.map_err(|e| {
-            let msg = String::from(e.to_string());
+            let msg = e.to_string();
             log_fn(&msg);
             msg
         })

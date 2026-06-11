@@ -1,19 +1,36 @@
 import { resolve } from 'node:path';
-import { defineConfig } from 'vite';
-import react, { reactCompilerPreset } from '@vitejs/plugin-react';
+
 import babel from '@rolldown/plugin-babel';
+import tailwindcss from '@tailwindcss/vite';
+import react, { reactCompilerPreset } from '@vitejs/plugin-react';
+import { defineConfig } from 'vite';
+import { createHtmlPlugin } from 'vite-plugin-html';
+import { viteStaticCopy } from 'vite-plugin-static-copy';
 
 const host = process.env.TAURI_DEV_HOST;
 
 // https://vitejs.dev/config/
-export default defineConfig(async () => ({
-  root: 'src-web',
+export default defineConfig(async ({ mode }) => ({
+  root: 'src',
   publicDir: '../public',
 
   plugins: [
     react(),
     babel({
       presets: [reactCompilerPreset()],
+    }),
+    createHtmlPlugin(),
+    tailwindcss(),
+    viteStaticCopy({
+      targets: [
+        {
+          src: resolve(
+            __dirname,
+            'node_modules/emoji-datasource-apple/img/apple/64/',
+          ),
+          dest: 'emoji-datasource-apple/img/apple/64/',
+        },
+      ],
     }),
   ],
 
@@ -25,11 +42,15 @@ export default defineConfig(async () => ({
   define: {
     OS_ARCH: `"${process.arch}"`,
     OS_PLATFORM: `"${process.platform}"`,
+    EMOJI_ROOT_PATH:
+      mode === 'production'
+        ? `""`
+        : `"/@fs/${resolve(__dirname, 'node_modules')}"`,
   },
 
   resolve: {
     alias: {
-      '@': resolve(__dirname, './src-web'),
+      '@': resolve(__dirname, './src'),
     },
   },
 
@@ -39,14 +60,14 @@ export default defineConfig(async () => ({
   clearScreen: false,
   // 2. tauri expects a fixed port, fail if that port is not available
   server: {
-    port: 1420,
+    port: 1422,
     strictPort: true,
     host: host || false,
     hmr: host
       ? {
           protocol: 'ws',
           host,
-          port: 1421,
+          port: 1423,
         }
       : undefined,
     watch: {

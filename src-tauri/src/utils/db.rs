@@ -47,34 +47,18 @@ impl DBManager {
             .pragma("key", whoami::username()?)
             .create_if_missing(true);
 
-        let db_pool = SqlitePoolOptions::new()
-            .max_connections(5)
-            .connect_with(opts)
-            .await?;
+        let db_pool = SqlitePoolOptions::new().max_connections(5).connect_with(opts).await?;
 
-        logging!(
-            info,
-            Type::Setup,
-            "Successfully connected to the client database"
-        );
+        logging!(info, Type::Setup, "Successfully connected to the client database");
 
         // Run migrations
-        let migration_dir = dirs::app_resources_dir()?.join("migrations");
-        logging_error!(
-            Type::Setup,
-            migrate::Migrator::new(migration_dir)
-                .await?
-                .set_ignore_missing(true)
-                .run(&db_pool)
-                .await
-        );
+        let migration_dir = dirs::db_migration_dir()?;
+        let mut migrator = migrate::Migrator::new(migration_dir).await?;
+        migrator.dangerous_set_table_name("_synclan_sqlx_migrations");
+        logging_error!(Type::Setup, migrator.set_ignore_missing(true).run(&db_pool).await);
         logging_error!(Type::Server, SqliteStorage::setup(&db_pool).await);
 
-        logging!(
-            info,
-            Type::Setup,
-            "Successfully applied database migrations"
-        );
+        logging!(info, Type::Setup, "Successfully applied database migrations");
 
         self.db_pool
             .set(db_pool)

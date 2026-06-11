@@ -27,6 +27,7 @@ impl Handle {
         APP_HANDLE.get().expect("App handle not initialized")
     }
 
+    #[allow(unused)]
     pub fn set_is_exiting(&self) {
         self.is_exiting.store(true, Ordering::Release);
     }
@@ -41,7 +42,7 @@ impl Handle {
     pub fn set_activation_policy(&self, policy: tauri::ActivationPolicy) -> Result<(), String> {
         Self::app_handle()
             .set_activation_policy(policy)
-            .map_err(|e| e.to_string().into())
+            .map_err(|e| e.to_string())
     }
 
     pub fn set_activation_policy_regular(&self) {

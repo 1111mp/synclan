@@ -1,7 +1,7 @@
 use crate::module::message::MessageType;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use tauri::{utils::config::WindowConfig, Emitter, Manager, WebviewUrl, WebviewWindowBuilder};
+use tauri::{Emitter, Manager, WebviewUrl, WebviewWindowBuilder, utils::config::WindowConfig};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct PreviewContext {

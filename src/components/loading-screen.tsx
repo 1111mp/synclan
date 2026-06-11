@@ -1,5 +1,6 @@
-import { AnimatePresence, motion } from 'motion/react';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+import { AnimatePresence, motion } from 'motion/react';
+
 import { TauriDragArea } from './tauri-drag-area';
 
 export function LoadingScreen({ loading = false }: { loading?: boolean }) {
@@ -7,17 +8,17 @@ export function LoadingScreen({ loading = false }: { loading?: boolean }) {
     <AnimatePresence initial={false}>
       {loading && (
         <motion.div
-          className='absolute inset-0 flex justify-center items-center z-50 bg-white dark:bg-gray-95'
+          className='bg-background absolute inset-0 z-50 flex items-center justify-center'
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
           <TauriDragArea />
-          <div className='w-80 h-80'>
+          <div className='h-80 w-80'>
             <DotLottieReact
               autoplay
               loop
-              src='../../assets/loading_screen.lottie'
+              src='/images/loading_screen.lottie'
               renderConfig={{
                 autoResize: true,
               }}

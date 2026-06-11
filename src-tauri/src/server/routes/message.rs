@@ -44,10 +44,9 @@ async fn get_messages(
     claims: Claims,
     Query(pagination): Query<Pagination>,
 ) -> Result<HttpResponse<PaginatedMessages>, HttpException> {
-    let data =
-        Message::get_messages(&claims.client_id, pagination.current, pagination.page_size).await?;
+    let data = Message::get_messages(&claims.device_id, pagination.current, pagination.page_size).await?;
 
-    json_response!(Some(data));
+    json_response!(data);
 }
 
 /// Get offline messages list.
@@ -66,7 +65,7 @@ async fn get_messages(
 )]
 #[debug_handler]
 async fn get_offline_messages(claims: Claims) -> Result<HttpResponse<Vec<Message>>, HttpException> {
-    let messages = Message::get_offline_messages(&claims.client_id).await?;
+    let messages = Message::get_offline_messages(&claims.device_id).await?;
 
-    json_response!(Some(messages));
+    json_response!(messages);
 }

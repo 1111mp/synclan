@@ -9,21 +9,14 @@ pub async fn build_rustls_config_with_ip(ip: &IpAddr) -> Result<RustlsConfig> {
     let synclan_draft = Config::synclan().await;
     let synclan = synclan_draft.latest_arc();
     if let (Some(cert_pem), Some(signing_key_pem)) = (&synclan.cert_pem, &synclan.signing_key_pem) {
-        let config = RustlsConfig::from_pem(
-            cert_pem.clone().into_bytes(),
-            signing_key_pem.clone().into_bytes(),
-        )
-        .await?;
+        let config =
+            RustlsConfig::from_pem(cert_pem.clone().into_bytes(), signing_key_pem.clone().into_bytes()).await?;
         return Ok(config);
     }
 
     // Generate new self-signed certificate
     let (cert_pem, signing_key_pem) = generate_cert(ip)?;
-    let config = RustlsConfig::from_pem(
-        cert_pem.clone().into_bytes(),
-        signing_key_pem.clone().into_bytes(),
-    )
-    .await?;
+    let config = RustlsConfig::from_pem(cert_pem.clone().into_bytes(), signing_key_pem.clone().into_bytes()).await?;
 
     // save to config
     let patch = ISynclan {
@@ -45,9 +38,7 @@ pub fn generate_cert(ip: &IpAddr) -> Result<(String, String)> {
     params
         .distinguished_name
         .push(DnType::CommonName, "Local SyncLan HTTPS Server");
-    params
-        .subject_alt_names
-        .push(SanType::IpAddress(ip.clone()));
+    params.subject_alt_names.push(SanType::IpAddress(*ip));
     let signing_key = KeyPair::generate()?;
     let cert = params.self_signed(&signing_key)?;
     let cert_pem = cert.pem();

@@ -1,35 +1,47 @@
 import { useEffect } from 'react';
+import { RouterProvider } from 'react-router';
+import { useShallow } from 'zustand/react/shallow';
 
 import { LoadingScreen } from '@/components';
 // import { AppProvider } from '@/app-context';
 import { TooltipProvider } from '@/components/ui';
-import { getClient } from '@/lib/utils';
-import HomePage from '@/pages/home';
-import { useAppStore } from '@/stores';
+import { useTheme } from '@/hooks/use-theme';
+import { getDevice } from '@/lib/device';
+import { router } from '@/routes';
+import { useDeviceStore } from '@/stores';
 
 function App() {
-  const { loading, updateLoading, updateClient } = useAppStore();
+  const { loading, updateLoading, updateCurrent } = useDeviceStore(
+    useShallow((s) => ({
+      loading: s.loading,
+      updateLoading: s.updateLoading,
+      updateCurrent: s.updateCurrent,
+    })),
+  );
+
+  useTheme();
 
   useEffect(() => {
     const initialization = async () => {
       try {
-        const client = await getClient();
-        if (client !== null) {
-          updateClient(client);
+        const device = await getDevice();
+        if (device) {
+          updateCurrent(device);
         }
+        console.log('device', device);
       } finally {
         setTimeout(() => {
           updateLoading(false);
-        }, 800);
+        }, 300);
       }
     };
 
     void initialization();
-  }, [updateClient, updateLoading]);
+  }, [updateLoading, updateCurrent]);
 
   return (
     <TooltipProvider>
-      <HomePage />
+      <RouterProvider router={router} />
       <LoadingScreen loading={loading} />
     </TooltipProvider>
   );

@@ -4,9 +4,9 @@ import { useShallow } from 'zustand/react/shallow';
 
 export type AppState = {
   loading: boolean;
-  client?: Client;
+  client?: IDevice;
   updateLoading: (loading: boolean) => void;
-  updateClient: (client: Client) => void;
+  updateClient: (client: IDevice) => void;
 };
 
 const store = createStore<AppState>()(
@@ -17,7 +17,7 @@ const store = createStore<AppState>()(
       set((state) => {
         state.loading = loading;
       }),
-    updateClient: (client: Client) =>
+    updateClient: (client: IDevice) =>
       set((state) => {
         state.client = { ...client };
       }),

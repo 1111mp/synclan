@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 use crate::{
     config::Config,
     feat, logging, logging_error,
@@ -12,7 +14,10 @@ use crate::{
 use anyhow::{Context, Result, anyhow};
 use apalis_sqlite::SqliteStorage;
 use api_doc::ApiDoc;
-use axum::{handler::HandlerWithoutStateExt, http::StatusCode};
+use axum::{
+    handler::HandlerWithoutStateExt,
+    http::{Method, StatusCode, header},
+};
 use axum_server::Handle;
 use parking_lot::Mutex;
 use socketioxide::{SocketIo, handler::ConnectHandler, layer::SocketIoLayer};
@@ -22,7 +27,10 @@ use std::{
     sync::Arc,
     time::Duration,
 };
-use tower_http::services::ServeDir;
+use tower_http::{
+    cors::{AllowOrigin, CorsLayer},
+    services::ServeDir,
+};
 use utoipa::OpenApi;
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_swagger_ui::SwaggerUi;
@@ -94,7 +102,7 @@ impl HttpServer {
     ) -> Result<()> {
         let message_backend = SqliteStorage::new(&db_pool);
         let app_state = Arc::new(AppState {
-            db_pool: db_pool,
+            db_pool,
             message_storage: message_backend.clone(),
         });
 
@@ -103,10 +111,7 @@ impl HttpServer {
             .with_state(app_state.clone())
             .with_state(clients.clone())
             .build_layer();
-        io.ns(
-            "/",
-            handlers::on_connection.with(handlers::authenticate_middleware),
-        );
+        io.ns("/", handlers::on_connection.with(handlers::authenticate_middleware));
 
         tokio::try_join!(
             Self::run_http_server(handle, app_state, layer),
@@ -122,9 +127,7 @@ impl HttpServer {
         io: SocketIo,
         clients: store::Clients,
     ) -> Result<()> {
-        WorkerMonitor::global()
-            .run(message_backend, io, clients)
-            .await
+        WorkerMonitor::global().run(message_backend, io, clients).await
     }
 
     /// the entry to start http server
@@ -150,15 +153,37 @@ impl HttpServer {
             // web static server
             .fallback_service(ServeDir::new(web_static_dir))
             .layer(layer)
+            .layer(
+                CorsLayer::new()
+                    .allow_credentials(true)
+                    .allow_headers([
+                        header::ACCEPT,
+                        header::ACCEPT_LANGUAGE,
+                        header::AUTHORIZATION,
+                        header::CONTENT_LANGUAGE,
+                        header::CONTENT_TYPE,
+                    ])
+                    .allow_methods([
+                        Method::GET,
+                        Method::POST,
+                        Method::PUT,
+                        Method::DELETE,
+                        Method::HEAD,
+                        Method::OPTIONS,
+                    ])
+                    .allow_origin(AllowOrigin::predicate(|origin, _request_parts| {
+                        origin.as_bytes().starts_with(b"http://localhost")
+                    }))
+                    .max_age(Duration::from_secs(3600)),
+            )
             .with_state(app_state);
 
         if let Some(file_upload_dir) = &synclan.file_upload_dir {
             // uploads files static server
             app = app.nest_service(
                 "/uploads",
-                ServeDir::new(file_upload_dir).not_found_service(
-                    (async || (StatusCode::NOT_FOUND, "Not found")).into_service(),
-                ),
+                ServeDir::new(file_upload_dir)
+                    .not_found_service((async || (StatusCode::NOT_FOUND, "Not found")).into_service()),
             );
         }
 
@@ -170,29 +195,19 @@ impl HttpServer {
         match synclan.enable_encryption {
             Some(true) | None => {
                 let config = tls::build_rustls_config_with_ip(&ip).await?;
-                logging!(
-                    info,
-                    Type::Server,
-                    "HTTP server listening on https://{}",
-                    addr
-                );
+                logging!(info, Type::Server, "HTTP server listening on https://{}", addr);
                 axum_server::bind_rustls(addr, config)
                     .handle(handle)
                     .serve(app.into_make_service())
                     .await?;
-            }
+            },
             Some(false) => {
-                logging!(
-                    info,
-                    Type::Server,
-                    "HTTP server listening on http://{}",
-                    addr
-                );
+                logging!(info, Type::Server, "HTTP server listening on http://{}", addr);
                 axum_server::bind(addr)
                     .handle(handle)
                     .serve(app.into_make_service())
                     .await?;
-            }
+            },
         };
 
         Ok(())
@@ -211,10 +226,7 @@ impl HttpServer {
         let runtime_handle = self.runtime_handle.lock().take();
         if let Some(handle) = runtime_handle {
             // Wait for the runtime to finish, with a timeout to prevent hanging indefinitely.
-            if tokio::time::timeout(Duration::from_millis(5500), handle)
-                .await
-                .is_err()
-            {
+            if tokio::time::timeout(Duration::from_millis(5500), handle).await.is_err() {
                 logging!(
                     warn,
                     Type::Server,
@@ -241,9 +253,9 @@ pub async fn start_http_server() -> Result<()> {
 /// Restart the local http server
 pub async fn restart_http_server() -> Result<()> {
     logging!(info, Type::Server, "Attempting to restart http server...");
-    let db_pool = db::DBManager::global().db_pool().with_context(|| {
-        anyhow!("Failed to restart: SQLite connection pool has not been initialized")
-    })?;
+    let db_pool = db::DBManager::global()
+        .db_pool()
+        .with_context(|| anyhow!("Failed to restart: SQLite connection pool has not been initialized"))?;
     HttpServer::global().start(db_pool).await?;
     logging!(info, Type::Server, "HTTP server restarted successfully");
     Ok(())

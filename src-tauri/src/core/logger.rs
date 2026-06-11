@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 use crate::{
     logging, singleton,
     utils::{
@@ -99,13 +101,7 @@ impl Logger {
                 .location()
                 .map(|loc| format!("{}:{}", loc.file(), loc.line()))
                 .unwrap_or_else(|| "Unknown location".to_string());
-            logging!(
-                error,
-                Type::System,
-                "Panic occurred at {}: {}",
-                location,
-                payload
-            );
+            logging!(error, Type::System, "Panic occurred at {}: {}", location, payload);
             if let Some(h) = Self::global().handle.lock().as_ref() {
                 h.flush();
                 std::thread::sleep(std::time::Duration::from_millis(100));
@@ -160,15 +156,14 @@ impl Logger {
         let log_dir = dirs::app_logs_dir()?;
         let log_max_size = self.log_max_size.load(Ordering::SeqCst);
         let log_max_count = self.log_max_count.load(Ordering::SeqCst);
-        let flwb = FileLogWriter::builder(FileSpec::default().directory(log_dir).basename(""))
-            .rotate(
-                Criterion::Size(log_max_size * 1024),
-                flexi_logger::Naming::TimestampsCustomFormat {
-                    current_infix: Some("synclan"),
-                    format: "%Y-%m-%d_%H-%M-%S",
-                },
-                Cleanup::KeepLogFiles(log_max_count),
-            );
+        let flwb = FileLogWriter::builder(FileSpec::default().directory(log_dir).basename("")).rotate(
+            Criterion::Size(log_max_size * 1024),
+            flexi_logger::Naming::TimestampsCustomFormat {
+                current_infix: Some("synclan"),
+                format: "%Y-%m-%d_%H-%M-%S",
+            },
+            Cleanup::KeepLogFiles(log_max_count),
+        );
         Ok(flwb)
     }
 }

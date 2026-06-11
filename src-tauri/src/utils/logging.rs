@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 use flexi_logger::{DeferredNow, filter::LogLineFilter, writers::FileLogWriter};
 use log::Record;
 use std::{fmt, sync::Arc};
@@ -82,9 +84,7 @@ impl<'a> NoModuleFilter<'a> {
     pub fn filter(&self, record: &Record) -> bool {
         if let Some(module) = record.module_path() {
             for blocked in self.0.iter() {
-                if module.len() >= blocked.len()
-                    && module.as_bytes()[..blocked.len()] == blocked.as_bytes()[..]
-                {
+                if module.len() >= blocked.len() && module.as_bytes()[..blocked.len()] == blocked.as_bytes()[..] {
                     return false;
                 }
             }

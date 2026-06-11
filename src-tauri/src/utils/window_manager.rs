@@ -9,12 +9,7 @@ pub struct WindowManager;
 impl WindowManager {
     pub fn create_window(should_create: bool) -> Pin<Box<dyn Future<Output = bool> + Send>> {
         Box::pin(async move {
-            logging!(
-                info,
-                Type::Window,
-                "开始创建主窗口, should_create={}",
-                should_create
-            );
+            logging!(info, Type::Window, "开始创建主窗口, should_create={}", should_create);
 
             if !should_create {
                 return false;
@@ -31,11 +26,11 @@ impl WindowManager {
                     }
 
                     true
-                }
+                },
                 Err(e) => {
                     logging!(error, Type::Window, "新窗口创建失败: {}", e);
                     false
-                }
+                },
             }
         })
     }

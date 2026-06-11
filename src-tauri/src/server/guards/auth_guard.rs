@@ -1,13 +1,13 @@
 use super::Claims;
-use crate::module::client::Client;
+use crate::module::device::Device;
 use axum::{
-    extract::FromRequestParts,
-    http::{request::Parts, StatusCode},
     RequestPartsExt,
+    extract::FromRequestParts,
+    http::{StatusCode, request::Parts},
 };
 use axum_extra::{
-    headers::{authorization::Bearer, Authorization},
     TypedHeader,
+    headers::{Authorization, authorization::Bearer},
 };
 
 pub struct AuthGuard;
@@ -24,11 +24,11 @@ where
             .await
             .map_err(|_| (StatusCode::UNAUTHORIZED, "Unauthorized"))?;
 
-        let client = Client::get_by_id(bearer.token())
+        let device = Device::get_by_id(bearer.token())
             .await
             .map_err(|_| (StatusCode::UNAUTHORIZED, "Unauthorized"))?
             .ok_or((StatusCode::UNAUTHORIZED, "Unauthorized"))?;
-        parts.extensions.insert(Claims::new(client.id));
+        parts.extensions.insert(Claims::new(device.id));
 
         Ok(Self)
     }

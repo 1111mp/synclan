@@ -1,11 +1,16 @@
 use super::CmdResult;
-use crate::cmd::StringifyErr;
+use crate::{cmd::StringifyErr, feat};
 use local_ip_address::local_ip;
 use std::net::IpAddr;
 
 #[tauri::command]
 pub async fn get_local_ip() -> CmdResult<IpAddr> {
     local_ip().stringify_err()
+}
+
+#[tauri::command]
+pub async fn get_system_theme() -> CmdResult<String> {
+    feat::get_system_theme().map(|t| t.to_string()).stringify_err()
 }
 
 #[tauri::command]

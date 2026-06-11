@@ -9,6 +9,7 @@ use crate::{
 use anyhow::Result;
 
 pub mod window;
+pub mod window_script;
 
 pub fn init_work_dir_and_logger() -> Result<()> {
     AsyncHandler::block_on(async {
@@ -28,12 +29,7 @@ pub fn resolve_server_setup_async() {
 
 pub fn resolve_setup_async() {
     AsyncHandler::spawn(|| async {
-        logging!(
-            info,
-            Type::Synclan,
-            "Version: {}",
-            env!("CARGO_PKG_VERSION")
-        );
+        logging!(info, Type::Synclan, "Version: {}", env!("CARGO_PKG_VERSION"));
 
         init_window().await;
     });
@@ -44,11 +40,7 @@ pub async fn init_work_config() {
 }
 
 pub(super) async fn init_window() {
-    let is_silent_start = Config::synclan()
-        .await
-        .data_arc()
-        .enable_silent_start
-        .unwrap_or(false);
+    let is_silent_start = Config::synclan().await.data_arc().enable_silent_start.unwrap_or(false);
     #[cfg(target_os = "macos")]
     if is_silent_start {
         use crate::core::handle::Handle;

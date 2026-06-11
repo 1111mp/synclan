@@ -13,10 +13,7 @@ pub struct Client {
 
 impl Client {
     pub fn new(socket_id: Sid, client_id: String) -> Self {
-        Self {
-            socket_id,
-            client_id,
-        }
+        Self { socket_id, client_id }
     }
 }
 

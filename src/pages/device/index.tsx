@@ -1,13 +1,13 @@
-import { useEffect, useMemo, useRef } from 'react';
-import { useParams } from 'react-router';
-import { LoaderCircle } from 'lucide-react';
-import { MessageWrapper, Transmitter } from '@/components';
-import { Toaster } from '@/components/ui';
-
+import { faker } from '@faker-js/faker';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useVirtualizer, elementScroll } from '@tanstack/react-virtual';
-import { faker } from '@faker-js/faker';
+import { LoaderCircle } from 'lucide-react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useInView, InView } from 'react-intersection-observer';
+import { useParams } from 'react-router';
+
+import { MessageWrapper, Transmitter } from '@/components';
+import { Toaster } from '@/components/ui';
 
 function loader() {}
 
@@ -181,14 +181,14 @@ function RoomPage() {
     return (
       <div
         ref={contentRef}
-        className='w-full flex flex-1 flex-col-reverse contain-strict overflow-y-auto scrollbar-color dark:scrollbar-color'
+        className='scrollbar-color dark:scrollbar-color flex w-full flex-1 flex-col-reverse overflow-y-auto contain-strict'
       >
         <div
-          className='relative w-full flex flex-col-reverse shrink-0'
+          className='relative flex w-full shrink-0 flex-col-reverse'
           style={{ height: virtualizer.getTotalSize() }}
         >
           <div
-            className='w-full flex flex-col-reverse'
+            className='flex w-full flex-col-reverse'
             style={{
               transform: `translateY(${-(items[0]?.start ?? 0) - virtualizer.options.scrollMargin}px)`,
             }}
@@ -239,11 +239,11 @@ function RoomPage() {
           {hasNextPage && (
             <div
               ref={loaderInView.ref}
-              className='w-full absolute top-96 flex justify-center items-center'
+              className='absolute top-96 flex w-full items-center justify-center'
             >
               {isFetchingNextPage ? (
                 <LoaderCircle
-                  className='animate-spin text-primary opacity-50'
+                  className='text-primary animate-spin opacity-50'
                   size={28}
                 />
               ) : (
@@ -257,8 +257,8 @@ function RoomPage() {
   };
 
   return (
-    <div className='relative h-full flex flex-col'>
-      <header className='w-full h-14 flex items-center px-3 border-b border-solid border-black/16 dark:border-white/16  shadow-sm overflow-hidden'>
+    <div className='relative flex h-full flex-col'>
+      <header className='flex h-14 w-full items-center overflow-hidden border-b border-solid border-black/16 px-3 shadow-sm dark:border-white/16'>
         <h1
           onClick={() => {
             console.log('lastMessageInView', lastMessageInViewRef.current);

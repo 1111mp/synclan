@@ -17,6 +17,7 @@
     "core:event:allow-emit-to",
     "core:event:allow-listen",
     "core:event:allow-unlisten",
-    "dialog:default"
+    "dialog:default",
+    "core:window:allow-set-theme"
   ]
 }

@@ -2,6 +2,7 @@ use serde::Deserialize;
 use utoipa::{IntoParams, ToSchema};
 use validator::{Validate, ValidationError};
 
+pub mod device_dto;
 pub mod synclan_dto;
 
 #[derive(Debug, Deserialize, IntoParams, ToSchema, Validate)]

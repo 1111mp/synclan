@@ -45,11 +45,7 @@ impl Message {
     }
 
     /// Get messages in pages
-    pub async fn get_messages(
-        receiver: &str,
-        current: u32,
-        page_size: u32,
-    ) -> Result<PaginatedMessages> {
+    pub async fn get_messages(receiver: &str, current: u32, page_size: u32) -> Result<PaginatedMessages> {
         let db_pool = db::get_db_pool()?;
         let offset = (current - 1) * page_size;
 
@@ -132,7 +128,7 @@ impl MessageAck {
             "#,
         )
         .bind(&self.receiver)
-        .bind(&self.last_ack)
+        .bind(self.last_ack)
         .execute(&db_pool)
         .await?;
 
@@ -166,6 +162,7 @@ pub struct PaginatedMessages {
     pub page_size: u32,
 }
 
+#[allow(unused)]
 #[derive(Debug, Deserialize, Serialize, sqlx::Type)]
 pub enum MessageStatus {
     Initial = 1,

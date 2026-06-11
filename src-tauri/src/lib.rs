@@ -7,7 +7,7 @@ mod process;
 mod server;
 mod utils;
 
-use crate::utils::resolve;
+use crate::{core::handle, process::AsyncHandler, utils::resolve};
 use once_cell::sync::OnceCell;
 use tauri::{AppHandle, Manager};
 use utils::logging::Type;
@@ -47,15 +47,17 @@ pub fn run() {
             cmd::get_synclan_config,
             cmd::patch_synclan_config,
             // system
+            cmd::get_system_theme,
             cmd::get_local_ip,
             cmd::is_admin,
             // server
+            cmd::get_server_domain,
             cmd::clean_upload_files,
             cmd::export_server_cert,
-            // client
-            cmd::get_client_by_id,
-            cmd::create_client,
-            cmd::patch_client,
+            // device
+            cmd::get_device_by_id,
+            cmd::register_device,
+            cmd::patch_device,
             // preview window
             cmd::create_preview_window
         ]);
@@ -71,7 +73,33 @@ pub fn run() {
         .build(tauri::generate_context!())
         .expect("error while running tauri application");
 
-    app.run(|app_handle, err| match err {
-        _ => {}
+    #[allow(unused)]
+    app.run(|app_handle, evt| match evt {
+        tauri::RunEvent::Exit => AsyncHandler::block_on(async {
+            // Windows session ending currently reaches Tao as WM_ENDSESSION and
+            // destroys the loop without a preventable ExitRequested event.
+            if !handle::Handle::global().is_exiting() {
+                // feat::quit().await;
+            }
+            logging!(info, Type::System, "Application exited");
+        }),
+        #[allow(unused_variables)]
+        tauri::RunEvent::ExitRequested { api, code, .. } => {
+            if code.is_none() {
+                api.prevent_exit();
+                if !handle::Handle::global().is_exiting() {
+                    AsyncHandler::block_on(async {
+                        // feat::quit().await;
+                    });
+                }
+            }
+        },
+        tauri::RunEvent::WindowEvent { label, event, .. } if label == "main" => match event {
+            tauri::WindowEvent::CloseRequested { api, .. } => {},
+            #[cfg(target_os = "macos")]
+            tauri::WindowEvent::Destroyed => {},
+            _ => {},
+        },
+        _ => {},
     });
 }

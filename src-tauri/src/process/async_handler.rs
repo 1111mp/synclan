@@ -3,6 +3,7 @@ use tauri::{async_runtime, async_runtime::JoinHandle};
 
 pub struct AsyncHandler;
 
+#[allow(unused)]
 impl AsyncHandler {
     #[inline]
     #[track_caller]

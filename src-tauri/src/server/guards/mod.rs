@@ -1,6 +1,6 @@
 use axum::{
     extract::FromRequestParts,
-    http::{request::Parts, StatusCode},
+    http::{StatusCode, request::Parts},
 };
 use serde::{Deserialize, Serialize};
 
@@ -10,12 +10,12 @@ pub use auth_guard::*;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Claims {
-    pub client_id: String,
+    pub device_id: String,
 }
 
 impl Claims {
-    pub fn new(client_id: String) -> Self {
-        Self { client_id }
+    pub fn new(device_id: String) -> Self {
+        Self { device_id }
     }
 }
 

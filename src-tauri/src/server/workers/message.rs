@@ -32,17 +32,15 @@ impl MessageWorker {
         _worker: WorkerContext,
         clients: Data<Clients>,
     ) -> Result<()> {
-        if let Some(client) = clients.get(&message.receiver) {
-            if let Some(socket) = io.get_socket(client.socket_id) {
-                let response = socket
-                    .timeout(Duration::from_secs(6))
-                    .emit_with_ack::<_, AckResponse>("on-message", &message)?
-                    .await?;
-                if response.status_code == StatusCode::OK {
-                    MessageAck::new(message.receiver, message.id)
-                        .received()
-                        .await?;
-                }
+        if let Some(client) = clients.get(&message.receiver)
+            && let Some(socket) = io.get_socket(client.socket_id)
+        {
+            let response = socket
+                .timeout(Duration::from_secs(6))
+                .emit_with_ack::<_, AckResponse>("on-message", &message)?
+                .await?;
+            if response.status_code == StatusCode::OK {
+                MessageAck::new(message.receiver, message.id).received().await?;
             }
         }
         Ok(())

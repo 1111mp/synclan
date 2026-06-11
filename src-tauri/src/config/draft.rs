@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 //! Draft management module
 //!
 //! Provides a thread-safe draft mechanism with both committed and optional draft snapshots,
@@ -15,11 +17,11 @@
 //! Your project is MIT licensed, but this file retains GPL-3.0 requirements.
 //!
 use parking_lot::Mutex;
+use std::sync::Arc;
 use std::sync::atomic::{
     AtomicBool,
     Ordering::{Acquire, Relaxed, Release},
 };
-use std::sync::Arc;
 use tokio::sync::Notify;
 
 pub type SharedDraft<T> = Arc<Box<T>>;

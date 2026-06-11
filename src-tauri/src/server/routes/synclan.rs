@@ -3,8 +3,8 @@ use crate::{
     config::Config,
     http_exception, json_response,
     server::{
-        api_doc::SYNCLAN_TAG, dtos::synclan_dto::AccessCodeDto, exception::HttpException,
-        extractors::Body, routes::JsonResponse,
+        api_doc::SYNCLAN_TAG, dtos::synclan_dto::AccessCodeDto, exception::HttpException, extractors::Body,
+        routes::JsonResponse,
     },
 };
 use axum_macros::debug_handler;
@@ -30,9 +30,7 @@ pub fn public_route() -> OpenApiRouter<Arc<AppState>> {
     tag = SYNCLAN_TAG
 )]
 #[debug_handler]
-async fn verify_access_code(
-    Body(input): Body<AccessCodeDto>,
-) -> Result<HttpResponse<()>, HttpException> {
+async fn verify_access_code(Body(input): Body<AccessCodeDto>) -> Result<HttpResponse<()>, HttpException> {
     let authorized_access_code = Config::synclan()
         .await
         .data_arc()
@@ -44,5 +42,5 @@ async fn verify_access_code(
         http_exception!(UnauthorizedException);
     }
 
-    json_response!(None, "Authorization code verification passed.");
+    json_response!((), "Authorization code verification passed.");
 }

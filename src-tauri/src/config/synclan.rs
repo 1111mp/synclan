@@ -111,12 +111,12 @@ impl ISynclan {
                 Err(err) => {
                     logging!(error, Type::Config, "{err}");
                     Self::template()
-                }
+                },
             },
             Err(err) => {
                 logging!(error, Type::Config, "{err}");
                 Self::template()
-            }
+            },
         }
     }
 

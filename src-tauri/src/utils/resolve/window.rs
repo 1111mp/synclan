@@ -1,4 +1,4 @@
-use crate::{config::Config, core::handle, logging_error, utils::logging::Type};
+use crate::{config::Config, core::handle, utils::resolve::window_script::build_window_initial_script};
 use anyhow::Result;
 use dark_light::{Mode as SystemTheme, detect as detect_system_theme};
 use tauri::{Theme, WebviewWindow, window::Color};
@@ -15,8 +15,8 @@ pub async fn build_new_window() -> Result<WebviewWindow, String> {
     let app_handle = handle::Handle::app_handle();
 
     let config = Config::synclan().await;
-    let latest = config.latest_arc();
-    let initial_theme_mode = match latest.theme.as_deref() {
+    let scynlan = config.latest_arc();
+    let initial_theme_mode = match scynlan.theme.as_deref() {
         Some("dark") => "dark",
         Some("light") => "light",
         _ => "system",
@@ -45,21 +45,21 @@ pub async fn build_new_window() -> Result<WebviewWindow, String> {
         _ => "light",
     };
 
-    let mut builder = tauri::WebviewWindowBuilder::new(
-        app_handle,
-        "main",
-        tauri::WebviewUrl::App("index.html".into()),
-    )
-    .title("SyncLan")
-    .decorations(DEFAULT_DECORATIONS)
-    // because we use a self-signed certificate
-    .additional_browser_args("--ignore-certificate-errors")
-    .inner_size(1080.0, 800.0)
-    .min_inner_size(750.0, 500.0)
-    .background_color(background_color)
-    .resizable(true)
-    .visible(true)
-    .center();
+    let synclan_settings_json_str = serde_json::to_string(&scynlan).map_err(|e| e.to_string())?;
+    let initial_script = build_window_initial_script(&synclan_settings_json_str, initial_theme_str);
+
+    let mut builder = tauri::WebviewWindowBuilder::new(app_handle, "main", tauri::WebviewUrl::App("index.html".into()))
+        .title("SyncLan")
+        .decorations(DEFAULT_DECORATIONS)
+        // because we use a self-signed certificate
+        .additional_browser_args("--ignore-certificate-errors")
+        .inner_size(1080.0, 800.0)
+        .min_inner_size(750.0, 500.0)
+        .background_color(background_color)
+        .initialization_script(&initial_script)
+        .resizable(true)
+        .visible(true)
+        .center();
 
     #[cfg(target_os = "macos")]
     {
@@ -86,7 +86,7 @@ pub async fn build_new_window() -> Result<WebviewWindow, String> {
             window.open_devtools();
 
             Ok(window)
-        }
+        },
         Err(e) => Err(e.to_string()),
     }
 }

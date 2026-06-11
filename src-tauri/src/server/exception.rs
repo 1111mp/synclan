@@ -6,6 +6,7 @@ use axum::{
 use serde::Serialize;
 use thiserror::Error;
 
+#[allow(unused)]
 #[derive(Debug, Error)]
 pub enum HttpException {
     /// 400
@@ -77,47 +78,30 @@ impl HttpException {
             HttpException::UnauthorizedException(_) => (StatusCode::UNAUTHORIZED, "Unauthorized"),
             HttpException::ForbiddenException(_) => (StatusCode::FORBIDDEN, "Forbidden"),
             HttpException::NotFoundException(_) => (StatusCode::NOT_FOUND, "Not Found"),
-            HttpException::MethodNotAllowedException(_) => {
-                (StatusCode::METHOD_NOT_ALLOWED, "Method Not Allowed")
-            }
-            HttpException::NotAcceptableException(_) => {
-                (StatusCode::NOT_ACCEPTABLE, "Not Acceptable")
-            }
-            HttpException::RequestTimeoutException(_) => {
-                (StatusCode::REQUEST_TIMEOUT, "Request Timeout")
-            }
+            HttpException::MethodNotAllowedException(_) => (StatusCode::METHOD_NOT_ALLOWED, "Method Not Allowed"),
+            HttpException::NotAcceptableException(_) => (StatusCode::NOT_ACCEPTABLE, "Not Acceptable"),
+            HttpException::RequestTimeoutException(_) => (StatusCode::REQUEST_TIMEOUT, "Request Timeout"),
             HttpException::ConflictException(_) => (StatusCode::CONFLICT, "Conflict"),
             HttpException::GoneException(_) => (StatusCode::GONE, "Gone"),
-            HttpException::PreconditionFailedException(_) => {
-                (StatusCode::PRECONDITION_FAILED, "Precondition Failed")
-            }
-            HttpException::PayloadTooLargeException(_) => {
-                (StatusCode::PAYLOAD_TOO_LARGE, "Payload Too Large")
-            }
+            HttpException::PreconditionFailedException(_) => (StatusCode::PRECONDITION_FAILED, "Precondition Failed"),
+            HttpException::PayloadTooLargeException(_) => (StatusCode::PAYLOAD_TOO_LARGE, "Payload Too Large"),
             HttpException::UnsupportedMediaTypeException(_) => {
                 (StatusCode::UNSUPPORTED_MEDIA_TYPE, "Unsupported Media Type")
-            }
+            },
             HttpException::ImATeapotException(_) => (StatusCode::IM_A_TEAPOT, "I'm a teapot"),
             HttpException::UnprocessableEntityException(_) => {
                 (StatusCode::UNPROCESSABLE_ENTITY, "Unprocessable Entity")
-            }
+            },
             HttpException::InternalServerErrorException(_) => {
                 (StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error")
-            }
-            HttpException::NotImplementedException(_) => {
-                (StatusCode::NOT_IMPLEMENTED, "Not Implemented")
-            }
+            },
+            HttpException::NotImplementedException(_) => (StatusCode::NOT_IMPLEMENTED, "Not Implemented"),
             HttpException::BadGatewayException(_) => (StatusCode::BAD_GATEWAY, "Bad Gateway"),
-            HttpException::ServiceUnavailableException(_) => {
-                (StatusCode::SERVICE_UNAVAILABLE, "Service Unavailable")
-            }
-            HttpException::GatewayTimeoutException(_) => {
-                (StatusCode::GATEWAY_TIMEOUT, "Gateway Timeout")
-            }
-            HttpException::HttpVersionNotSupportedException(_) => (
-                StatusCode::HTTP_VERSION_NOT_SUPPORTED,
-                "HTTP Version Not Supported",
-            ),
+            HttpException::ServiceUnavailableException(_) => (StatusCode::SERVICE_UNAVAILABLE, "Service Unavailable"),
+            HttpException::GatewayTimeoutException(_) => (StatusCode::GATEWAY_TIMEOUT, "Gateway Timeout"),
+            HttpException::HttpVersionNotSupportedException(_) => {
+                (StatusCode::HTTP_VERSION_NOT_SUPPORTED, "HTTP Version Not Supported")
+            },
         }
     }
 }
@@ -170,10 +154,7 @@ impl From<std::io::Error> for HttpException {
 impl From<anyhow::Error> for HttpException {
     fn from(err: anyhow::Error) -> Self {
         logging_error!(Type::Server, "{}", err);
-        Self::InternalServerErrorException(Some(format!(
-            "Something went wrong: {}",
-            err.to_string()
-        )))
+        Self::InternalServerErrorException(Some(format!("Something went wrong: {err}")))
     }
 }
 

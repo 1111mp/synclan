@@ -44,26 +44,34 @@ CREATE TABLE
 
 CREATE INDEX IF NOT EXISTS idx_message_acks_receiver_last_ack ON message_acks (receiver, last_ack);
 
--- Table Clients
+-- Table Devices
 CREATE TABLE
-	IF NOT EXISTS clients (
-		-- fingerprint id
-		id TEXT NOT NULL PRIMARY KEY,
-		name TEXT UNIQUE DEFAULT NULL,
-		avatar TEXT DEFAULT NULL,
-		auto_message_clean INTEGER DEFAULT -1,
-		created_at DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),
-		updated_at DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now'))
+	IF NOT EXISTS devices (
+	  id TEXT PRIMARY KEY,
+		name TEXT NOT NULL,
+		avatar TEXT,
+		fingerprint_id TEXT,
+		role TEXT NOT NULL DEFAULT 'client',
+		platform TEXT,
+		browser TEXT,
+		created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+		updated_at INTEGER NOT NULL DEFAULT (unixepoch())
 	);
 
--- Trigger
-CREATE TRIGGER IF NOT EXISTS update_clients_updated_at AFTER
-UPDATE ON clients FOR EACH ROW WHEN OLD.updated_at = NEW.updated_at -- 避免循环
-BEGIN
-UPDATE clients
-SET
-	updated_at = strftime ('%Y-%m-%d %H:%M:%f', 'now')
-WHERE
-	id = OLD.id;
+CREATE INDEX IF NOT EXISTS idx_devices_fingerprint_id ON devices(fingerprint_id);
 
+-- Trigger
+CREATE TRIGGER IF NOT EXISTS update_devices_updated_at
+AFTER UPDATE OF
+    name,
+    avatar,
+    fingerprint_id,
+    platform,
+    browser
+ON devices
+FOR EACH ROW
+BEGIN
+    UPDATE devices
+    SET updated_at = unixepoch()
+    WHERE id = NEW.id;
 END;
