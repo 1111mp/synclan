@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
 import { Smile } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
 import {
   Button,
   Popover,
@@ -43,38 +44,36 @@ function EmojiButton({ ...props }: Props) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className='h-7'>
-          <Popover
-            open={open}
-            onOpenChange={(o) => {
-              setOpen(o);
-            }}
-          >
-            <PopoverTrigger asChild>
-              <Button
-                className='text-muted-foreground hover:text-muted-foreground'
-                size='xs'
-                variant='ghost'
-              >
-                <Smile className='size-5' strokeWidth={2.25} />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent
-              align='center'
-              side='top'
-              sideOffset={12}
-              className='w-auto p-0'
-              onEscapeKeyDown={(event) => event.preventDefault()}
+        <Popover
+          open={open}
+          onOpenChange={(o) => {
+            setOpen(o);
+          }}
+        >
+          <PopoverTrigger asChild>
+            <Button
+              className='text-muted-foreground hover:text-muted-foreground'
+              size='sm'
+              variant='ghost'
             >
-              <EmojiPicker
-                onClose={() => {
-                  setOpen(false);
-                }}
-                {...props}
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
+              <Smile className='size-5' strokeWidth={2} />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent
+            align='center'
+            side='top'
+            sideOffset={12}
+            className='w-auto p-0'
+            onEscapeKeyDown={(event) => event.preventDefault()}
+          >
+            <EmojiPicker
+              onClose={() => {
+                setOpen(false);
+              }}
+              {...props}
+            />
+          </PopoverContent>
+        </Popover>
       </TooltipTrigger>
       <TooltipContent>表情</TooltipContent>
     </Tooltip>

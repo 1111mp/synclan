@@ -1,9 +1,7 @@
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import { AnimatePresence, motion } from 'motion/react';
 
-import { TauriDragArea } from './tauri-drag-area';
-
-export function LoadingScreen({ loading = false }: { loading?: boolean }) {
+export function LoadingScreen({ loading = true }: { loading?: boolean }) {
   return (
     <AnimatePresence initial={false}>
       {loading && (
@@ -13,7 +11,7 @@ export function LoadingScreen({ loading = false }: { loading?: boolean }) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
-          <TauriDragArea />
+          <div className='fixed top-0 h-7 w-full' data-tauri-drag-region />
           <div className='h-80 w-80'>
             <DotLottieReact
               autoplay

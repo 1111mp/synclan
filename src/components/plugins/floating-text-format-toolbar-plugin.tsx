@@ -1,26 +1,32 @@
 import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type Dispatch,
-  type JSX,
-} from 'react';
+  autoUpdate,
+  flip,
+  FloatingPortal,
+  inline,
+  offset,
+  shift,
+  useDismiss,
+  useFloating,
+  useInteractions,
+  useTransitionStyles,
+} from '@floating-ui/react';
+import { $isLinkNode } from '@lexical/link';
+import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+import { mergeRegister } from '@lexical/utils';
 import {
+  $addUpdateTag,
   $getSelection,
   $isParagraphNode,
   $isRangeSelection,
   $isTextNode,
-  getDOMSelection,
   COMMAND_PRIORITY_CRITICAL,
   COMMAND_PRIORITY_LOW,
   FORMAT_TEXT_COMMAND,
+  getDOMSelection,
   KEY_ESCAPE_COMMAND,
   SELECTION_CHANGE_COMMAND,
-  type LexicalEditor,
-  $addUpdateTag,
   SKIP_SELECTION_FOCUS_TAG,
+  type LexicalEditor,
 } from 'lexical';
 import {
   Bold,
@@ -33,35 +39,31 @@ import {
   Strikethrough,
   Underline,
 } from 'lucide-react';
-import { Button, Tooltip, TooltipContent, TooltipTrigger } from '../ui';
-import { $isLinkNode } from '@lexical/link';
-import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { mergeRegister } from '@lexical/utils';
 import {
-  autoUpdate,
-  flip,
-  FloatingPortal,
-  inline,
-  offset,
-  shift,
-  useDismiss,
-  useFloating,
-  useInteractions,
-  useTransitionStyles,
-} from '@floating-ui/react';
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type Dispatch,
+  type JSX,
+} from 'react';
+
+import { cn } from '@/lib/utils';
+
 import { $isSimpleListItemNode, $isSimpleQuoteNode } from '../nodes';
+import { Button, Tooltip, TooltipContent, TooltipTrigger } from '../ui';
 import {
+  $findNearestCodeNode,
   $findNearestListNode,
-  $toggleButtletedList,
-  $toggleOrderedList,
-  $toggleQuoteNode,
   $getSelectedNode,
   $selectionContainsOnlyText,
   $selectionJustContainsSameCodeNode,
+  $toggleButtletedList,
   $toggleCodeNode,
-  $findNearestCodeNode,
+  $toggleOrderedList,
+  $toggleQuoteNode,
 } from './lib';
-import { cn } from '@/lib/utils';
 import {
   SHORTCUT_LINK_CREATE_COMMAND,
   TOGGLE_LINK_CREATE_COMMAND,
@@ -100,7 +102,7 @@ function TextFormatToolbar({
   onSetIsLinkEditMode,
 }: Omit<TextFormatFloatingToolbarProps, 'isText'>) {
   return (
-    <div className='flex items-center p-2 space-x-1'>
+    <div className='flex items-center space-x-1 p-2'>
       <Tooltip delayDuration={700}>
         <TooltipTrigger asChild>
           <Button
@@ -111,7 +113,7 @@ function TextFormatToolbar({
             )}
             disabled={isCode}
             variant='ghost'
-            size='xs'
+            size='sm'
             onClick={() => {
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold');
             }}
@@ -134,7 +136,7 @@ function TextFormatToolbar({
             )}
             disabled={isCode}
             variant='ghost'
-            size='xs'
+            size='sm'
             onClick={() => {
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'strikethrough');
             }}
@@ -157,7 +159,7 @@ function TextFormatToolbar({
             )}
             disabled={isCode}
             variant='ghost'
-            size='xs'
+            size='sm'
             onClick={() => {
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic');
             }}
@@ -180,7 +182,7 @@ function TextFormatToolbar({
             )}
             disabled={isCode}
             variant='ghost'
-            size='xs'
+            size='sm'
             onClick={() => {
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'underline');
             }}
@@ -204,7 +206,7 @@ function TextFormatToolbar({
             )}
             disabled={isCode}
             variant='ghost'
-            size='xs'
+            size='sm'
             onClick={() => {
               editor.update(() => {
                 const selection = $getSelection();
@@ -233,7 +235,7 @@ function TextFormatToolbar({
             )}
             disabled={isCode}
             variant='ghost'
-            size='xs'
+            size='sm'
             onClick={() => {
               editor.update(() => {
                 const selection = $getSelection();
@@ -262,7 +264,7 @@ function TextFormatToolbar({
             )}
             disabled={isCode}
             variant='ghost'
-            size='xs'
+            size='sm'
             onClick={() => {
               editor.update(() => {
                 const selection = $getSelection();
@@ -291,7 +293,7 @@ function TextFormatToolbar({
             )}
             disabled={isCode}
             variant='ghost'
-            size='xs'
+            size='sm'
             onClick={() => {
               editor.update(() => {
                 $addUpdateTag(SKIP_SELECTION_FOCUS_TAG);
@@ -330,7 +332,7 @@ function TextFormatToolbar({
         <TooltipTrigger asChild>
           <Button
             variant='ghost'
-            size='xs'
+            size='sm'
             className={cn(
               'disabled:pointer-events-auto',
               isCode &&
@@ -565,7 +567,7 @@ function TextFormatFloatingToolbar({
     <FloatingPortal>
       <div
         ref={refs.setFloating}
-        className='rounded-md border bg-popover text-popover-foreground'
+        className='bg-popover text-popover-foreground rounded-md border'
         style={{
           ...floatingStyles,
           ...transitionStyles,
@@ -815,4 +817,4 @@ function FloatingTextFormatToolbarPlugin({
   );
 }
 
-export { FloatingTextFormatToolbarPlugin, FixedTextFormatToolbar };
+export { FixedTextFormatToolbar, FloatingTextFormatToolbarPlugin };

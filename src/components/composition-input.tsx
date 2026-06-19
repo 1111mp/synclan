@@ -1,42 +1,47 @@
-import { useImperativeHandle, useRef, useState, type Ref } from 'react';
+import { $generateHtmlFromNodes } from '@lexical/html';
+import { AutoFocusPlugin } from '@lexical/react/LexicalAutoFocusPlugin';
+import { AutoLinkPlugin } from '@lexical/react/LexicalAutoLinkPlugin';
+import { ContentEditable } from '@lexical/react/LexicalContentEditable';
+import { EditorRefPlugin } from '@lexical/react/LexicalEditorRefPlugin';
+import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
+import {
+  createEmptyHistoryState,
+  HistoryPlugin,
+  type HistoryState,
+} from '@lexical/react/LexicalHistoryPlugin';
+import { ListPlugin } from '@lexical/react/LexicalListPlugin';
+import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
+import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
+import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
+import { TabIndentationPlugin } from '@lexical/react/LexicalTabIndentationPlugin';
 import {
   $getSelection,
   $isRangeSelection,
   type EditorState,
   type LexicalEditor,
 } from 'lexical';
-import { $generateHtmlFromNodes } from '@lexical/html';
-import { ContentEditable } from '@lexical/react/LexicalContentEditable';
-import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
-import {
-  createEmptyHistoryState,
-  HistoryPlugin,
-  type HistoryState,
-} from '@lexical/react/LexicalHistoryPlugin';
-import { AutoFocusPlugin } from '@lexical/react/LexicalAutoFocusPlugin';
-import { AutoLinkPlugin } from '@lexical/react/LexicalAutoLinkPlugin';
-import { ListPlugin } from '@lexical/react/LexicalListPlugin';
-import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
-import { TabIndentationPlugin } from '@lexical/react/LexicalTabIndentationPlugin';
-import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
-import { EditorRefPlugin } from '@lexical/react/LexicalEditorRefPlugin';
-import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
+import { useImperativeHandle, useRef, useState, type Ref } from 'react';
+
+import { cn } from '@/lib/utils';
+
+import { type EmojiPickerProps } from './emoji';
+import { $createEmojiNode } from './nodes';
 import {
   AutoLinePlugin,
+  CodeBehaviorPlugin,
   CodeHighlightShikiPlugin,
   CodeNodeToolbarPlugin,
-  CodeBehaviorPlugin,
   EmojiPickerPlugin,
+  EmptyBlockToParagraphPlugin,
   EnterBehaviorPlugin,
+  FixEmptyQuoteAfterDeletePlugin,
+  FixTextFormatPlugin,
+  FloatingTextFormatToolbarPlugin,
   IsEmptyPlugin,
   IsFocusedPlugin,
-  FixEmptyQuoteAfterDeletePlugin,
-  FloatingTextFormatToolbarPlugin,
   LinkPlugin,
-  ShortcutsPlugin,
-  FixTextFormatPlugin,
   OrderedListRecomputePlugin,
-  EmptyBlockToParagraphPlugin,
+  ShortcutsPlugin,
   type AutoLinePluginProps,
   type IsEmptyPluginProps,
   type IsFocusedPluginProps,
@@ -46,9 +51,6 @@ import {
   ELEMENT_TRANSFORMERS,
   TEXT_MATCH_TRANSFORMERS,
 } from './transformers';
-import { $createEmojiNode } from './nodes';
-import { cn } from '@/lib/utils';
-import { type EmojiPickerProps } from './emoji';
 
 const URL_MATCHER =
   /((https?:\/\/(www\.)?)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/;
@@ -95,8 +97,8 @@ function CompositionInput({
     });
   };
 
-  const onChange = (editorState: EditorState, editor: LexicalEditor) => {
-    editorState.read(() => {
+  const onChange = (_editorState: EditorState, editor: LexicalEditor) => {
+    editor.read(() => {
       const htmlString = $generateHtmlFromNodes(editor);
       console.log('HTML:', htmlString);
     });
@@ -105,7 +107,7 @@ function CompositionInput({
   return (
     <div
       id='synclan-composition-scroll-wrapper'
-      className='relative px-3 max-h-56 overflow-y-auto scrollbar-color dark:scrollbar-color'
+      className='relative max-h-56 overflow-y-auto px-3'
     >
       <ShortcutsPlugin />
       <RichTextPlugin
@@ -116,7 +118,7 @@ function CompositionInput({
             )}
             aria-placeholder='Enter Message'
             placeholder={
-              <p className='inline-block absolute top-0 text-sm text-muted-foreground select-none pointer-events-none'>
+              <p className='text-muted-foreground pointer-events-none absolute top-0 inline-block text-sm select-none'>
                 Send Message
               </p>
             }

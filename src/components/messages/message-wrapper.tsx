@@ -1,9 +1,9 @@
+import { cn } from '@/lib/utils';
+
 import { Avatar, AvatarFallback, AvatarImage } from '../ui';
 import { ImageMessage } from './message-image';
 import { TextMessage } from './message-text';
 import { VideoMessage } from './message-video';
-
-import { cn } from '@/lib/utils';
 import { isSameDay, renderTime } from './util';
 
 type Props = {
@@ -36,7 +36,7 @@ function MessageWrapper({
   return (
     <div className='w-full p-4'>
       {!isSameDay(message.createdAt, previousMessage?.createdAt) && (
-        <div className='flex justify-center items-center py-4 text-xs font-normal'>
+        <div className='flex items-center justify-center py-4 text-xs font-normal'>
           {renderTime(message.createdAt)}
         </div>
       )}
@@ -54,11 +54,11 @@ function MessageWrapper({
         )}
         <div
           className={cn(
-            'relative w-fit max-w-4/5 px-2 py-3 text-base leading-6 rounded-md shadow-md bg-gray-05 dark:bg-gray-75',
+            'relative w-fit max-w-4/5 px-2 py-3 text-base leading-6 rounded-md shadow-md bg-secondary',
             'before:absolute before:top-3.5 before:border-6 before:border-solid before:border-transparent',
             position === 'left'
-              ? 'before:right-full before:border-r-gray-05 dark:before:border-r-gray-75'
-              : 'before:left-full before:border-l-gray-05 dark:before:border-l-gray-75',
+              ? 'before:right-full before:border-r-secondary'
+              : 'before:left-full before:border-l-secondary',
           )}
         >
           {renderMessage()}

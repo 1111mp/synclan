@@ -53,14 +53,74 @@ impl Device {
             Ok(Some(device))
         } else {
             let host_device = sqlx::query_as::<_, Device>(
-                "SELECT id, name, avatar, fingerprint_id, role, platform, browser, created_at, updated_at
-                       FROM devices WHERE role = 'host' LIMIT 1",
+                r#"
+                    SELECT
+                        id,
+                        name,
+                        avatar,
+                        fingerprint_id,
+                        role,
+                        platform,
+                        browser,
+                        created_at,
+                        updated_at
+                    FROM devices WHERE role = 'host' LIMIT 1
+                    "#,
             )
             .fetch_optional(&db_pool)
             .await?;
 
             Ok(host_device)
         }
+    }
+
+    pub async fn get_all(self_id: Option<&str>) -> Result<Vec<Device>> {
+        let db_pool = db::get_db_pool()?;
+        let devices = match self_id {
+            Some(id) => {
+                sqlx::query_as::<_, Device>(
+                    r#"
+                SELECT
+                    id,
+                    name,
+                    avatar,
+                    fingerprint_id,
+                    role,
+                    platform,
+                    browser,
+                    created_at,
+                    updated_at
+                FROM devices WHERE id != $1
+                ORDER BY created_at DESC
+                "#,
+                )
+                .bind(id)
+                .fetch_all(&db_pool)
+                .await?
+            },
+            None => {
+                sqlx::query_as::<_, Device>(
+                    r#"
+                SELECT
+                    id,
+                    name,
+                    avatar,
+                    fingerprint_id,
+                    role,
+                    platform,
+                    browser,
+                    created_at,
+                    updated_at
+                FROM devices
+                ORDER BY created_at DESC
+                "#,
+                )
+                .fetch_all(&db_pool)
+                .await?
+            },
+        };
+
+        Ok(devices)
     }
 
     pub async fn register(&self) -> Result<Device> {

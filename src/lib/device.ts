@@ -7,14 +7,16 @@ export const DEVICE_ID_STORAGE_KEY = '__SYNCLAN_DEVICE_ID__';
 
 export async function getDevice(): Promise<IDevice> {
   let deviceId = localStorage.getItem(DEVICE_ID_STORAGE_KEY);
-  if (deviceId) {
-    const device = await getDeviceById(deviceId);
-    if (device) {
-      return device;
-    }
+  if (!deviceId) {
+    deviceId = uuidv4();
+    localStorage.setItem(DEVICE_ID_STORAGE_KEY, deviceId);
   }
 
-  deviceId = uuidv4();
+  const device = await getDeviceById(deviceId);
+  if (device) {
+    return device;
+  }
+
   const newDevice: Partial<IDevice> = {
     id: deviceId,
     name: generateDefaultDeviceName(deviceId),
@@ -23,7 +25,6 @@ export async function getDevice(): Promise<IDevice> {
     browser: getBrowser(),
   };
   const createdDevice = await registerDevice(newDevice);
-  localStorage.setItem(DEVICE_ID_STORAGE_KEY, createdDevice.id);
   return createdDevice;
 }
 

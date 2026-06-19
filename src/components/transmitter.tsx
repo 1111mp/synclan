@@ -1,15 +1,16 @@
-import { useEffect, useRef, useState } from 'react';
-import { LineBreakNode, ParagraphNode } from 'lexical';
+import { CodeHighlightNode, CodeNode } from '@lexical/code';
+import { AutoLinkNode, LinkNode } from '@lexical/link';
+import { ListItemNode, ListNode } from '@lexical/list';
 import {
   LexicalComposer,
   type InitialConfigType,
 } from '@lexical/react/LexicalComposer';
-import { AutoLinkNode, LinkNode } from '@lexical/link';
-import { ListItemNode, ListNode } from '@lexical/list';
 import { HeadingNode, QuoteNode } from '@lexical/rich-text';
-import { CodeHighlightNode, CodeNode } from '@lexical/code';
+import { LineBreakNode, ParagraphNode } from 'lexical';
 import { CaseSensitive, Maximize2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
+import { useRef, useState } from 'react';
+
 import {
   CompositionInput,
   EmojiButton,
@@ -21,8 +22,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui';
-import { useLatestRef } from '@/hooks';
-import { FixedTextFormatToolbar } from './plugins';
+import { cn } from '@/lib/utils';
+
 import {
   $createCodePlusNode,
   $createSimpleListItemNode,
@@ -34,13 +35,9 @@ import {
   SimpleListNode,
   SimpleQuoteNode,
 } from './nodes';
-import { cn } from '@/lib/utils';
+import { FixedTextFormatToolbar } from './plugins';
 
-type Props = {
-  onLineOverflow?: () => void;
-};
-
-function Transmitter({ onLineOverflow }: Props) {
+function Transmitter() {
   const [isEmpty, setIsEmpty] = useState<boolean>(true);
   const [focused, setFocueed] = useState<boolean>(true);
   const [lineOverflow, setLineOverflow] = useState<boolean>(false);
@@ -49,12 +46,6 @@ function Transmitter({ onLineOverflow }: Props) {
 
   const compositionInputRef = useRef<CompositionInputRef>(null);
   // const toolsFixedContainer = useRef<HTMLDivElement>(null);
-
-  const latestonLineOverflow = useLatestRef(onLineOverflow);
-
-  useEffect(() => {
-    latestonLineOverflow.current?.();
-  }, [lineOverflow, latestonLineOverflow]);
 
   const initialConfig: InitialConfigType = {
     namespace: 'synclan-editor',
@@ -126,135 +117,131 @@ function Transmitter({ onLineOverflow }: Props) {
 
   return (
     <LexicalComposer initialConfig={initialConfig}>
-      <div className='mx-4 mb-5'>
+      <div
+        className={cn(
+          'flex flex-wrap border rounded-lg bg-card/60 backdrop-blur-sm',
+          multiLine && 'flex-col flex-nowrap',
+        )}
+      >
         <div
           className={cn(
-            'flex flex-wrap border rounded-lg bg-card',
-            multiLine && 'flex-col flex-nowrap',
+            'flex-[1_1_auto] max-w-full mt-2.5',
+            multiLine && 'w-full',
           )}
         >
-          <div
-            className={cn(
-              'flex-[1_1_auto] max-w-full mt-2.5',
-              multiLine && 'w-full',
-            )}
-          >
-            <CompositionInput
-              ref={compositionInputRef}
-              isFixedTools={isFixedTools}
-              onLineChange={(changed) => {
-                setLineOverflow(changed);
-              }}
-              onEmptyChange={(empty) => {
-                setIsEmpty(empty);
-              }}
-              onFocusChange={(focus) => {
-                setFocueed(focus);
-              }}
-            />
-          </div>
-          <div
-            className={cn('flex items-center ml-auto', multiLine && 'w-full')}
-          >
-            <div className='flex-1'>
-              {isFixedTools && (
-                <FixedTextFormatToolbar onSetIsLinkEditMode={() => {}} />
-              )}
-            </div>
-            <ul className={cn('flex items-center pl-4 pr-3 py-2 space-x-1')}>
-              <li className='flex items-center'>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      className={cn(
-                        'text-muted-foreground hover:text-muted-foreground',
-                        isFixedTools &&
-                          'bg-blue-500/20 text-blue-500 hover:bg-blue-500/20 hover:text-blue-500',
-                      )}
-                      size='xs'
-                      variant='ghost'
-                      onClick={() => {
-                        setIsFixedTools((f) => !f);
-                      }}
-                    >
-                      <CaseSensitive className='size-5.5 mt-0.5' />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>显示格式工具栏</TooltipContent>
-                </Tooltip>
-              </li>
-              <li className='flex items-center'>
-                <EmojiButton
-                  onPickEmoji={({ shortName, skinTone }) => {
-                    compositionInputRef.current?.onPickEmoji?.({
-                      shortName,
-                      skinTone,
-                    });
-                  }}
-                />
-              </li>
-              <li className='flex items-center'>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      className='text-muted-foreground hover:text-muted-foreground'
-                      size='xs'
-                      variant='ghost'
-                      onClick={() => {
-                        setIsFulled((f) => !f);
-                      }}
-                    >
-                      <Maximize2 className='size-4.5' strokeWidth={2.5} />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>展开</TooltipContent>
-                </Tooltip>
-              </li>
-              <li className='flex items-center ml-1'>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      disabled={isEmpty}
-                      className={cn(
-                        'transition-all duration-300',
-                        !isEmpty && 'bg-primary/30 hover:bg-primary/30',
-                      )}
-                      size='xs'
-                      variant='ghost'
-                    >
-                      <svg
-                        className={cn(
-                          'size-6 transition-all duration-300',
-                          isEmpty ? 'text-input' : 'text-primary',
-                        )}
-                        xmlns='http://www.w3.org/2000/svg'
-                        viewBox='0 0 24 24'
-                        fill='currentColor'
-                        shapeRendering='crispEdges'
-                      >
-                        <path d='M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z' />
-                      </svg>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>发送(Enter)</TooltipContent>
-                </Tooltip>
-              </li>
-            </ul>
-          </div>
+          <CompositionInput
+            ref={compositionInputRef}
+            isFixedTools={isFixedTools}
+            onLineChange={(changed) => {
+              setLineOverflow(changed);
+            }}
+            onEmptyChange={(empty) => {
+              setIsEmpty(empty);
+            }}
+            onFocusChange={(focus) => {
+              setFocueed(focus);
+            }}
+          />
         </div>
-        <AnimatePresence>
-          {!isEmpty && focused && (
-            <motion.p
-              className='absolute bottom-1 text-[10px] right-4'
-              animate={{ opacity: 1 }}
-              initial={{ opacity: 0 }}
-              exit={{ opacity: 0 }}
-            >
-              Shift + Enter 换行
-            </motion.p>
-          )}
-        </AnimatePresence>
+        <div className={cn('flex items-center ml-auto', multiLine && 'w-full')}>
+          <div className='flex-1'>
+            {isFixedTools && (
+              <FixedTextFormatToolbar onSetIsLinkEditMode={() => {}} />
+            )}
+          </div>
+          <ul className={cn('flex items-center pl-4 pr-3 py-2 gap-1')}>
+            <li className='flex items-center'>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    className={cn(
+                      'text-muted-foreground hover:text-muted-foreground',
+                      isFixedTools &&
+                        'bg-blue-500/20 text-blue-500 hover:bg-blue-500/20 hover:text-blue-500',
+                    )}
+                    size='sm'
+                    variant='ghost'
+                    onClick={() => {
+                      setIsFixedTools((f) => !f);
+                    }}
+                  >
+                    <CaseSensitive className='size-6' />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>显示格式工具栏</TooltipContent>
+              </Tooltip>
+            </li>
+            <li className='flex items-center'>
+              <EmojiButton
+                onPickEmoji={({ shortName, skinTone }) => {
+                  compositionInputRef.current?.onPickEmoji?.({
+                    shortName,
+                    skinTone,
+                  });
+                }}
+              />
+            </li>
+            <li className='flex items-center'>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    className='text-muted-foreground hover:text-muted-foreground'
+                    size='sm'
+                    variant='ghost'
+                    onClick={() => {
+                      setIsFulled((f) => !f);
+                    }}
+                  >
+                    <Maximize2 className='size-4' strokeWidth={3} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>展开</TooltipContent>
+              </Tooltip>
+            </li>
+            <li className='flex items-center'>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    disabled={isEmpty}
+                    className={cn(
+                      // 'transition-all duration-300',
+                      !isEmpty && 'bg-primary/30 hover:bg-primary/30!',
+                    )}
+                    size='sm'
+                    variant='ghost'
+                  >
+                    <svg
+                      className={cn(
+                        'size-5',
+                        isEmpty ? 'text-input' : 'text-primary',
+                      )}
+                      xmlns='http://www.w3.org/2000/svg'
+                      viewBox='0 0 24 24'
+                      fill='currentColor'
+                      shapeRendering='crispEdges'
+                    >
+                      <path d='M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z' />
+                    </svg>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>发送(Enter)</TooltipContent>
+              </Tooltip>
+            </li>
+          </ul>
+        </div>
       </div>
+      <AnimatePresence>
+        {!isEmpty && focused && (
+          <motion.p
+            className='absolute right-4 bottom-0 text-[10px]'
+            animate={{ opacity: 1 }}
+            initial={{ opacity: 0 }}
+            exit={{ opacity: 0 }}
+          >
+            Shift + Enter 换行
+          </motion.p>
+        )}
+      </AnimatePresence>
     </LexicalComposer>
   );
 }

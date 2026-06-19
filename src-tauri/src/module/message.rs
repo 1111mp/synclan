@@ -29,7 +29,7 @@ impl Message {
             r#"
             INSERT INTO messages (uuid, sender, receiver, msg_type, content, extra)
             VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING *Ï
+            RETURNING *
             "#,
         )
         .bind(&self.uuid)

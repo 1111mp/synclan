@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+import { mergeRegister } from '@lexical/utils';
 import {
   $getRoot,
   $getSelection,
@@ -7,8 +7,9 @@ import {
   $isRangeSelection,
   type LexicalNode,
 } from 'lexical';
-import { useLatestRef } from '@/hooks';
-import { mergeRegister } from '@lexical/utils';
+import { useEffect } from 'react';
+import { useLatest } from 'react-use';
+
 import { $isCodePlusNode } from '../nodes';
 
 type AutoLinePluginProps = {
@@ -18,7 +19,7 @@ type AutoLinePluginProps = {
 function AutoLinePlugin({ onLineChange }: AutoLinePluginProps) {
   const [editor] = useLexicalComposerContext();
 
-  const latestLineChange = useLatestRef(onLineChange);
+  const latestLineChange = useLatest(onLineChange);
 
   useEffect(() => {
     return mergeRegister(

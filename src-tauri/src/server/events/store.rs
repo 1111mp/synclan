@@ -17,10 +17,20 @@ impl Client {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct Clients(Arc<DashMap<String, Arc<Client>>>);
 
+impl Default for Clients {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Clients {
+    pub fn new() -> Self {
+        Self(Arc::new(DashMap::new()))
+    }
+
     pub fn get(&self, client_id: &str) -> Option<Arc<Client>> {
         self.0.get(client_id).map(|r| r.value().clone())
     }

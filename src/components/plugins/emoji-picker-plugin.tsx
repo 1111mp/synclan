@@ -1,17 +1,18 @@
-import { useMemo, useState } from 'react';
-import { $getSelection, $isRangeSelection, type TextNode } from 'lexical';
+import { FloatingPortal, offset, useFloating } from '@floating-ui/react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import {
   LexicalTypeaheadMenuPlugin,
   MenuOption,
   useBasicTypeaheadTriggerMatch,
 } from '@lexical/react/LexicalTypeaheadMenuPlugin';
-import { FloatingPortal, offset, useFloating } from '@floating-ui/react';
-import { $createEmojiNode } from '../nodes';
+import { $getSelection, $isRangeSelection, type TextNode } from 'lexical';
+import { useMemo, useState } from 'react';
 
-import { search } from '../emoji/lib';
 import { cn } from '@/lib/utils';
+
 import { Emoji } from '../emoji';
+import { search } from '../emoji/lib';
+import { $createEmojiNode } from '../nodes';
 
 class EmojiOption extends MenuOption {
   shortName: string;
@@ -73,7 +74,6 @@ function EmojiPickerPlugin() {
         refs.setPositionReference({
           getBoundingClientRect: r.getRect,
         });
-        // oxlint-disable-next-line react-compiler/react-compiler
         editor.__emojiMenuOpen = true;
       }}
       onClose={() => {
@@ -89,10 +89,10 @@ function EmojiPickerPlugin() {
           <FloatingPortal>
             <div
               ref={refs.setFloating}
-              className='min-w-52 py-2 rounded-lg bg-popover shadow-lg'
+              className='bg-popover min-w-52 rounded-lg py-2 shadow-lg'
               style={floatingStyles}
             >
-              <ul className='max-h-56 overflow-y-auto no-scrollbar'>
+              <ul className='no-scrollbar max-h-56 overflow-y-auto'>
                 {options.map((emoji, index) => {
                   const isSelected = selectedIndex === index;
                   return (

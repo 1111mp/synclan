@@ -2,8 +2,8 @@ import { useEffect } from 'react';
 import { RouterProvider } from 'react-router';
 import { useShallow } from 'zustand/react/shallow';
 
+import { AppProvider } from '@/app-context';
 import { LoadingScreen } from '@/components';
-// import { AppProvider } from '@/app-context';
 import { TooltipProvider } from '@/components/ui';
 import { useTheme } from '@/hooks/use-theme';
 import { getDevice } from '@/lib/device';
@@ -39,10 +39,15 @@ function App() {
     void initialization();
   }, [updateLoading, updateCurrent]);
 
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
   return (
     <TooltipProvider>
-      <RouterProvider router={router} />
-      <LoadingScreen loading={loading} />
+      <AppProvider>
+        <RouterProvider router={router} />
+      </AppProvider>
     </TooltipProvider>
   );
 }

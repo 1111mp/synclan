@@ -1,6 +1,8 @@
-import { useEffect } from 'react';
+import { $isLinkNode } from '@lexical/link';
+import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import {
   $copyNode,
+  $createParagraphNode,
   $findMatchingParent,
   $getSelection,
   $isParagraphNode,
@@ -9,16 +11,16 @@ import {
   COMMAND_PRIORITY_HIGH,
   INSERT_PARAGRAPH_COMMAND,
   KEY_ENTER_COMMAND,
-  $createParagraphNode,
 } from 'lexical';
-import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { $isLinkNode } from '@lexical/link';
+import { useEffect } from 'react';
+import { useLatest } from 'react-use';
+
 import {
-  $isSimpleQuoteNode,
-  $isSimpleListNode,
-  $isSimpleListItemNode,
-  type SimpleListNode,
   $createSimpleListItemNode,
+  $isSimpleListItemNode,
+  $isSimpleListNode,
+  $isSimpleQuoteNode,
+  type SimpleListNode,
 } from '../nodes';
 import {
   $copyCompleteNodeWithChildren,
@@ -29,7 +31,6 @@ import {
   $splitLinkNodeBySelection,
   $splitNodesFromOneLine,
 } from './lib';
-import { useLatestRef } from '@/hooks';
 
 type EnterPluginProps = {
   onSend?: () => void;
@@ -38,7 +39,7 @@ type EnterPluginProps = {
 function EnterBehaviorPlugin({ onSend }: EnterPluginProps) {
   const [editor] = useLexicalComposerContext();
 
-  const onChangeRef = useLatestRef(onSend);
+  const onChangeRef = useLatest(onSend);
 
   useEffect(() => {
     return editor.registerCommand<KeyboardEvent | null>(

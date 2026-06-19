@@ -1,4 +1,5 @@
-import { DEVICE_ID_STORAGE_KEY } from './device';
+import { BASE_URL } from '@/lib/constant';
+import { DEVICE_ID_STORAGE_KEY } from '@/lib/device';
 
 export interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>;
@@ -13,10 +14,6 @@ export class HttpError extends Error {
     super(message ?? `HTTP Error: ${status}`);
   }
 }
-
-const BASE_URL = import.meta.env.DEV
-  ? 'http://192.168.8.248:53317/api/v1'
-  : window.location.origin; // 生产环境用当前域名
 
 function buildUrl(path: string, params?: RequestOptions['params']) {
   const url = new URL(path, window.location.origin);

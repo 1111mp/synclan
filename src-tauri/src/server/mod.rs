@@ -111,7 +111,10 @@ impl HttpServer {
             .with_state(app_state.clone())
             .with_state(clients.clone())
             .build_layer();
-        io.ns("/", handlers::on_connection.with(handlers::authenticate_middleware));
+        io.ns(
+            "/socket",
+            handlers::on_connection.with(handlers::authenticate_middleware),
+        );
 
         tokio::try_join!(
             Self::run_http_server(handle, app_state, layer),

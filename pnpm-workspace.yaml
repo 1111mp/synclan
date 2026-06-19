@@ -1,2 +1,5 @@
 allowBuilds:
   msw: false
+minimumReleaseAgeExclude:
+  - lucide-react@1.20.0
+  - react-router@7.18.0

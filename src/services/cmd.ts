@@ -45,10 +45,10 @@ export async function patchSynclanConfig(payload: ISynclanConfig) {
   return invoke<void>('patch_synclan_config', { payload });
 }
 
-export async function getDeviceById(id: string) {
+export async function getDeviceById(id: string): Promise<IDevice | null> {
   if (isWeb) {
     try {
-      const device = await api.get<IDevice>(`/device/${id}`);
+      const device = await api.get<IDevice>(`/devices/${id}`);
       return device.payload;
     } catch {
       return null;
@@ -57,12 +57,24 @@ export async function getDeviceById(id: string) {
   return invoke<IDevice | null>('get_device_by_id', { id });
 }
 
+export async function getDevices(selfId?: string): Promise<IDevice[]> {
+  if (isWeb) {
+    try {
+      const devices = await api.get<IDevice[]>('/devices');
+      return devices.payload ?? [];
+    } catch {
+      return [];
+    }
+  }
+  return invoke<IDevice[]>('get_devices', { selfId });
+}
+
 export async function registerDevice(
   device: Partial<IDevice>,
 ): Promise<IDevice> {
   if (isWeb) {
     // TODO
-    const data = await api.post<IDevice>('/device', device);
+    const data = await api.post<IDevice>('/devices', device);
     return data.payload;
   }
   return invoke<IDevice>('register_device', { payload: device });

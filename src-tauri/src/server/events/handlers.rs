@@ -49,8 +49,9 @@ pub async fn on_connection(socket: SocketRef) {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Auth {
-    pub fingerprint: Option<String>,
+    pub device_id: Option<String>,
 }
 
 /// Handles the connection of a new user.
@@ -60,13 +61,17 @@ pub async fn authenticate_middleware(
     Data(auth): Data<Auth>,
     State(clients): State<Clients>,
 ) -> Result<()> {
-    let fingerprint = auth.fingerprint.ok_or_else(|| anyhow!("Unauthorized"))?;
-    let client = device::Device::get_by_id(&fingerprint)
+    let device_id = auth.device_id.ok_or_else(|| anyhow!("Unauthorized"))?;
+    let device = device::Device::get_by_id(&device_id)
         .await?
         .ok_or_else(|| anyhow!("Unauthorized"))?;
-    if !clients.contains(&client.id) {
-        clients.add(Arc::new(Client::new(socket.id, client.id)));
+
+    let client = Arc::new(Client::new(socket.id, device.id.clone()));
+    if !clients.contains(&device.id) {
+        clients.add(client.clone());
     }
+
+    socket.extensions.insert(client);
 
     Ok(())
 }

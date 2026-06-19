@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { io as SocketIO } from 'socket.io-client';
 import type { ManagerOptions, Socket, SocketOptions } from 'socket.io-client';
+import { io as SocketIO } from 'socket.io-client';
 
 import { HttpStatus, type IMessage } from '@/lib/types';
 
@@ -49,50 +49,58 @@ export function useSocketIO(url: string, options: UseSocketOptions = {}) {
   );
 
   const socketRef = useRef<Socket<ListenEvents, EmitEvents>>(null);
+  const urlRef = useRef<string | null>(null);
   const optionsRef = useRef<UseSocketOptions>(options);
+  urlRef.current = url;
   optionsRef.current = options;
 
   useEffect(() => {
-    if (url) {
-      const socket = SocketIO(url, optionsRef.current);
-      socketRef.current = socket;
-      setState(ReadyState.CONNECTING);
+    if (!urlRef.current) return;
 
-      function onConnect() {
-        setState(ReadyState.CONNECTED);
-      }
-
-      function onDisconnect() {
-        setState(ReadyState.DISCONNECT);
-      }
-
-      socket.on('connect', onConnect);
-      socket.on('disconnect', onDisconnect);
-
-      let onMessage: EmitEvents[EventNames.MESSAGE];
-      if (optionsRef.current?.onMessage) {
-        onMessage = (message, callback) => {
-          optionsRef.current.onMessage?.(message);
-          callback({
-            statusCode: HttpStatus.OK,
-            message: 'successed',
-          });
-        };
-        socket.on('on-message', onMessage);
-      }
-
-      return () => {
-        socket.off('connect', onConnect);
-        socket.off('disconnect', onDisconnect);
-
-        if (optionsRef.current?.onMessage && onMessage) {
-          socket.off('on-message', onMessage);
-        }
-
-        socket.close();
-      };
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
     }
-  }, [url]);
+
+    const socket = SocketIO(urlRef.current, optionsRef.current);
+    socketRef.current = socket;
+    setState(ReadyState.CONNECTING);
+
+    function onConnect() {
+      setState(ReadyState.CONNECTED);
+    }
+
+    function onDisconnect() {
+      setState(ReadyState.DISCONNECT);
+    }
+
+    socket.on('connect', onConnect);
+    socket.on('disconnect', onDisconnect);
+
+    let onMessage: EmitEvents[EventNames.MESSAGE];
+    if (optionsRef.current?.onMessage) {
+      onMessage = (message, callback) => {
+        optionsRef.current.onMessage?.(message);
+        callback({
+          statusCode: HttpStatus.OK,
+          message: 'successed',
+        });
+      };
+      socket.on('on-message', onMessage);
+    }
+
+    return () => {
+      socket.off('connect', onConnect);
+      socket.off('disconnect', onDisconnect);
+
+      if (optionsRef.current?.onMessage && onMessage) {
+        socket.off('on-message', onMessage);
+      }
+
+      socket.close();
+      socketRef.current = null;
+    };
+  }, []);
 
   const sendMessage = useCallback<SendMessage>(
     (

@@ -56,6 +56,7 @@ pub fn run() {
             cmd::export_server_cert,
             // device
             cmd::get_device_by_id,
+            cmd::get_devices,
             cmd::register_device,
             cmd::patch_device,
             // preview window

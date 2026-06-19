@@ -7,6 +7,12 @@ pub async fn get_device_by_id(id: String) -> CmdResult<Option<Device>> {
     feat::get_device_by_id(id).await.stringify_err()
 }
 
+/// Query all Devices
+#[tauri::command]
+pub async fn get_devices(self_id: Option<String>) -> CmdResult<Vec<Device>> {
+    feat::get_devices(self_id).await.stringify_err()
+}
+
 /// Create device
 #[tauri::command]
 pub async fn register_device(payload: Device) -> CmdResult<Device> {
