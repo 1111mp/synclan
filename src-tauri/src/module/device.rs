@@ -1,6 +1,7 @@
 use crate::utils::db;
 use anyhow::{Result, bail};
 use serde::{Deserialize, Serialize};
+use sqlx::{QueryBuilder, Sqlite};
 use utoipa::ToSchema;
 
 #[derive(Debug, Default, Deserialize, Serialize, ToSchema, PartialEq, sqlx::Type)]
@@ -119,6 +120,37 @@ impl Device {
                 .await?
             },
         };
+
+        Ok(devices)
+    }
+
+    pub async fn get_not_in(ids: &[String]) -> Result<Vec<Device>> {
+        let db_pool = db::get_db_pool()?;
+        if ids.is_empty() {
+            return Self::get_all(None).await;
+        }
+
+        let mut query_builder = QueryBuilder::<Sqlite>::new(
+            r#"
+            SELECT
+                id,
+                name,
+                avatar,
+                fingerprint_id,
+                role,
+                platform,
+                browser,
+                created_at,
+                updated_at
+            FROM devices WHERE id NOT IN (
+          "#,
+        );
+        let mut separated = query_builder.separated(", ");
+        for id in ids {
+            separated.push_bind(id);
+        }
+        separated.push_unseparated(") ");
+        let devices = query_builder.build_query_as::<Device>().fetch_all(&db_pool).await?;
 
         Ok(devices)
     }

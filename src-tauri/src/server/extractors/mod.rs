@@ -16,6 +16,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use serde::Serialize;
+use serde_qs::Error as QsError;
 use thiserror::Error;
 use validator::ValidationErrors;
 
@@ -31,7 +32,7 @@ pub enum ParserRejection {
     PathRejection(#[from] PathRejection),
 
     #[error(transparent)]
-    QueryRejection(#[from] QueryRejection),
+    QueryRejection(#[from] QsError),
 }
 
 impl ParserRejection {
@@ -104,15 +105,9 @@ impl IntoResponse for ParserRejection {
                     None,
                 ),
             },
-            ParserRejection::QueryRejection(rejection) => match rejection {
-                QueryRejection::FailedToDeserializeQueryString(inner) => {
-                    Self::into_json_response(StatusCode::BAD_REQUEST, inner.body_text(), None)
-                },
-                _ => Self::into_json_response(
-                    StatusCode::BAD_REQUEST,
-                    format!("Unhandled query rejection: {rejection}"),
-                    None,
-                ),
+            ParserRejection::QueryRejection(rejection) => {
+                let message = format!("Failed to deserialize query string: {rejection}");
+                Self::into_json_response(StatusCode::BAD_REQUEST, message, None)
             },
         }
     }

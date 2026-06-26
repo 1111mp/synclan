@@ -13,6 +13,11 @@ pub async fn get_devices(self_id: Option<String>) -> CmdResult<Vec<Device>> {
     feat::get_devices(self_id).await.stringify_err()
 }
 
+#[tauri::command]
+pub async fn devices_discover(exclude_ids: Vec<String>) -> CmdResult<Vec<Device>> {
+    feat::devices_discover(&exclude_ids).await.stringify_err()
+}
+
 /// Create device
 #[tauri::command]
 pub async fn register_device(payload: Device) -> CmdResult<Device> {

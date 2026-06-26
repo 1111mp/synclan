@@ -2,6 +2,7 @@ import { invoke } from '@tauri-apps/api/core';
 
 import { api } from '@/lib/api';
 import { isWeb } from '@/lib/constant';
+import { db } from '@/lib/db';
 
 /**
  * @description Get the local IP address of the device.
@@ -69,6 +70,32 @@ export async function getDevices(selfId?: string): Promise<IDevice[]> {
   return invoke<IDevice[]>('get_devices', { selfId });
 }
 
+export async function devicesDiscover(excludeIds: string[] = []) {
+  if (isWeb) {
+    try {
+      const devives = await api.get<IDevice[]>('/devices/discover', {
+        ids: excludeIds,
+      });
+      return devives.payload ?? [];
+    } catch {
+      return [];
+    }
+  }
+  return invoke<IDevice[]>('devices_discover', { excludeIds });
+}
+
+export async function getDevicesFromLocal() {
+  try {
+    const conversations = await db.conversations
+      .orderBy('lastAccessed')
+      .reverse()
+      .toArray();
+    return conversations;
+  } catch {
+    return [];
+  }
+}
+
 export async function registerDevice(
   device: Partial<IDevice>,
 ): Promise<IDevice> {
@@ -86,4 +113,55 @@ export async function getSystemTheme() {
     return media.matches ? 'dark' : 'light';
   }
   return invoke<AppBaseTheme>('get_system_theme');
+}
+
+export type FetchMessagesParams = {
+  selfId: string;
+  targetId: string;
+  lastId?: number;
+  pageSize?: number;
+};
+export type FetchMessagesResp = {
+  data: IMessage[];
+  nextCursor?: number | null;
+};
+
+export async function getMessages({
+  selfId,
+  targetId,
+  lastId,
+  pageSize = 20,
+}: FetchMessagesParams): Promise<FetchMessagesResp> {
+  if (isWeb) {
+    try {
+      const response = await api.get<CursorPaginatedMessages>('/messages', {
+        selfId,
+        targetId,
+        lastId,
+        pageSize,
+      });
+      const { messages, hasMore, lastId: serverLastId } = response.payload;
+      const formattedMessages = [...messages].reverse();
+      return {
+        data: formattedMessages,
+        // 将后端的 last_id（更旧数据的游标）作为向前的参数返回
+        nextCursor: hasMore ? serverLastId : undefined,
+      };
+    } catch {
+      return {
+        data: [],
+      };
+    }
+  }
+  const data = await invoke<CursorPaginatedMessages>('get_messages', {
+    selfId,
+    targetId,
+    lastId,
+    pageSize,
+  });
+  return {
+    data: [...data.messages].reverse(),
+    // 将后端的 last_id（更旧数据的游标）作为向前的参数返回
+    nextCursor: data.hasMore ? data.lastId : undefined,
+  };
 }

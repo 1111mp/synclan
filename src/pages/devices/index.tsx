@@ -1,4 +1,3 @@
-import { faker } from '@faker-js/faker';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import {
@@ -18,15 +17,20 @@ import {
   useMemo,
   useRef,
 } from 'react';
+import { InView } from 'react-intersection-observer';
 
 import 'overlayscrollbars/overlayscrollbars.css';
-import { InView } from 'react-intersection-observer';
 import { useParams } from 'react-router';
 import { useMeasure } from 'react-use';
+import { v4 as uuidv4 } from 'uuid';
+import { useShallow } from 'zustand/react/shallow';
 
+import { useAppContext } from '@/app-context';
 import { MessageWrapper, Transmitter } from '@/components';
 import { Toaster } from '@/components/ui';
-import { useSynclanStore } from '@/stores';
+import { HttpStatus } from '@/lib/types';
+import { getMessages } from '@/services/cmd';
+import { useDeviceStore, useIMStore, useSynclanStore } from '@/stores';
 
 OverlayScrollbars.plugin([
   ScrollbarsHidingPlugin,
@@ -35,102 +39,6 @@ OverlayScrollbars.plugin([
 ]);
 
 function loader() {}
-
-const randomNumber = (min: number, max: number) =>
-  faker.number.int({ min, max });
-
-function randomInt(min: number, max: number) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-function randomGapMs() {
-  const r = Math.random();
-  if (r < 0.6) {
-    return randomInt(30, 300) * 1000; // 30秒 ~ 5分钟
-  } else if (r < 0.9) {
-    return randomInt(1, 3) * 60 * 60 * 1000; // 1 ~ 3 小时
-  } else {
-    return randomInt(1, 3) * 24 * 60 * 60 * 1000; // 1 ~ 3 天
-  }
-}
-
-function getRandomMessageType(): Message['type'] {
-  const r = Math.random();
-  if (r < 0.6) return 'text';
-  if (r < 0.85) return 'image';
-  return 'video';
-}
-
-function getImageMessageExtra() {
-  const width = randomNumber(200, 800);
-  const height = randomNumber(200, 800);
-  return {
-    width,
-    height,
-    url: `https://picsum.photos/${width}/${height}?random=${Math.random()}`,
-  };
-}
-
-function getVideoMessageExtra() {
-  return {
-    url: 'https://sample-videos.com/video321/mp4/720/big_buck_bunny_720p_1mb.mp4',
-    width: 640,
-    height: 360,
-    duration: randomNumber(5, 60), // 秒
-    thumbnail: 'https://picsum.photos/640/360?random=' + Math.random(),
-  };
-}
-
-// function sleep() {
-//   return new Promise((resolve) => {
-//     setTimeout(resolve, 1000);
-//   });
-// }
-
-async function fetchServerPage(cursor: number) {
-  const pageSize = 20;
-  let baseTime = Date.now();
-
-  // await sleep();
-
-  const data: Message[] = Array(pageSize)
-    .fill(0)
-    .map((_, i) => {
-      baseTime -= randomGapMs();
-
-      const type = getRandomMessageType();
-
-      let message: any = {
-        id: i + cursor * pageSize,
-        uuid: `${i + cursor * pageSize}`,
-        type,
-        sender: Math.random() < 0.5 ? '11111' : '22222',
-        receiver: Math.random() < 0.5 ? '22222' : '11111',
-        createdAt: baseTime,
-        updatedAt: baseTime,
-      };
-
-      if (type === 'text') {
-        message.content = faker.lorem.sentence(randomNumber(20, 140));
-      } else if (type === 'image') {
-        const image = getImageMessageExtra();
-        message.content = image.url;
-        message.extra = JSON.stringify(image);
-      } else if (type === 'video') {
-        const video = getVideoMessageExtra();
-        message.content = video.url;
-        message.extra = JSON.stringify(video);
-      }
-
-      return message as Message;
-    })
-    .reverse();
-
-  const nextId = data[data.length - 1].id + 1;
-  const previousId = data[0].id - pageSize;
-
-  return { data, nextId, previousId };
-}
 
 function DevicesPage() {
   const params = useParams();
@@ -150,81 +58,137 @@ function DevicesPage() {
     return theme;
   }, [theme]);
 
+  const { sendMessage } = useAppContext();
+
+  const current = useDeviceStore((s) => s.current);
+  const isHydrated = useIMStore(
+    useCallback(
+      (s) => s.messageCaches.get(params.id || '')?.hydrated ?? false,
+      [params.id],
+    ),
+  );
+  const addMessage = useIMStore((s) => s.addMessage);
+  const reconcileServerMessage = useIMStore((s) => s.reconcileServerMessage);
+
   const {
     // status,
-    data,
+    data: queryData,
     // error,
     // isFetching,
-    isFetchingNextPage,
-    // isFetchingPreviousPage,
+    // isFetchingNextPage,
+    isFetchingPreviousPage,
     // hasNextPage,
-    // hasPreviousPage,
+    hasPreviousPage,
     // fetchNextPage,
     fetchPreviousPage,
   } = useInfiniteQuery({
     queryKey: ['messages', params.id],
-    initialPageParam: 0,
+    // 首次进入没有 last_id，传 undefined
+    initialPageParam: undefined as number | undefined,
     refetchOnWindowFocus: false,
-    queryFn: ({ pageParam }) => fetchServerPage(pageParam),
-    getPreviousPageParam: (firstPage) => firstPage.previousId ?? undefined,
-    getNextPageParam: (lastPage) => lastPage.nextId ?? undefined,
+    queryFn: ({ pageParam }) =>
+      getMessages({
+        selfId: current?.id || '',
+        targetId: params.id || '',
+        lastId: pageParam,
+        pageSize: 20,
+      }),
+    getPreviousPageParam: (firstPage) => firstPage.nextCursor,
+    getNextPageParam: () => undefined,
+    enabled: !!params.id && !!current?.id && !isHydrated,
   });
 
-  const messages = useMemo(() => {
-    return data?.pages?.flatMap((p) => p.data) ?? [];
-  }, [data]);
+  useEffect(() => {
+    if (queryData?.pages && queryData.pages.length > 0) {
+      const lastPage = queryData.pages[queryData.pages.length - 1];
+      if (lastPage.data && lastPage.data.length > 0) {
+        useIMStore.getState().setHistory(params.id!, lastPage.data);
+      }
+    }
+  }, [queryData, params.id]);
+
+  const messages = useIMStore(
+    useShallow((s) => {
+      const messageCache = s.messageCaches.get(params.id!);
+      if (!messageCache) return [];
+      return messageCache.order.map((id) => messageCache.messages.get(id)!);
+    }),
+  );
 
   const virtualizer = useVirtualizer({
     count: messages.length,
     overscan: 10,
     // scrollMargin: 20,
     // paddingStart: 12,
-    paddingEnd: footerHeight,
+    paddingEnd: footerHeight + 16,
     // gap: 12,
     estimateSize: () => 120,
     getScrollElement: () =>
       osRef.current?.osInstance()?.elements().viewport ?? null,
-    getItemKey: useCallback((index: number) => messages[index]!.id, [messages]),
+    getItemKey: useCallback(
+      (index: number) => messages[index]!.uuid,
+      [messages],
+    ),
     anchorTo: 'end',
-    followOnAppend: true,
+    followOnAppend: 'smooth',
     scrollEndThreshold: 80,
     directDomUpdates: true,
   });
 
   useLayoutEffect(() => {
     if (mounted.current || messages.length === 0) return;
+    mounted.current = true;
     requestAnimationFrame(() => {
       virtualizer.scrollToEnd({ behavior: 'auto' });
-      mounted.current = true;
     });
   }, [virtualizer, messages.length]);
 
   useEffect(() => {
-    console.log('footerHeight', footerHeight);
-
     if (footerHeight <= 46 || !latestMessageInViewRef.current) return;
 
     virtualizer.scrollToEnd({ behavior: 'smooth' });
   }, [footerHeight, virtualizer]);
 
-  useEffect(() => {
-    const osInstance = osRef.current?.osInstance();
-    if (!osInstance) return;
+  const onSend = async (content: string) => {
+    const deviceId = params.id;
+    if (!content.trim() || !deviceId || !current) return;
 
-    const scrollbarVertical = osInstance.elements().scrollbarVertical;
-    if (scrollbarVertical) {
-      // scrollbarVertical.scrollbar.style.paddingTop = `${16}px`;
-      scrollbarVertical.scrollbar.style.paddingBottom = `${footerHeight + 8}px`;
+    const now = Date.now();
+    const message: IMessage = {
+      uuid: uuidv4(),
+      type: 'text',
+      sender: current.id,
+      receiver: deviceId,
+      content: content.trim(),
+      createdAt: now,
+      updatedAt: now,
+    };
+    console.log('message', message);
+    addMessage(deviceId, message, current.id);
+
+    try {
+      const result = await sendMessage(message);
+      if (result.statusCode === HttpStatus.OK && result.data) {
+        reconcileServerMessage(deviceId, message.uuid, result.data);
+      }
+    } catch (error) {
+      console.error('Failed to send message:', error);
     }
-  }, [footerHeight]);
+  };
 
   const virtualItems = virtualizer.getVirtualItems();
 
   return (
-    <div className='flex flex-col' style={{ height: 'calc(100vh - 64px)' }}>
+    <div
+      className='flex flex-col'
+      style={{
+        height: 'calc(100vh - 64px)',
+        ['--footer-height' as any]: `${footerHeight}px`,
+      }}
+    >
       <OverlayScrollbarsComponent
         ref={osRef}
-        className='flex-1 overflow-x-hidden overflow-y-auto'
+        className='chat-container flex-1 overflow-x-hidden overflow-y-auto'
         options={{
           scrollbars: {
             theme: realTheme === 'dark' ? 'os-theme-light' : 'os-theme-dark',
@@ -242,7 +206,8 @@ function DevicesPage() {
             if (
               !mounted.current ||
               virtualizer.isAtEnd(80) ||
-              isFetchingNextPage
+              isFetchingPreviousPage ||
+              !hasPreviousPage
             )
               return;
 
@@ -259,7 +224,7 @@ function DevicesPage() {
           {virtualItems.map((virtualItem) => {
             const message = messages[virtualItem.index],
               previousMessage = messages[virtualItem.index - 1] || void 0,
-              left = virtualItem.index % 2 === 0,
+              right = message.sender === current?.id,
               isLatest = virtualItem.index === messages.length - 1;
 
             if (isLatest)
@@ -279,7 +244,7 @@ function DevicesPage() {
                     <MessageWrapper
                       message={message}
                       previousMessage={previousMessage}
-                      position={left ? 'left' : 'right'}
+                      position={right ? 'right' : 'left'}
                     />
                   </InView>
                 </div>
@@ -295,7 +260,7 @@ function DevicesPage() {
                 <MessageWrapper
                   message={message}
                   previousMessage={previousMessage}
-                  position={left ? 'left' : 'right'}
+                  position={right ? 'right' : 'left'}
                 />
               </div>
             );
@@ -307,7 +272,7 @@ function DevicesPage() {
         ref={footerRef}
         className='footer-gradient absolute bottom-0 w-full shrink-0 pr-4 pb-2 pl-2'
       >
-        <Transmitter />
+        <Transmitter onSend={onSend} />
       </footer>
       <Toaster />
     </div>

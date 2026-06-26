@@ -11,13 +11,12 @@ import {
 } from '@lexical/react/LexicalHistoryPlugin';
 import { ListPlugin } from '@lexical/react/LexicalListPlugin';
 import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
-import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { TabIndentationPlugin } from '@lexical/react/LexicalTabIndentationPlugin';
 import {
+  $getRoot,
   $getSelection,
   $isRangeSelection,
-  type EditorState,
   type LexicalEditor,
 } from 'lexical';
 import { useImperativeHandle, useRef, useState, type Ref } from 'react';
@@ -61,6 +60,7 @@ type CompositionInputProps = {
   onEmptyChange?: IsEmptyPluginProps['onChange'];
   onFocusChange?: IsFocusedPluginProps['onFocusChange'];
   onLineChange?: AutoLinePluginProps['onLineChange'];
+  onSend?: (content: string) => Promise<void>;
 };
 
 type CompositionInputRef = {
@@ -73,6 +73,7 @@ function CompositionInput({
   onEmptyChange,
   onFocusChange,
   onLineChange,
+  onSend,
 }: CompositionInputProps) {
   const [_isLinkEditMode, setIsLinkEditMode] = useState<boolean>(false);
 
@@ -97,12 +98,12 @@ function CompositionInput({
     });
   };
 
-  const onChange = (_editorState: EditorState, editor: LexicalEditor) => {
-    editor.read(() => {
-      const htmlString = $generateHtmlFromNodes(editor);
-      console.log('HTML:', htmlString);
-    });
-  };
+  // const onChange = (_editorState: EditorState, editor: LexicalEditor) => {
+  //   editor.read(() => {
+  //     const htmlString = $generateHtmlFromNodes(editor);
+  //     console.log('HTML:', htmlString);
+  //   });
+  // };
 
   return (
     <div
@@ -182,10 +183,22 @@ function CompositionInput({
       <AutoLinePlugin onLineChange={onLineChange} />
       <IsEmptyPlugin onChange={onEmptyChange} />
       <IsFocusedPlugin onFocusChange={onFocusChange} />
-      <OnChangePlugin onChange={onChange} />
+      {/*<OnChangePlugin onChange={onChange} />*/}
       <EnterBehaviorPlugin
         onSend={() => {
-          console.log('onSend');
+          const editor = editorRef.current;
+          if (!editor) return;
+
+          let htmlStr = '';
+          editor.read(() => {
+            htmlStr = $generateHtmlFromNodes(editor);
+          });
+
+          if (!htmlStr || htmlStr === '<p><br></p>') return;
+          editor.update(() => {
+            $getRoot().clear();
+          });
+          void onSend?.(htmlStr);
         }}
       />
     </div>

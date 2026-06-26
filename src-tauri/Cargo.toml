@@ -57,6 +57,7 @@ parking_lot = { workspace = true }
 rcgen = "0.14.8"
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
+serde_qs = "1.1.2"
 serde_yaml_ng = { workspace = true }
 socketioxide = { version = "0.18.3", features = [
   "extensions",

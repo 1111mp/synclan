@@ -37,7 +37,11 @@ import {
 } from './nodes';
 import { FixedTextFormatToolbar } from './plugins';
 
-function Transmitter() {
+function Transmitter({
+  onSend,
+}: {
+  onSend?: (content: string) => Promise<void>;
+}) {
   const [isEmpty, setIsEmpty] = useState<boolean>(true);
   const [focused, setFocueed] = useState<boolean>(true);
   const [lineOverflow, setLineOverflow] = useState<boolean>(false);
@@ -45,7 +49,6 @@ function Transmitter() {
   const [_isFulled, setIsFulled] = useState<boolean>(false);
 
   const compositionInputRef = useRef<CompositionInputRef>(null);
-  // const toolsFixedContainer = useRef<HTMLDivElement>(null);
 
   const initialConfig: InitialConfigType = {
     namespace: 'synclan-editor',
@@ -141,6 +144,7 @@ function Transmitter() {
             onFocusChange={(focus) => {
               setFocueed(focus);
             }}
+            onSend={onSend}
           />
         </div>
         <div className={cn('flex items-center ml-auto', multiLine && 'w-full')}>

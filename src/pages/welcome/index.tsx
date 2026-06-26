@@ -6,12 +6,16 @@ import {
   MoonStar,
   Sun,
   SunMoon,
+  User,
 } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { useShallow } from 'zustand/react/shallow';
 
 import { DeviceDiscover } from '@/components/device-discover';
 import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
   Button,
   Card,
   CardContent,
@@ -38,16 +42,26 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from '@/components/ui';
-import { useDeviceStore, useSynclanStore } from '@/stores';
+import {
+  useConversationList,
+  useDeviceStore,
+  useIMStore,
+  useSynclanStore,
+} from '@/stores';
 
 function WelcomePage() {
   const navigate = useNavigate();
   const { config, updateTheme } = useSynclanStore(
     useShallow((s) => ({ config: s.config, updateTheme: s.updateTheme })),
   );
-  const devices = useDeviceStore((s) => s.devices);
+  const current = useDeviceStore((s) => s.current);
+  const conversations = useConversationList();
 
-  const hasDevices = devices.length > 0;
+  const currentId = current ? [current.id] : [];
+  const localIds = conversations.map((c) => c.id);
+  const excludeIds = [...currentId, ...localIds];
+
+  const hasDevices = conversations.length > 0;
 
   return (
     <div className='flex flex-1 items-center justify-center'>
@@ -133,21 +147,37 @@ function WelcomePage() {
                   <DropdownMenuGroup>
                     {hasDevices ? (
                       <>
-                        <DropdownMenuLabel>My Projects</DropdownMenuLabel>
-                        {devices.map(({ id, name }) => (
-                          <DropdownMenuItem
-                            key={id}
-                            className='py-1.5'
-                            onClick={() => {
-                              void navigate(`/projects/${id}/dashboard`);
-                            }}
-                          >
-                            {name}
-                            <DropdownMenuShortcut>
-                              <ChevronRightIcon className='size-4' />
-                            </DropdownMenuShortcut>
-                          </DropdownMenuItem>
-                        ))}
+                        <DropdownMenuLabel>My Devices</DropdownMenuLabel>
+                        {conversations.map((conv) => {
+                          const name = conv?.device?.name ?? '未知设备Ï';
+                          return (
+                            <DropdownMenuItem
+                              key={conv.id}
+                              className='py-1.5'
+                              title={name}
+                              onClick={() => {
+                                useIMStore
+                                  .getState()
+                                  .setActiveConversation(conv.id);
+                                void navigate(`/devices/${conv.id}`);
+                              }}
+                            >
+                              <Avatar>
+                                <AvatarImage
+                                  src={conv?.device?.avatar}
+                                  className='rounded-full'
+                                />
+                                <AvatarFallback>
+                                  <User />
+                                </AvatarFallback>
+                              </Avatar>
+                              {name}
+                              <DropdownMenuShortcut>
+                                <ChevronRightIcon className='size-4' />
+                              </DropdownMenuShortcut>
+                            </DropdownMenuItem>
+                          );
+                        })}
                       </>
                     ) : (
                       <div className='flex flex-col items-center justify-center gap-2 p-6 text-center'>
@@ -163,7 +193,7 @@ function WelcomePage() {
                   </DropdownMenuGroup>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <DeviceDiscover />
+              <DeviceDiscover excludeIds={excludeIds} />
             </Field>
           </FieldGroup>
         </CardContent>

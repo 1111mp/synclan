@@ -16,9 +16,12 @@ pub struct Message {
     pub r#type: MessageType,
     pub content: Option<String>,
     pub extra: Option<String>,
-    #[schema(value_type = String, format = "date-time")]
+
+    #[serde(with = "chrono::naive::serde::ts_milliseconds_option")]
+    #[schema(value_type = i64)]
     pub created_at: Option<NaiveDateTime>,
-    #[schema(value_type = String, format = "date-time")]
+    #[serde(with = "chrono::naive::serde::ts_milliseconds_option")]
+    #[schema(value_type = i64)]
     pub updated_at: Option<NaiveDateTime>,
 }
 
@@ -27,7 +30,7 @@ impl Message {
         let db_pool = db::get_db_pool()?;
         let message = sqlx::query_as::<_, Message>(
             r#"
-            INSERT INTO messages (uuid, sender, receiver, msg_type, content, extra)
+            INSERT INTO messages (uuid, sender, receiver, type, content, extra)
             VALUES ($1, $2, $3, $4, $5, $6)
             RETURNING *
             "#,
@@ -45,41 +48,47 @@ impl Message {
     }
 
     /// Get messages in pages
-    pub async fn get_messages(receiver: &str, current: u32, page_size: u32) -> Result<PaginatedMessages> {
+    pub async fn get_messages(
+        self_id: &str,
+        target_id: &str,
+        last_id: Option<i32>,
+        page_size: u32,
+    ) -> Result<CursorPaginatedMessages> {
         let db_pool = db::get_db_pool()?;
-        let offset = (current - 1) * page_size;
+        let fetch_limit = page_size + 1;
 
-        let messages = sqlx::query_as::<_, Message>(
+        let mut messages = sqlx::query_as::<_, Message>(
             r#"
-            SELECT id, uuid, sender, receiver, msg_type, content, extra, created_at, updated_at
-            FROM messages
-            WHERE receiver = $1
-            ORDER BY id DESC
-            LIMIT $2 OFFSET $3
-            "#,
+                SELECT id, uuid, sender, receiver, type, content, extra, created_at, updated_at
+                FROM messages
+                WHERE
+                  (
+                    (sender = $1 AND receiver = $2)
+                    OR
+                    (sender = $2 AND receiver = $1)
+                  )
+                  AND ($3 IS NULL OR id < $3)
+                ORDER BY id DESC
+                LIMIT $4
+                "#,
         )
-        .bind(receiver)
-        .bind(page_size)
-        .bind(offset)
+        .bind(self_id)
+        .bind(target_id)
+        .bind(last_id)
+        .bind(fetch_limit)
         .fetch_all(&db_pool)
         .await?;
 
-        let total: i64 = sqlx::query_scalar(
-            r#"
-            SELECT COUNT(*)
-            FROM messages
-            WHERE receiver = $1
-            "#,
-        )
-        .bind(receiver)
-        .fetch_one(&db_pool)
-        .await?;
+        let has_more = messages.len() > page_size as usize;
+        if has_more {
+            messages.pop();
+        }
+        let next_last_id = messages.last().and_then(|m| m.id);
 
-        Ok(PaginatedMessages {
+        Ok(CursorPaginatedMessages {
             messages,
-            total,
-            current,
-            page_size,
+            has_more,
+            last_id: next_last_id,
         })
     }
 
@@ -92,7 +101,7 @@ impl Message {
             .map_or(0, |a| a.last_ack.unwrap_or(0));
         let messages = sqlx::query_as::<_, Message>(
             r#"
-            SELECT id, uuid, sender, receiver, msg_type, content, extra, created_at, updated_at
+            SELECT id, uuid, sender, receiver, type, content, extra, created_at, updated_at
             FROM messages
             WHERE receiver = $1 AND id > $2
             ORDER BY id DESC
@@ -152,6 +161,7 @@ impl MessageAck {
 }
 
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct PaginatedMessages {
     pub messages: Vec<Message>,
     #[schema(default = 0)]
@@ -160,6 +170,14 @@ pub struct PaginatedMessages {
     pub current: u32,
     #[schema(default = 10)]
     pub page_size: u32,
+}
+
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct CursorPaginatedMessages {
+    pub messages: Vec<Message>,
+    pub has_more: bool,
+    pub last_id: Option<i32>,
 }
 
 #[allow(unused)]

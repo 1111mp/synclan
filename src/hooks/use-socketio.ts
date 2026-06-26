@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ManagerOptions, Socket, SocketOptions } from 'socket.io-client';
 import { io as SocketIO } from 'socket.io-client';
 
-import { HttpStatus, type IMessage } from '@/lib/types';
+import { HttpStatus } from '@/lib/types';
 
 export enum ReadyState {
   UNINSTANTIATED = -1,
@@ -13,22 +13,23 @@ export enum ReadyState {
 }
 
 export enum EventNames {
-  MESSAGE = 'on-message',
-  MESSAGEREAD = 'on-message:read',
+  MESSAGE = 'synclan://message',
+  MESSAGEREAD = 'synclan://message:read',
 }
 
-type AckResponse = {
+type AckResponse<T> = {
   statusCode: HttpStatus;
   message?: string;
+  data?: T;
 };
 
 type ListenEvents = Record<
   EventNames,
-  (message: IMessage, cb: (resp: AckResponse) => void) => void
+  (message: IMessage, cb: (resp: AckResponse<unknown>) => void) => void
 >;
 type EmitEvents = Record<
   EventNames,
-  (message: IMessage, cb: (resp: AckResponse) => void) => void
+  (message: IMessage, cb: (resp: AckResponse<IMessage>) => void) => void
 >;
 
 export type UseSocketOptions = Partial<
@@ -41,7 +42,7 @@ export type UseSocketOptions = Partial<
 export type SendMessage = (
   message: IMessage,
   timeout?: number,
-) => Promise<AckResponse>;
+) => Promise<AckResponse<IMessage>>;
 
 export function useSocketIO(url: string, options: UseSocketOptions = {}) {
   const [state, setState] = useState<ReadyState>(
@@ -86,7 +87,7 @@ export function useSocketIO(url: string, options: UseSocketOptions = {}) {
           message: 'successed',
         });
       };
-      socket.on('on-message', onMessage);
+      socket.on(EventNames.MESSAGE, onMessage);
     }
 
     return () => {
@@ -94,7 +95,7 @@ export function useSocketIO(url: string, options: UseSocketOptions = {}) {
       socket.off('disconnect', onDisconnect);
 
       if (optionsRef.current?.onMessage && onMessage) {
-        socket.off('on-message', onMessage);
+        socket.off(EventNames.MESSAGE, onMessage);
       }
 
       socket.close();
@@ -106,17 +107,21 @@ export function useSocketIO(url: string, options: UseSocketOptions = {}) {
     (
       message: IMessage,
       timeout: number = 10000, // Message sending timeout (millisecond)
-    ): Promise<AckResponse> => {
+    ): Promise<AckResponse<IMessage>> => {
       return new Promise((resolve, reject) => {
         if (socketRef.current?.connected) {
           socketRef.current
             .timeout(timeout)
             .emit(EventNames.MESSAGE, message, (err, resp) => {
               if (err) {
-                reject({
+                return reject({
                   statusCode: HttpStatus.REQUEST_TIMEOUT,
                   message: 'timeout',
                 });
+              }
+
+              if (resp.statusCode !== HttpStatus.OK) {
+                return reject(resp);
               }
 
               resolve(resp);

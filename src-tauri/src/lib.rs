@@ -57,8 +57,11 @@ pub fn run() {
             // device
             cmd::get_device_by_id,
             cmd::get_devices,
+            cmd::devices_discover,
             cmd::register_device,
             cmd::patch_device,
+            // message
+            cmd::get_messages,
             // preview window
             cmd::create_preview_window
         ]);

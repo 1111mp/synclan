@@ -17,15 +17,12 @@ CREATE TABLE
 		updated_at DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now'))
 	);
 
-CREATE INDEX IF NOT EXISTS idx_messages_sender ON messages (sender);
-
-CREATE INDEX IF NOT EXISTS idx_messages_receiver ON messages (receiver);
-
-CREATE INDEX IF NOT EXISTS idx_messages_sender_receiver ON messages (sender, receiver);
+CREATE INDEX IF NOT EXISTS idx_messages_sender_receiver ON messages (sender, receiver, id DESC);
+CREATE INDEX IF NOT EXISTS idx_messages_receiver_sender ON messages (receiver, sender, id DESC);
 
 -- Trigger
 CREATE TRIGGER IF NOT EXISTS update_messages_updated_at AFTER
-UPDATE ON messages FOR EACH ROW WHEN OLD.updated_at = NEW.updated_at -- 避免递归
+UPDATE ON messages FOR EACH ROW WHEN OLD.updated_at = NEW.updated_at
 BEGIN
 UPDATE messages
 SET
@@ -61,17 +58,12 @@ CREATE TABLE
 CREATE INDEX IF NOT EXISTS idx_devices_fingerprint_id ON devices(fingerprint_id);
 
 -- Trigger
-CREATE TRIGGER IF NOT EXISTS update_devices_updated_at
-AFTER UPDATE OF
-    name,
-    avatar,
-    fingerprint_id,
-    platform,
-    browser
-ON devices
-FOR EACH ROW
+CREATE TRIGGER IF NOT EXISTS update_devices_updated_at AFTER
+UPDATE ON devices FOR EACH ROW WHEN OLD.updated_at = NEW.updated_at
 BEGIN
-    UPDATE devices
-    SET updated_at = unixepoch()
-    WHERE id = NEW.id;
+UPDATE devices
+SET
+	updated_at = unixepoch()
+WHERE
+	id = OLD.id;
 END;

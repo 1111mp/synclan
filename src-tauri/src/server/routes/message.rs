@@ -1,10 +1,10 @@
 use super::AppState;
 use crate::{
     json_response,
-    module::message::{Message, PaginatedMessages},
+    module::message::{CursorPaginatedMessages, Message, PaginatedMessages},
     server::{
         api_doc::MESSAGE_TAG,
-        dtos::Pagination,
+        dtos::message_dto::CursorPagination,
         exception::HttpException,
         extractors::Query,
         guards::Claims,
@@ -29,10 +29,12 @@ pub fn protected_route() -> OpenApiRouter<Arc<AppState>> {
   get,
   path = "",
   params(
-    Pagination
+    CursorPagination
   ),
   responses(
-    (status = OK, body = JsonResponse<PaginatedMessages>)
+    (status = OK, body = JsonResponse<CursorPaginatedMessages>),
+    (status = 400, description = "Invalid query parameters"),
+    (status = 401, description = "Unauthorized")
   ),
   security(
     ("bearer_auth" = [])
@@ -41,11 +43,15 @@ pub fn protected_route() -> OpenApiRouter<Arc<AppState>> {
 )]
 #[debug_handler]
 async fn get_messages(
-    claims: Claims,
-    Query(pagination): Query<Pagination>,
-) -> Result<HttpResponse<PaginatedMessages>, HttpException> {
-    let data = Message::get_messages(&claims.device_id, pagination.current, pagination.page_size).await?;
-
+    Query(pagination): Query<CursorPagination>,
+) -> Result<HttpResponse<CursorPaginatedMessages>, HttpException> {
+    let data = Message::get_messages(
+        &pagination.self_id,
+        &pagination.target_id,
+        pagination.last_id,
+        pagination.page_size,
+    )
+    .await?;
     json_response!(data);
 }
 

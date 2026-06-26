@@ -8,7 +8,7 @@ import { TooltipProvider } from '@/components/ui';
 import { useTheme } from '@/hooks/use-theme';
 import { getDevice } from '@/lib/device';
 import { router } from '@/routes';
-import { useDeviceStore } from '@/stores';
+import { useDeviceStore, useIMStore } from '@/stores';
 
 function App() {
   const { loading, updateLoading, updateCurrent } = useDeviceStore(
@@ -18,13 +18,17 @@ function App() {
       updateCurrent: s.updateCurrent,
     })),
   );
+  const hydrateConversations = useIMStore((s) => s.hydrateConversations);
 
   useTheme();
 
   useEffect(() => {
     const initialization = async () => {
       try {
-        const device = await getDevice();
+        const [device] = await Promise.all([
+          getDevice(),
+          hydrateConversations(),
+        ]);
         if (device) {
           updateCurrent(device);
         }
@@ -37,7 +41,7 @@ function App() {
     };
 
     void initialization();
-  }, [updateLoading, updateCurrent]);
+  }, [updateLoading, updateCurrent, hydrateConversations]);
 
   if (loading) {
     return <LoadingScreen />;

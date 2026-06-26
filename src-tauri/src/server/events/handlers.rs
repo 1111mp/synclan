@@ -13,12 +13,12 @@ use serde::Deserialize;
 use socketioxide::extract::{AckSender, Data, Extension, SocketRef, State};
 use std::sync::Arc;
 
-async fn message_handler(app_state: &Arc<AppState>, payload: &Message) -> Result<()> {
+async fn message_handler(app_state: &Arc<AppState>, payload: &Message) -> Result<Message> {
     let message = payload.create().await?;
     let mut storage = app_state.message_storage.clone();
-    storage.push(message).await?;
+    storage.push(message.clone()).await?;
 
-    Ok(())
+    Ok(message)
 }
 
 pub async fn on_connection(socket: SocketRef) {
@@ -26,13 +26,15 @@ pub async fn on_connection(socket: SocketRef) {
         "synclan://message",
         async |Data(payload): Data<Message>, State::<Arc<AppState>>(app_state), ack: AckSender| {
             let resp = match message_handler(&app_state, &payload).await {
-                Ok(_) => AckResponse {
+                Ok(saved_msg) => AckResponse {
                     status_code: StatusCode::OK,
                     message: None,
+                    data: Some(saved_msg),
                 },
                 Err(err) => AckResponse {
                     status_code: StatusCode::INTERNAL_SERVER_ERROR,
                     message: Some(format!("Message processing failed: {}", err)),
+                    data: None,
                 },
             };
 

@@ -1,37 +1,3 @@
-import { useEffect, useRef, useState, type JSX } from 'react';
-import {
-  $createRangeSelection,
-  $getNearestNodeFromDOMNode,
-  $getSelection,
-  $isElementNode,
-  $isNodeSelection,
-  $isRangeSelection,
-  $normalizeSelection__EXPERIMENTAL,
-  $setSelection,
-  CLICK_COMMAND,
-  COMMAND_PRIORITY_HIGH,
-  COMMAND_PRIORITY_LOW,
-  createCommand,
-  getDOMSelection,
-  type LexicalEditor,
-  type LexicalCommand,
-  type LexicalNode,
-  type NodeKey,
-  type Point,
-  $getNodeByKey,
-  $createTextNode,
-  HISTORIC_TAG,
-  type RangeSelection,
-} from 'lexical';
-import {
-  $createLinkNode,
-  $isAutoLinkNode,
-  $isLinkNode,
-  LinkNode,
-  type LinkAttributes,
-} from '@lexical/link';
-import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { Button, Input, Label } from '../ui';
 import {
   autoUpdate,
   flip,
@@ -43,11 +9,46 @@ import {
   useFloating,
   useInteractions,
 } from '@floating-ui/react';
-import { $findMatchingParent, mergeRegister } from '@lexical/utils';
-import { $isEmojiNode } from '../nodes';
-import { $getAncestor, $getSelectedNode } from './lib';
-import invariant from './invariant';
+import {
+  $createLinkNode,
+  $isAutoLinkNode,
+  $isLinkNode,
+  LinkNode,
+  type LinkAttributes,
+} from '@lexical/link';
+import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import type { HistoryState } from '@lexical/react/LexicalHistoryPlugin';
+import { $findMatchingParent, mergeRegister } from '@lexical/utils';
+import {
+  $createRangeSelection,
+  $createTextNode,
+  $getNearestNodeFromDOMNode,
+  $getNodeByKey,
+  $getSelection,
+  $isElementNode,
+  $isNodeSelection,
+  $isRangeSelection,
+  $normalizeSelection__EXPERIMENTAL,
+  $setSelection,
+  CLICK_COMMAND,
+  COMMAND_PRIORITY_HIGH,
+  COMMAND_PRIORITY_LOW,
+  createCommand,
+  getDOMSelection,
+  HISTORIC_TAG,
+  type LexicalCommand,
+  type LexicalEditor,
+  type LexicalNode,
+  type NodeKey,
+  type Point,
+  type RangeSelection,
+} from 'lexical';
+import { useEffect, useRef, useState, type JSX } from 'react';
+
+import { $isEmojiNode } from '../nodes';
+import { Button, Input, Label } from '../ui';
+import invariant from './invariant';
+import { $getAncestor, $getSelectedNode } from './lib';
 
 // Source: https://stackoverflow.com/a/8234912/2013580
 const urlRegExp = new RegExp(
@@ -513,7 +514,7 @@ function LinkPlugin({
             <Label className='font-light'>文本：</Label>
             <Input
               autoFocus
-              className='w-56 h-7'
+              className='h-7 w-56'
               value={nodeText}
               onChange={(event) => {
                 setNodeText(event.target.value);
@@ -528,7 +529,7 @@ function LinkPlugin({
           <div className='flex items-center space-x-2'>
             <Label className='font-light'>链接：</Label>
             <Input
-              className='w-56 h-7'
+              className='h-7 w-56'
               value={nodeUrl}
               onChange={(event) => {
                 setNodeUrl(event.target.value);
@@ -541,9 +542,9 @@ function LinkPlugin({
             />
           </div>
           <div className='flex justify-end'>
-            <div className='flex item-center space-x-2'>
+            <div className='item-center flex space-x-2'>
               <Button
-                size='xxs'
+                size='xs'
                 variant='outline'
                 onClick={() => {
                   onFromShortcutCloseHandle(true);
@@ -552,8 +553,8 @@ function LinkPlugin({
                 取消
               </Button>
               <Button
-                size='xxs'
-                className='text-popover-foreground'
+                size='xs'
+                // className='text-popover-foreground'
                 disabled={!validateUrl(nodeUrl)}
                 onClick={handlerShortcusSubmission}
               >
@@ -573,7 +574,7 @@ function LinkPlugin({
             <Input
               ref={inputRef}
               value={linkUrl}
-              className='w-56 h-7'
+              className='h-7 w-56'
               placeholder='粘贴或输入一个链接'
               onChange={(event) => {
                 setLinkUrl(event.target.value);
@@ -585,9 +586,9 @@ function LinkPlugin({
               }}
             />
           </div>
-          <div className='flex justify-end items-center space-x-2'>
+          <div className='flex items-center justify-end space-x-2'>
             <Button
-              size='xxs'
+              size='xs'
               variant='outline'
               onClick={() => {
                 onAfterCloseHandle(true, true);
@@ -596,8 +597,8 @@ function LinkPlugin({
               取消
             </Button>
             <Button
-              size='xxs'
-              className='text-popover-foreground'
+              size='xs'
+              // className='text-popover-foreground'
               disabled={!validateUrl(linkUrl)}
               onClick={handleLinkSubmission}
             >
@@ -615,7 +616,7 @@ function LinkPlugin({
           {isEdit ? (
             <Input
               autoFocus
-              className='w-56 h-7'
+              className='h-7 w-56'
               value={nodeText}
               onChange={(event) => {
                 setNodeText(event.target.value);
@@ -634,7 +635,7 @@ function LinkPlugin({
           <Label className='font-light'>链接：</Label>
           {isEdit ? (
             <Input
-              className='w-56 h-7'
+              className='h-7 w-56'
               value={nodeUrl}
               onChange={(event) => {
                 setNodeUrl(event.target.value);
@@ -648,7 +649,7 @@ function LinkPlugin({
           ) : (
             <p>
               <span
-                className='inline-block max-w-56 truncate cursor-pointer hover:underline text-blue-500'
+                className='inline-block max-w-56 cursor-pointer truncate text-blue-500 hover:underline'
                 onClick={() => {
                   window.open(activedLinkNode.url, '_blank');
                 }}
@@ -660,9 +661,9 @@ function LinkPlugin({
         </div>
         <div className='flex justify-end'>
           {isEdit ? (
-            <div className='flex item-center space-x-2'>
+            <div className='item-center flex space-x-2'>
               <Button
-                size='xxs'
+                size='xs'
                 variant='outline'
                 onClick={() => {
                   onAfterCloseHandle(false, true);
@@ -671,8 +672,8 @@ function LinkPlugin({
                 取消
               </Button>
               <Button
-                size='xxs'
-                className='text-popover-foreground'
+                size='xs'
+                // className='text-popover-foreground'
                 disabled={!validateUrl(nodeUrl)}
                 onClick={handleLinkInfoSubmission}
               >
@@ -683,7 +684,7 @@ function LinkPlugin({
             <Button
               className='font-light'
               variant='outline'
-              size='xxs'
+              size='xs'
               onClick={() => {
                 setIsEdit(true);
                 setNodeUrl(activedLinkNode.url);
@@ -702,7 +703,7 @@ function LinkPlugin({
     <FloatingPortal>
       <div
         ref={refs.setFloating}
-        className='py-3 px-4 space-y-3 border rounded-md bg-popover text-popover-foreground'
+        className='bg-popover text-popover-foreground space-y-3 rounded-md border px-4 py-3'
         style={floatingStyles}
         {...getFloatingProps()}
       >

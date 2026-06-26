@@ -12,78 +12,72 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
+  SidebarMenuAction,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui';
 
 export function NavDevices({
-  devices = [],
+  activeDeviceId,
+  conversations = [],
   onSelectDevice,
 }: {
-  devices?: IDevice[];
+  activeDeviceId?: string;
+  conversations?: IConversations[];
   onSelectDevice?: (id: string) => void;
 }) {
-  console.log('devices', devices);
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Devices</SidebarGroupLabel>
       <SidebarMenu>
-        {devices.map((device) => (
-          <SidebarMenuItem key={device.id}>
-            <SidebarMenuButton
-              asChild
-              size='xl'
-              tooltip={device.name}
-              onClick={() => {
-                onSelectDevice?.(device.id);
-              }}
-            >
-              <Item>
-                <ItemMedia>
-                  <Avatar size='lg'>
-                    <AvatarImage src={device.avatar} className='rounded-full' />
-                    <AvatarFallback>
-                      <User />
-                    </AvatarFallback>
-                  </Avatar>
-                </ItemMedia>
-                <ItemContent className='gap-1'>
-                  <ItemTitle className='line-clamp-1 break-all'>
-                    {device.name}
-                  </ItemTitle>
-                  <ItemDescription className='line-clamp-1 break-all'>
-                    This is a message from device 1
-                  </ItemDescription>
-                </ItemContent>
-              </Item>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        ))}
-        {/*<SidebarMenuItem>
-          <SidebarMenuButton asChild size='xl' tooltip='device 1'>
-            <Item>
-              <ItemMedia>
-                <Avatar size='lg'>
-                  <AvatarImage
-                    src='https://ui.shadcn.com/avatars/shadcn.jpg'
-                    className='rounded-full'
-                  />
-                  <AvatarFallback>
-                    <User />
-                  </AvatarFallback>
-                </Avatar>
-              </ItemMedia>
-              <ItemContent className='gap-1'>
-                <ItemTitle className='line-clamp-1 break-all'>
-                  device 1
-                </ItemTitle>
-                <ItemDescription className='line-clamp-1 break-all'>
-                  This is a message from device 1
-                </ItemDescription>
-              </ItemContent>
-            </Item>
-          </SidebarMenuButton>
-        </SidebarMenuItem>*/}
+        {conversations.map((conv) => {
+          const name = conv?.device?.name ?? '未知设备',
+            unread = conv?.unreadCount ?? 0;
+
+          return (
+            <SidebarMenuItem key={conv.id}>
+              <SidebarMenuButton
+                asChild
+                size='xl'
+                isActive={activeDeviceId === conv.id}
+                tooltip={name}
+                onClick={() => {
+                  onSelectDevice?.(conv.id);
+                }}
+              >
+                <Item>
+                  <ItemMedia>
+                    <Avatar size='lg'>
+                      <AvatarImage
+                        src={conv?.device?.avatar}
+                        className='rounded-full'
+                      />
+                      <AvatarFallback>
+                        <User />
+                      </AvatarFallback>
+                    </Avatar>
+                  </ItemMedia>
+                  <ItemContent className='gap-1'>
+                    <ItemTitle className='line-clamp-1 break-all'>
+                      {name}
+                    </ItemTitle>
+                    <ItemDescription className='line-clamp-1 break-all'>
+                      This is a message from device 1
+                    </ItemDescription>
+                  </ItemContent>
+                </Item>
+              </SidebarMenuButton>
+              {unread > 0 && (
+                <SidebarMenuAction>
+                  <SidebarMenuBadge>
+                    {unread > 99 ? '99+' : unread}
+                  </SidebarMenuBadge>
+                </SidebarMenuAction>
+              )}
+            </SidebarMenuItem>
+          );
+        })}
       </SidebarMenu>
     </SidebarGroup>
   );

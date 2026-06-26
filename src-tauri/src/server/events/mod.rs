@@ -7,8 +7,9 @@ pub mod store;
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct AckResponse {
+pub struct AckResponse<T> {
     #[serde(with = "status_code_serde")]
     pub status_code: StatusCode,
     pub message: Option<String>,
+    pub data: Option<T>,
 }

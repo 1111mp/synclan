@@ -2,7 +2,10 @@ import { BASE_URL } from '@/lib/constant';
 import { DEVICE_ID_STORAGE_KEY } from '@/lib/device';
 
 export interface RequestOptions extends RequestInit {
-  params?: Record<string, string | number | boolean | undefined>;
+  params?: Record<
+    string,
+    string | number | boolean | string[] | number[] | undefined
+  >;
 }
 
 export class HttpError extends Error {
@@ -21,7 +24,15 @@ function buildUrl(path: string, params?: RequestOptions['params']) {
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined) {
-        url.searchParams.set(key, String(value));
+        if (Array.isArray(value)) {
+          value.forEach((item) => {
+            if (item !== undefined && item !== null) {
+              url.searchParams.append(key, String(item));
+            }
+          });
+        } else {
+          url.searchParams.set(key, String(value));
+        }
       }
     });
   }

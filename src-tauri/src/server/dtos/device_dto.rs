@@ -1,6 +1,6 @@
 use crate::module::device::DeviceRole;
 use serde::Deserialize;
-use utoipa::ToSchema;
+use utoipa::{IntoParams, ToSchema};
 use validator::Validate;
 
 #[derive(Debug, Deserialize, Validate, ToSchema)]
@@ -18,4 +18,10 @@ pub(crate) struct RegistorDeviceDto {
 
     pub platform: Option<String>,
     pub browser: Option<String>,
+}
+
+#[derive(Debug, Deserialize, IntoParams, Validate, ToSchema)]
+pub(crate) struct DiscoverDeviceDto {
+    #[param(inline, value_type = Option<Vec<String>>)]
+    pub ids: Option<Vec<String>>,
 }

@@ -1,11 +1,13 @@
 mod config;
 mod device;
+mod messsage;
 mod server;
 mod system;
 mod webview_window;
 
 pub use config::*;
 pub use device::*;
+pub use messsage::*;
 pub use server::*;
 pub use system::*;
 pub use webview_window::*;

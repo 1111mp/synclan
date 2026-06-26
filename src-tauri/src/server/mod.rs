@@ -12,6 +12,7 @@ use crate::{
     utils::{db, dirs, logging::Type, tls},
 };
 use anyhow::{Context, Result, anyhow};
+use apalis::prelude::{BackoffConfig, IntervalStrategy, StrategyBuilder};
 use apalis_sqlite::SqliteStorage;
 use api_doc::ApiDoc;
 use axum::{
@@ -100,7 +101,20 @@ impl HttpServer {
         db_pool: Pool<Sqlite>,
         handle: Handle<std::net::SocketAddr>,
     ) -> Result<()> {
-        let message_backend = SqliteStorage::new(&db_pool);
+        let config = &apalis_sqlite::Config::default()
+            .with_poll_interval(
+                StrategyBuilder::new()
+                    .apply(
+                        IntervalStrategy::new(Duration::from_millis(100)).with_backoff(
+                            BackoffConfig::new(Duration::from_secs(2))
+                                .with_multiplier(1.5)
+                                .with_jitter(0.1),
+                        ),
+                    )
+                    .build(),
+            )
+            .set_buffer_size(50);
+        let mut message_backend = SqliteStorage::new_with_config(&db_pool, config);
         let app_state = Arc::new(AppState {
             db_pool,
             message_storage: message_backend.clone(),

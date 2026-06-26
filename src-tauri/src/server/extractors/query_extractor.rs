@@ -16,7 +16,8 @@ where
     type Rejection = super::ParserRejection;
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
-        let AxumQuery(value) = AxumQuery::<T>::from_request_parts(parts, state).await?;
+        let query = parts.uri.query().unwrap_or_default();
+        let value: T = serde_qs::from_str(query)?;
         value.validate()?;
         Ok(Query(value))
     }

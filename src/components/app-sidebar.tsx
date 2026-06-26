@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query';
 import { AudioWaveform, Command, GalleryVerticalEnd } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router';
 
@@ -13,8 +12,7 @@ import {
   SidebarHeader,
   SidebarRail,
 } from '@/components/ui';
-import { getDevices } from '@/services/cmd';
-import { useDeviceStore } from '@/stores';
+import { useConversationList, useIMStore } from '@/stores';
 
 // This is sample data.
 const data = {
@@ -45,16 +43,13 @@ const data = {
 function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   let params = useParams();
   const navigate = useNavigate();
-  const current = useDeviceStore((s) => s.current);
-
-  const { data: devices = [] } = useQuery({
-    queryKey: ['devices', current?.id],
-    queryFn: () => getDevices(current?.id),
-    enabled: !!current?.id,
-  });
+  const conversations = useConversationList();
+  const setActiveConversation = useIMStore((s) => s.setActiveConversation);
 
   const onSelectDevice = (id: string) => {
     if (params?.id === id) return;
+
+    setActiveConversation(id);
     void navigate(`/devices/${id}`);
   };
 
@@ -65,7 +60,11 @@ function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SearchForm />
       </SidebarHeader>
       <SidebarContent>
-        <NavDevices devices={devices} onSelectDevice={onSelectDevice} />
+        <NavDevices
+          activeDeviceId={params.id}
+          conversations={conversations}
+          onSelectDevice={onSelectDevice}
+        />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />

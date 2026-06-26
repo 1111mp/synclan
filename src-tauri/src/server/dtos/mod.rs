@@ -3,6 +3,7 @@ use utoipa::{IntoParams, ToSchema};
 use validator::{Validate, ValidationError};
 
 pub mod device_dto;
+pub mod message_dto;
 pub mod synclan_dto;
 
 #[derive(Debug, Deserialize, IntoParams, ToSchema, Validate)]
@@ -14,7 +15,7 @@ pub struct Pagination {
     pub current: u32,
 
     #[serde(default = "default_page_size")]
-    #[schema(default = 10)]
+    #[schema(default = 20)]
     #[validate(custom(function = "validate_page_size", message = "Invalid pageSize"))]
     pub page_size: u32,
 }
@@ -24,7 +25,7 @@ fn default_current() -> u32 {
 }
 
 fn default_page_size() -> u32 {
-    10
+    20
 }
 
 fn validate_page_size(value: u32) -> Result<(), ValidationError> {

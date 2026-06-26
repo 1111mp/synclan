@@ -2,7 +2,7 @@ import { createContext, useContext, type ReactNode } from 'react';
 
 import { useSocketIO, type ReadyState, type SendMessage } from '@/hooks';
 import { WS_URL } from '@/lib/constant';
-import { useDeviceStore } from '@/stores';
+import { useDeviceStore, useIMStore } from '@/stores';
 
 type AppContext = {
   socketState: ReadyState;
@@ -12,15 +12,17 @@ type AppContext = {
 export const AppContext = createContext<AppContext | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const device = useDeviceStore((s) => s.current);
+  const current = useDeviceStore((s) => s.current);
+  const addMessage = useIMStore((s) => s.addMessage);
 
   const { state: socketState, sendMessage } = useSocketIO(WS_URL, {
     transports: ['websocket'],
     auth: {
-      deviceId: device?.id,
+      deviceId: current?.id,
     },
     onMessage(message) {
-      console.log('Received message:', message);
+      if (!current?.id) return;
+      addMessage(message.sender, message, current.id);
     },
   });
 
