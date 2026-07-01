@@ -1,25 +1,13 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import {
-  ClickScrollPlugin,
-  OverlayScrollbars,
-  ScrollbarsHidingPlugin,
-  SizeObserverPlugin,
-} from 'overlayscrollbars';
-import {
-  OverlayScrollbarsComponent,
-  type OverlayScrollbarsComponentRef,
-} from 'overlayscrollbars-react';
-import {
   useCallback,
   useEffect,
   useLayoutEffect,
-  useMemo,
   useRef,
+  useState,
 } from 'react';
 import { InView } from 'react-intersection-observer';
-
-import 'overlayscrollbars/overlayscrollbars.css';
 import { useParams } from 'react-router';
 import { useMeasure } from 'react-use';
 import { v4 as uuidv4 } from 'uuid';
@@ -30,33 +18,20 @@ import { MessageWrapper, Transmitter } from '@/components';
 import { Toaster } from '@/components/ui';
 import { HttpStatus } from '@/lib/types';
 import { getMessages } from '@/services/cmd';
-import { useDeviceStore, useIMStore, useSynclanStore } from '@/stores';
-
-OverlayScrollbars.plugin([
-  ScrollbarsHidingPlugin,
-  SizeObserverPlugin,
-  ClickScrollPlugin,
-]);
+import { useDeviceStore, useIMStore } from '@/stores';
 
 function loader() {}
 
 function DevicesPage() {
+  const [didInitialScroll, setDidInitialScroll] = useState<boolean>(false);
+
   const params = useParams();
 
   const mounted = useRef<boolean>(false);
-  const osRef = useRef<OverlayScrollbarsComponentRef>(null);
+  const parentRef = useRef<HTMLDivElement>(null);
   const latestMessageInViewRef = useRef<boolean>(false);
+  const isFetching = useRef<boolean>(false);
   const [footerRef, { height: footerHeight }] = useMeasure<HTMLElement>();
-
-  const theme = useSynclanStore((s) => s.config?.theme);
-  const realTheme = useMemo(() => {
-    if (theme === 'system') {
-      return matchMedia('(prefers-color-scheme: dark)').matches
-        ? 'dark'
-        : 'light';
-    }
-    return theme;
-  }, [theme]);
 
   const { sendMessage } = useAppContext();
 
@@ -68,6 +43,7 @@ function DevicesPage() {
     ),
   );
   const addMessage = useIMStore((s) => s.addMessage);
+  const setActiveConversation = useIMStore((s) => s.setActiveConversation);
   const reconcileServerMessage = useIMStore((s) => s.reconcileServerMessage);
 
   const {
@@ -100,12 +76,12 @@ function DevicesPage() {
 
   useEffect(() => {
     if (queryData?.pages && queryData.pages.length > 0) {
-      const lastPage = queryData.pages[queryData.pages.length - 1];
+      const lastPage = queryData.pages[0];
       if (lastPage.data && lastPage.data.length > 0) {
         useIMStore.getState().setHistory(params.id!, lastPage.data);
       }
     }
-  }, [queryData, params.id]);
+  }, [queryData?.pages, params.id]);
 
   const messages = useIMStore(
     useShallow((s) => {
@@ -117,31 +93,33 @@ function DevicesPage() {
 
   const virtualizer = useVirtualizer({
     count: messages.length,
-    overscan: 10,
-    // scrollMargin: 20,
+    overscan: 6,
     // paddingStart: 12,
     paddingEnd: footerHeight + 16,
     // gap: 12,
-    estimateSize: () => 120,
-    getScrollElement: () =>
-      osRef.current?.osInstance()?.elements().viewport ?? null,
+    estimateSize: () => 74,
+    getScrollElement: () => parentRef.current,
     getItemKey: useCallback(
       (index: number) => messages[index]!.uuid,
       [messages],
     ),
     anchorTo: 'end',
-    followOnAppend: 'smooth',
-    scrollEndThreshold: 80,
+    followOnAppend: true,
+    scrollEndThreshold: 120,
     directDomUpdates: true,
   });
 
+  useEffect(() => {
+    if (!params.id || mounted.current) return;
+    setActiveConversation(params.id);
+  }, [params.id, setActiveConversation]);
+
   useLayoutEffect(() => {
-    if (mounted.current || messages.length === 0) return;
+    if (didInitialScroll) return;
     mounted.current = true;
-    requestAnimationFrame(() => {
-      virtualizer.scrollToEnd({ behavior: 'auto' });
-    });
-  }, [virtualizer, messages.length]);
+    virtualizer.scrollToEnd();
+    setDidInitialScroll(true);
+  }, [didInitialScroll, virtualizer]);
 
   useEffect(() => {
     if (footerHeight <= 46 || !latestMessageInViewRef.current) return;
@@ -163,7 +141,6 @@ function DevicesPage() {
       createdAt: now,
       updatedAt: now,
     };
-    console.log('message', message);
     addMessage(deviceId, message, current.id);
 
     try {
@@ -180,44 +157,35 @@ function DevicesPage() {
 
   return (
     <div
-      className='flex flex-col'
+      className='flex flex-col overflow-hidden'
       style={{
         height: 'calc(100vh - 64px)',
-        ['--footer-height' as any]: `${footerHeight}px`,
       }}
     >
-      <OverlayScrollbarsComponent
-        ref={osRef}
-        className='chat-container flex-1 overflow-x-hidden overflow-y-auto'
-        options={{
-          scrollbars: {
-            theme: realTheme === 'dark' ? 'os-theme-light' : 'os-theme-dark',
-            autoHide: 'scroll',
-            dragScroll: true,
-            clickScroll: true,
-          },
-          overflow: {
-            x: 'hidden',
-            y: 'scroll',
-          },
-        }}
-        events={{
-          scroll: (_instance, event) => {
-            if (
-              !mounted.current ||
-              virtualizer.isAtEnd(80) ||
-              isFetchingPreviousPage ||
-              !hasPreviousPage
-            )
-              return;
+      <div
+        ref={parentRef}
+        className='min-h-0 w-full overflow-x-hidden overflow-y-auto'
+        onScroll={(event) => {
+          if (
+            !mounted.current ||
+            virtualizer.isAtEnd(80) ||
+            isFetchingPreviousPage ||
+            !hasPreviousPage ||
+            isFetching.current
+          )
+            return;
 
-            if (
-              event.currentTarget &&
-              (event.currentTarget as HTMLElement).scrollTop < 120
-            ) {
-              void fetchPreviousPage();
-            }
-          },
+          if (
+            event.currentTarget &&
+            (event.currentTarget as HTMLElement).scrollTop < 120
+          ) {
+            isFetching.current = true;
+            void fetchPreviousPage().finally(() => {
+              setTimeout(() => {
+                isFetching.current = false;
+              }, 300);
+            });
+          }
         }}
       >
         <div ref={virtualizer.containerRef} className='relative w-full'>
@@ -227,14 +195,14 @@ function DevicesPage() {
               right = message.sender === current?.id,
               isLatest = virtualItem.index === messages.length - 1;
 
-            if (isLatest)
-              return (
-                <div
-                  key={virtualItem.key}
-                  data-index={virtualItem.index}
-                  ref={virtualizer.measureElement}
-                  className='absolute top-0 left-0 w-full'
-                >
+            return (
+              <div
+                key={virtualItem.key}
+                data-index={virtualItem.index}
+                ref={virtualizer.measureElement}
+                className='absolute top-0 left-0 w-full'
+              >
+                {isLatest ? (
                   <InView
                     as='div'
                     onChange={(inView) => {
@@ -247,26 +215,18 @@ function DevicesPage() {
                       position={right ? 'right' : 'left'}
                     />
                   </InView>
-                </div>
-              );
-
-            return (
-              <div
-                key={virtualItem.key}
-                data-index={virtualItem.index}
-                ref={virtualizer.measureElement}
-                className='absolute top-0 left-0 w-full'
-              >
-                <MessageWrapper
-                  message={message}
-                  previousMessage={previousMessage}
-                  position={right ? 'right' : 'left'}
-                />
+                ) : (
+                  <MessageWrapper
+                    message={message}
+                    previousMessage={previousMessage}
+                    position={right ? 'right' : 'left'}
+                  />
+                )}
               </div>
             );
           })}
         </div>
-      </OverlayScrollbarsComponent>
+      </div>
 
       <footer
         ref={footerRef}

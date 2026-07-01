@@ -1,14 +1,16 @@
+import { User } from 'lucide-react';
+
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui';
 import { cn } from '@/lib/utils';
 
-import { Avatar, AvatarFallback, AvatarImage } from '../ui';
 import { ImageMessage } from './message-image';
 import { TextMessage } from './message-text';
 import { VideoMessage } from './message-video';
-import { isSameDay, renderTime } from './util';
+import { isSameDay as isSameDayHandler, renderTime, THRESHOLD } from './util';
 
 type Props = {
-  message: Message;
-  previousMessage?: Message;
+  message: IMessage;
+  previousMessage?: IMessage;
   position?: 'left' | 'right';
 };
 
@@ -33,10 +35,28 @@ function MessageWrapper({
     return null;
   };
 
+  const isSameUser = previousMessage?.sender === message.sender;
+
+  const isNewDay =
+    !previousMessage ||
+    !isSameDayHandler(message.createdAt, previousMessage.createdAt);
+
+  const isTimeGapExceeded =
+    !!previousMessage &&
+    message.createdAt - previousMessage.createdAt > THRESHOLD;
+
+  const isNewGroup =
+    !previousMessage || !isSameUser || isNewDay || isTimeGapExceeded;
+
   return (
-    <div className='w-full p-4'>
-      {!isSameDay(message.createdAt, previousMessage?.createdAt) && (
-        <div className='flex items-center justify-center py-4 text-xs font-normal'>
+    <div
+      className={cn(
+        'w-full px-4 pb-1',
+        isSameUser && !isNewGroup ? 'pt-1' : 'pt-4',
+      )}
+    >
+      {isNewDay && (
+        <div className='flex items-center justify-center py-3 text-xs font-normal'>
           {renderTime(message.createdAt)}
         </div>
       )}
@@ -47,27 +67,47 @@ function MessageWrapper({
         )}
       >
         {position === 'left' && (
-          <Avatar className='mr-3'>
-            <AvatarImage src='https://github.com/shadcn.png' />
-            <AvatarFallback>CN</AvatarFallback>
-          </Avatar>
+          <div className='mr-3 w-10'>
+            {isNewGroup && (
+              <Avatar size='lg'>
+                <AvatarImage
+                  className='rounded-full'
+                  src='https://github.com/shadcn.png'
+                />
+                <AvatarFallback>
+                  <User />
+                </AvatarFallback>
+              </Avatar>
+            )}
+          </div>
         )}
         <div
           className={cn(
             'relative w-fit max-w-4/5 px-2 py-3 text-base leading-6 rounded-md shadow-md bg-secondary',
-            'before:absolute before:top-3.5 before:border-6 before:border-solid before:border-transparent',
-            position === 'left'
-              ? 'before:right-full before:border-r-secondary'
-              : 'before:left-full before:border-l-secondary',
+            isNewGroup &&
+              'before:absolute before:top-3.5 before:border-6 before:border-solid before:border-transparent',
+            isNewGroup &&
+              (position === 'left'
+                ? 'before:right-full before:border-r-secondary'
+                : 'before:left-full before:border-l-secondary'),
           )}
         >
           {renderMessage()}
         </div>
         {position === 'right' && (
-          <Avatar className='ml-3'>
-            <AvatarImage src='https://github.com/shadcn.png' />
-            <AvatarFallback>CN</AvatarFallback>
-          </Avatar>
+          <div className='ml-3 w-10'>
+            {isNewGroup && (
+              <Avatar size='lg'>
+                <AvatarImage
+                  className='rounded-full'
+                  src='https://github.com/shadcn.png'
+                />
+                <AvatarFallback>
+                  <User />
+                </AvatarFallback>
+              </Avatar>
+            )}
+          </div>
         )}
       </div>
     </div>

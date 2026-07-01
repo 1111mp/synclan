@@ -22,6 +22,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     },
     onMessage(message) {
       if (!current?.id) return;
+      console.log('----message-----', message);
       addMessage(message.sender, message, current.id);
     },
   });

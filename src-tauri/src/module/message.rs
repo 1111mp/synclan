@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::utils::db;
 use anyhow::Result;
 use chrono::NaiveDateTime;
@@ -114,9 +116,93 @@ impl Message {
 
         Ok(messages)
     }
+
+    pub async fn get_offline_msgs_summary(receiver: &str) -> Result<Option<OfflineMessagesInfoMap>> {
+        let db_pool = db::get_db_pool()?;
+        let last_ack = MessageAck::get_last_ack(receiver)
+            .await?
+            .map_or(0, |a| a.last_ack.unwrap_or(0));
+        let rows = sqlx::query_as::<_, OfflineSummaryRow>(
+            r#"
+                SELECT
+                    m.sender,
+                    summary.total,
+                    m.id, m.uuid, m.receiver, m.type, m.content, m.extra, m.created_at, m.updated_at
+                FROM messages m
+                INNER JOIN (
+                    -- 子查询：计算每个发送者的未读总数，以及最新一条消息的 ID
+                    SELECT
+                        sender,
+                        COUNT(*) as total,
+                        MAX(id) as max_id
+                    FROM messages
+                    WHERE receiver = $1 AND id > $2
+                    GROUP BY sender
+                ) summary ON m.id = summary.max_id
+                ORDER BY m.id DESC
+                "#,
+        )
+        .bind(receiver)
+        .bind(last_ack)
+        .fetch_all(&db_pool)
+        .await?;
+        if rows.is_empty() {
+            return Ok(None);
+        }
+
+        let mut summary = HashMap::new();
+        for row in rows {
+            let sender = row.sender.clone();
+            let last_msg = Message {
+                id: row.id,
+                uuid: row.uuid,
+                sender: row.sender,
+                receiver: row.receiver,
+                r#type: row.r#type,
+                content: row.content,
+                extra: row.extra,
+                created_at: row.created_at,
+                updated_at: row.updated_at,
+            };
+
+            summary.insert(
+                sender,
+                OfflineMessageGroup {
+                    total: row.total,
+                    last_msg,
+                },
+            );
+        }
+        Ok(Some(summary))
+    }
 }
 
-#[derive(Debug, Deserialize, Serialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct OfflineMessageGroup {
+    pub total: i64,
+    pub last_msg: Message,
+}
+
+pub type OfflineMessagesInfoMap = HashMap<String, OfflineMessageGroup>;
+
+#[derive(Debug, sqlx::FromRow)]
+struct OfflineSummaryRow {
+    total: i64,
+    id: Option<i32>,
+    uuid: String,
+    sender: String,
+    receiver: String,
+    #[sqlx(rename = "type")]
+    r#type: MessageType,
+    content: Option<String>,
+    extra: Option<String>,
+    created_at: Option<NaiveDateTime>,
+    updated_at: Option<NaiveDateTime>,
+}
+
+#[derive(Debug, Deserialize, Serialize, sqlx::FromRow, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct MessageAck {
     pub receiver: String,
     pub last_ack: Option<i32>,

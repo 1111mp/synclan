@@ -1,4 +1,3 @@
-import { $generateHtmlFromNodes } from '@lexical/html';
 import { AutoFocusPlugin } from '@lexical/react/LexicalAutoFocusPlugin';
 import { AutoLinkPlugin } from '@lexical/react/LexicalAutoLinkPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
@@ -17,6 +16,7 @@ import {
   $getRoot,
   $getSelection,
   $isRangeSelection,
+  type EditorState,
   type LexicalEditor,
 } from 'lexical';
 import { useImperativeHandle, useRef, useState, type Ref } from 'react';
@@ -64,6 +64,7 @@ type CompositionInputProps = {
 };
 
 type CompositionInputRef = {
+  getEditorState(): EditorState | void;
   onPickEmoji: EmojiPickerProps['onPickEmoji'];
 };
 
@@ -81,8 +82,11 @@ function CompositionInput({
   const historyState = useRef<HistoryState>(createEmptyHistoryState());
 
   useImperativeHandle(ref, () => ({
+    getEditorState: onGetEditorState,
     onPickEmoji: onPickEmojiHandle,
   }));
+
+  const onGetEditorState = () => editorRef.current?.getEditorState();
 
   const onPickEmojiHandle: EmojiPickerProps['onPickEmoji'] = ({
     shortName,
@@ -189,16 +193,17 @@ function CompositionInput({
           const editor = editorRef.current;
           if (!editor) return;
 
-          let htmlStr = '';
+          let content = '';
           editor.read(() => {
-            htmlStr = $generateHtmlFromNodes(editor);
+            content = JSON.stringify(editor.getEditorState().toJSON());
           });
 
-          if (!htmlStr || htmlStr === '<p><br></p>') return;
+          if (!content) return;
           editor.update(() => {
             $getRoot().clear();
           });
-          void onSend?.(htmlStr);
+
+          void onSend?.(content);
         }}
       />
     </div>

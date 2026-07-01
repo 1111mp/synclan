@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { RouterProvider } from 'react-router';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -11,6 +11,7 @@ import { router } from '@/routes';
 import { useDeviceStore, useIMStore } from '@/stores';
 
 function App() {
+  const mounted = useRef<boolean>(false);
   const { loading, updateLoading, updateCurrent } = useDeviceStore(
     useShallow((s) => ({
       loading: s.loading,
@@ -19,10 +20,14 @@ function App() {
     })),
   );
   const hydrateConversations = useIMStore((s) => s.hydrateConversations);
+  const updateConvsFromOffline = useIMStore((s) => s.updateConvsFromOffline);
 
   useTheme();
 
   useEffect(() => {
+    if (mounted.current) return;
+    mounted.current = true;
+
     const initialization = async () => {
       try {
         const [device] = await Promise.all([
@@ -30,6 +35,7 @@ function App() {
           hydrateConversations(),
         ]);
         if (device) {
+          await updateConvsFromOffline(device.id);
           updateCurrent(device);
         }
         console.log('device', device);
@@ -41,7 +47,12 @@ function App() {
     };
 
     void initialization();
-  }, [updateLoading, updateCurrent, hydrateConversations]);
+  }, [
+    updateLoading,
+    updateCurrent,
+    hydrateConversations,
+    updateConvsFromOffline,
+  ]);
 
   if (loading) {
     return <LoadingScreen />;

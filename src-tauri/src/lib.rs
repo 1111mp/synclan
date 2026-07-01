@@ -62,6 +62,9 @@ pub fn run() {
             cmd::patch_device,
             // message
             cmd::get_messages,
+            cmd::get_offline_messages,
+            cmd::get_offline_msgs_summary,
+            cmd::update_ack,
             // preview window
             cmd::create_preview_window
         ]);

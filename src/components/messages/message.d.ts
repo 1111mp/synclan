@@ -18,7 +18,7 @@ interface BasicMessage {
 //   LOCATION = 'location',
 //   STICKER = 'sticker',
 // }
-//
+
 interface TextMessage extends BasicMessage {
   type: 'text';
 }
@@ -36,6 +36,7 @@ interface FileMessage extends BasicMessage {
 }
 
 type IMessage = TextMessage | ImageMessage | VideoMessage | FileMessage;
+type IUIMessage = IMessage & { showTimestamp: boolean };
 
 type MediaMessageExtra = Record<string, any> & {
   width?: number;
@@ -47,3 +48,16 @@ type CursorPaginatedMessages = {
   hasMore: boolean; // 是否还有更多历史消息
   lastId: number | null; // 下一次请求历史记录应该传入的游标 id
 };
+
+type MessageAck = {
+  receiver: string;
+  lastAck: number;
+};
+
+type OfflineMessagesSummary = Record<
+  string,
+  {
+    total?: number;
+    lastMsg: IMessage;
+  }
+>;

@@ -17,3 +17,10 @@ pub struct CursorPagination {
     #[validate(custom(function = "super::validate_page_size", message = "Invalid pageSize"))]
     pub page_size: u32,
 }
+
+#[derive(Debug, Deserialize, IntoParams, ToSchema, Validate)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateAckDto {
+    pub receiver: String,
+    pub last_ack: i32,
+}

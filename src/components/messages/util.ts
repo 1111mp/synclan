@@ -1,24 +1,30 @@
 import dayjs from 'dayjs';
+import type { EditorState } from 'lexical';
 
 export function renderTime(time: number) {
   const date = dayjs(time),
     now = dayjs(),
-    diff = now.diff(date, 'day');
+    isSameYear = date.isSame(now, 'year'),
+    daysDiff = now.startOf('day').diff(date.startOf('day'), 'day');
 
-  if (diff < 1) {
-    return now.isSame(date, 'day')
-      ? date.format('HH:mm')
-      : date.format('[昨天] HH:mm');
-  }
+  if (isSameYear) {
+    if (daysDiff === 0) {
+      return date.format('HH:mm');
+    }
 
-  if (diff < 2) {
-    return date.isSame(now.subtract(1, 'day'))
-      ? date.format('[昨天] HH:mm')
-      : date.format('dddd HH:mm');
-  }
+    if (daysDiff === 1) {
+      return date.format('[昨天] HH:mm');
+    }
 
-  if (diff < 7) {
-    return date.format('dddd HH:mm');
+    if (daysDiff === 2) {
+      return date.format('[前天] HH:mm');
+    }
+
+    if (daysDiff < 7) {
+      return date.format('dddd HH:mm');
+    }
+
+    return date.format('M月D日 HH:mm');
   }
 
   return date.format('YYYY-MM-DD');
@@ -39,6 +45,16 @@ export function isSameDay(time: number, diffTime?: number) {
 }
 
 export const MEDIA_MAX_WIDTH = 640;
+
+export const THRESHOLD = 5 * 60 * 1000;
+
+export function parseTextMessageContent(content: string) {
+  try {
+    return JSON.parse(content) as EditorState;
+  } catch {
+    return content;
+  }
+}
 
 export function parseMessageExtra<T>(extra?: string): T | undefined {
   if (!extra) return void 0;

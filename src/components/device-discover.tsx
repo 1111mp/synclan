@@ -39,7 +39,6 @@ export function DeviceDiscover({ excludeIds = [] }: { excludeIds?: string[] }) {
     enabled: open,
   });
 
-  console.log('devices', devices);
   const hasDevices = devices?.length > 0;
 
   return (

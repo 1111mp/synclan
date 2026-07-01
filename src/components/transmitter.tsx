@@ -9,7 +9,7 @@ import { HeadingNode, QuoteNode } from '@lexical/rich-text';
 import { LineBreakNode, ParagraphNode } from 'lexical';
 import { CaseSensitive, Maximize2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 import {
   CompositionInput,
@@ -37,6 +37,69 @@ import {
 } from './nodes';
 import { FixedTextFormatToolbar } from './plugins';
 
+export const EDITOR_INITIAL_CONFIG: Omit<InitialConfigType, 'onError'> = {
+  namespace: 'synclan-editor',
+  nodes: [
+    AutoLinkNode,
+    LinkNode,
+    SimpleListNode,
+    {
+      replace: ListNode,
+      with: (node: ListNode) =>
+        $createSimpleListNode(node.getListType(), node.getStart()),
+      withKlass: SimpleListNode,
+    },
+    SimpleListItemNode,
+    {
+      replace: ListItemNode,
+      with: (node: ListItemNode) =>
+        $createSimpleListItemNode(node.getChecked()),
+      withKlass: SimpleListItemNode,
+    },
+    ParagraphNode,
+    HeadingNode,
+    SimpleQuoteNode,
+    {
+      replace: QuoteNode,
+      with: () => $createSimpleQuoteNode(),
+      withKlass: SimpleQuoteNode,
+    },
+    CodePlusNode,
+    {
+      replace: CodeNode,
+      with: (node: CodeNode) =>
+        $createCodePlusNode(node.getLanguage(), node.getTheme()),
+      withKlass: CodePlusNode,
+    },
+    CodeHighlightNode,
+    EmojiNode,
+    LineBreakNode,
+  ],
+  theme: {
+    code: 'block relative pt-7 pb-4 pl-[72px] pr-2 my-2 border rounded-md bg-muted! text-muted-foreground! indent-0 before:box-border before:absolute before:top-0 before:left-0 before:content-[attr(data-gutter)] before:w-14 before:pt-[29px] before:px-2 before:pb-0 before:font-thin before:text-right',
+    paragraph: 'mt-0 mb-0',
+    link: 'font-light text-blue-500 no-underline cursor-pointer hover:underline',
+    list: {
+      ul: 'mt-0 mb-0 pl-0 list-outside marker:text-blue-500',
+      ulDepth: ['list-disc', 'list-[circle]', 'list-[square]'],
+      ol: 'mt-0 mb-0 pl-0 list-outside marker:text-blue-500 ',
+      olDepth: ['list-decimal', 'list-[lower-alpha]', 'list-[lower-roman]'],
+      listitem: 'mt-0 mb-0 ml-4 pl-2',
+      nested: {
+        listitem: 'ml-6 list-none',
+      },
+    },
+    quote: 'm-0 pl-2 text-gray-400 border-l-2 border-input overflow-hidden',
+    text: {
+      bold: 'font-bold',
+      strikethrough: 'line-through',
+      italic: 'italic',
+      underline: 'underline',
+      underlineStrikethrough: '[text-decoration-line:underline_line-through]',
+    },
+  },
+};
+
 function Transmitter({
   onSend,
 }: {
@@ -50,71 +113,15 @@ function Transmitter({
 
   const compositionInputRef = useRef<CompositionInputRef>(null);
 
-  const initialConfig: InitialConfigType = {
-    namespace: 'synclan-editor',
-    nodes: [
-      AutoLinkNode,
-      LinkNode,
-      SimpleListNode,
-      {
-        replace: ListNode,
-        with: (node: ListNode) =>
-          $createSimpleListNode(node.getListType(), node.getStart()),
-        withKlass: SimpleListNode,
+  const initialConfig = useMemo<InitialConfigType>(
+    () => ({
+      ...EDITOR_INITIAL_CONFIG,
+      onError(error) {
+        console.log('error', error);
       },
-      SimpleListItemNode,
-      {
-        replace: ListItemNode,
-        with: (node: ListItemNode) =>
-          $createSimpleListItemNode(node.getChecked()),
-        withKlass: SimpleListItemNode,
-      },
-      ParagraphNode,
-      HeadingNode,
-      SimpleQuoteNode,
-      {
-        replace: QuoteNode,
-        with: () => $createSimpleQuoteNode(),
-        withKlass: SimpleQuoteNode,
-      },
-      CodePlusNode,
-      {
-        replace: CodeNode,
-        with: (node: CodeNode) =>
-          $createCodePlusNode(node.getLanguage(), node.getTheme()),
-        withKlass: CodePlusNode,
-      },
-      CodeHighlightNode,
-      EmojiNode,
-      LineBreakNode,
-    ],
-    theme: {
-      code: 'block relative pt-7 pb-4 pl-[72px] pr-2 my-2 border rounded-md bg-muted! text-muted-foreground! indent-0 before:box-border before:absolute before:top-0 before:left-0 before:content-[attr(data-gutter)] before:w-14 before:pt-[29px] before:px-2 before:pb-0 before:font-thin before:text-right',
-      paragraph: 'mt-0 mb-0',
-      link: 'font-light text-blue-500 no-underline cursor-pointer hover:underline',
-      list: {
-        ul: 'mt-0 mb-0 pl-0 list-outside marker:text-blue-500',
-        ulDepth: ['list-disc', 'list-[circle]', 'list-[square]'],
-        ol: 'mt-0 mb-0 pl-0 list-outside marker:text-blue-500 ',
-        olDepth: ['list-decimal', 'list-[lower-alpha]', 'list-[lower-roman]'],
-        listitem: 'mt-0 mb-0 ml-4 pl-2',
-        nested: {
-          listitem: 'ml-6 list-none',
-        },
-      },
-      quote: 'm-0 pl-2 text-gray-400 border-l-2 border-input overflow-hidden',
-      text: {
-        bold: 'font-bold',
-        strikethrough: 'line-through',
-        italic: 'italic',
-        underline: 'underline',
-        underlineStrikethrough: '[text-decoration-line:underline_line-through]',
-      },
-    },
-    onError(error) {
-      console.log('error', error);
-    },
-  };
+    }),
+    [],
+  );
 
   const multiLine = lineOverflow || isFixedTools;
 
@@ -144,7 +151,10 @@ function Transmitter({
             onFocusChange={(focus) => {
               setFocueed(focus);
             }}
-            onSend={onSend}
+            onSend={async (content) => {
+              if (isEmpty) return;
+              await onSend?.(content);
+            }}
           />
         </div>
         <div className={cn('flex items-center ml-auto', multiLine && 'w-full')}>
@@ -213,6 +223,18 @@ function Transmitter({
                     )}
                     size='sm'
                     variant='ghost'
+                    onClick={async () => {
+                      if (isEmpty) return;
+
+                      const state =
+                        compositionInputRef.current?.getEditorState();
+                      if (!state) return;
+
+                      const content = JSON.stringify(state.toJSON());
+                      if (!content) return;
+
+                      await onSend?.(content);
+                    }}
                   >
                     <svg
                       className={cn(

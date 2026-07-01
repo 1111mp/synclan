@@ -165,3 +165,43 @@ export async function getMessages({
     nextCursor: data.hasMore ? data.lastId : undefined,
   };
 }
+
+export async function getOfflineMessages(
+  receiver: string,
+): Promise<IMessage[]> {
+  if (isWeb) {
+    try {
+      const response = await api.get<IMessage[]>('/messages/offline');
+      return response.payload ?? [];
+    } catch {
+      return [];
+    }
+  }
+  return invoke<IMessage[]>('get_offline_messages', { receiver });
+}
+
+export async function getOfflineMsgsSummary(
+  receiver: string,
+): Promise<OfflineMessagesSummary | null> {
+  if (isWeb) {
+    try {
+      const response = await api.get<OfflineMessagesSummary>(
+        '/messages/offline_summary',
+      );
+      return response.payload ?? null;
+    } catch {
+      return null;
+    }
+  }
+  return invoke<OfflineMessagesSummary>('get_offline_msgs_summary', {
+    receiver,
+  });
+}
+
+export async function updateMsgAck(payload: MessageAck) {
+  if (isWeb) {
+    await api.post<void>('/messages/ack', payload);
+    return;
+  }
+  return invoke<void>('update_ack', { payload });
+}

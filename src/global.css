@@ -130,10 +130,6 @@
   html {
     @apply font-sans;
   }
-
-  .chat-container .os-scrollbar-vertical {
-    padding-bottom: calc(var(--footer-height, 0px) + 12px) !important;
-  }
 }
 
 @layer utilities {

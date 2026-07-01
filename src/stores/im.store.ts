@@ -4,8 +4,13 @@ import { subscribeWithSelector } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import { useShallow } from 'zustand/react/shallow';
 
+import { isSameDay, THRESHOLD } from '@/components/messages/util';
 import { db } from '@/lib/db';
-import { getDeviceById } from '@/services/cmd';
+import {
+  getDeviceById,
+  getOfflineMsgsSummary,
+  updateMsgAck,
+} from '@/services/cmd';
 
 enableMapSet();
 
@@ -27,10 +32,10 @@ type IMState = {
 
   // actions
   hydrateConversations: () => Promise<void>;
-  // initConversations: (id: string) => void;
   addConversations: (incomingDevices: IDevice[]) => void;
-
+  updateConvsFromOffline: (receiver: string) => Promise<void>;
   setActiveConversation: (id: string, device?: IDevice) => void;
+
   setHistory: (deviceId: string, msgs: IMessage[]) => void;
   addMessage: (deviceId: string, msg: IMessage, currentId: string) => void;
   updateMessage: (
@@ -66,16 +71,6 @@ export const useIMStore = create<IMState>()(
           });
         }
       },
-      // initConversations: (id) =>
-      //   set((state) => {
-      //     if (!state.conversations.has(id)) {
-      //       state.conversations.set(id, {
-      //         id,
-      //         unreadCount: 0,
-      //         lastAccessed: Date.now(),
-      //       });
-      //     }
-      //   }),
       addConversations: (incomingDevices) =>
         set((state) => {
           const now = Date.now();
@@ -91,10 +86,57 @@ export const useIMStore = create<IMState>()(
             }
           });
         }),
+      updateConvsFromOffline: async (receiver) => {
+        const summary = await getOfflineMsgsSummary(receiver);
+        if (!summary) return;
+
+        const activeId = get().activeDeviceId;
+        const now = Date.now();
+
+        let lastAck: number | null = null;
+
+        for (const [deviceId, deviceSummary] of Object.entries(summary)) {
+          const { total = 0, lastMsg } = deviceSummary;
+          if (total <= 0 || !lastMsg) continue;
+
+          if (lastMsg.id && (lastAck === null || lastMsg.id > lastAck)) {
+            lastAck = lastMsg.id;
+          }
+
+          const isCurrentActive = activeId === deviceId;
+          const existingConv = get().conversations.get(deviceId);
+          if (existingConv) {
+            set((state) => {
+              const conv = state.conversations.get(deviceId)!;
+              conv.lastAccessed = now;
+              conv.lastMessage = lastMsg;
+              // 如果不是当前处于激活状态的聊天框，累加未读数
+              if (!isCurrentActive) {
+                conv.unreadCount += total;
+              }
+            });
+          } else {
+            const device = await getDeviceById(deviceId);
+            set((state) => {
+              const initialUnreadCount = !isCurrentActive ? total : 0;
+              state.conversations.set(deviceId, {
+                id: deviceId,
+                device,
+                unreadCount: initialUnreadCount,
+                lastAccessed: now,
+                lastMessage: lastMsg,
+              });
+            });
+          }
+        }
+        // TODO update lastest ack
+        if (lastAck) {
+          await updateMsgAck({ receiver, lastAck });
+        }
+      },
       setActiveConversation: (id, device) =>
         set((state) => {
           state.activeDeviceId = id;
-
           const now = Date.now();
           let conv = state.conversations.get(id);
           if (!conv) {
@@ -131,6 +173,7 @@ export const useIMStore = create<IMState>()(
           // }
 
           conv.lastAccessed = now;
+          conv.unreadCount = 0;
 
           let cache = state.messageCaches.get(deviceId);
           if (!cache) {
@@ -157,7 +200,8 @@ export const useIMStore = create<IMState>()(
               newUuids.push(msg.uuid);
             }
           }
-          cache.order = [...newUuids, ...cache.order];
+          cache.order = Array.from(new Set([...newUuids, ...cache.order]));
+          // cache.order = [...newUuids, ...cache.order];
 
           if (cache.order.length > 0) {
             const lastMsgId = cache.order[cache.order.length - 1];
@@ -191,6 +235,7 @@ export const useIMStore = create<IMState>()(
             // 2. 更新消息详情缓存（如果该会话目前在 10 个缓存名额中）
             const cache = state.messageCaches.get(deviceId);
             if (cache) {
+              if (cache.messages.get(msg.uuid)) return;
               // 情况 1：缓存存在，直接追加
               cache.messages.set(msg.uuid, msg);
               cache.order.push(msg.uuid);
@@ -200,7 +245,7 @@ export const useIMStore = create<IMState>()(
               state.messageCaches.set(deviceId, {
                 messages: new Map([[msg.uuid, msg]]),
                 order: [msg.uuid],
-                hydrated: true,
+                hydrated: false,
                 loadingHistory: false,
               });
               evictOldestMessageCaches(
@@ -221,14 +266,10 @@ export const useIMStore = create<IMState>()(
           conv.lastAccessed = now;
           conv.lastMessage = msg;
 
-          // 🔥 未读数计数逻辑：如果不是当前激活的会话，且是别人发的消息，未读数 +1
-          if (!isCurrentActive && isFromOthers) {
-            conv.unreadCount += 1;
-          }
-
           // 2. 更新消息详情缓存（如果该会话目前在 10 个缓存名额中）
           const cache = state.messageCaches.get(deviceId);
           if (cache) {
+            if (cache.messages.has(msg.uuid)) return;
             // 情况 1：缓存存在，直接追加
             cache.messages.set(msg.uuid, msg);
             cache.order.push(msg.uuid);
@@ -246,6 +287,11 @@ export const useIMStore = create<IMState>()(
               state.activeDeviceId,
               state.conversations,
             );
+          }
+
+          // 🔥 未读数计数逻辑：如果不是当前激活的会话，且是别人发的消息，未读数 +1
+          if (!isCurrentActive && isFromOthers) {
+            conv.unreadCount += 1;
           }
         });
       },
@@ -300,9 +346,11 @@ useIMStore.subscribe(
 export const useConversationList = () => {
   return useIMStore(
     useShallow((state) => {
-      return Array.from(state.conversations.values()).sort(
-        (a, b) => b.lastAccessed - a.lastAccessed,
-      );
+      return Array.from(state.conversations.values()).sort((a, b) => {
+        const timeA = a.lastMessage?.updatedAt ?? a.lastAccessed ?? 0;
+        const timeB = b.lastMessage?.updatedAt ?? b.lastAccessed ?? 0;
+        return timeB - timeA;
+      });
     }),
   );
 };
@@ -315,6 +363,45 @@ export const useTotalUnreadCount = () => {
     );
   });
 };
+
+export function getMessagesWithTimestamp(cache: IMDeviceState) {
+  if (!cache?.order.length) return [];
+
+  const messages = cache.order.map((id) => cache.messages.get(id)!);
+  console.log('messages', messages);
+  const result: IUIMessage[] = [];
+  let lastTimestampTime: number | undefined = undefined;
+
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i];
+    const preMsg = i > 0 ? messages[i - 1] : undefined;
+
+    let showTimestamp = false;
+
+    if (!preMsg) {
+      showTimestamp = true;
+    } else if (!isSameDay(msg.createdAt, preMsg.createdAt)) {
+      showTimestamp = true;
+    } else if (lastTimestampTime !== undefined) {
+      if (lastTimestampTime - preMsg.createdAt > THRESHOLD) {
+        showTimestamp = true;
+      }
+    } else if (msg.createdAt - preMsg.createdAt > THRESHOLD) {
+      showTimestamp = true;
+    }
+
+    if (showTimestamp) {
+      lastTimestampTime = msg.createdAt;
+    }
+
+    result[i] = {
+      ...msg,
+      showTimestamp,
+    } as IUIMessage;
+  }
+
+  return result;
+}
 
 function evictOldestMessageCaches(
   caches: Map<string, IMDeviceState>,

@@ -41,7 +41,7 @@ const data = {
 };
 
 function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  let params = useParams();
+  const params = useParams();
   const navigate = useNavigate();
   const conversations = useConversationList();
   const setActiveConversation = useIMStore((s) => s.setActiveConversation);
