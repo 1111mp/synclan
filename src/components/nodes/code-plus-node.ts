@@ -1,4 +1,12 @@
 import {
+  $createCodeHighlightNode,
+  $getFirstCodeNodeOfLine,
+  $isCodeHighlightNode,
+  $isCodeNode,
+  CodeHighlightNode,
+  CodeNode,
+} from '@lexical/code';
+import {
   $create,
   $createLineBreakNode,
   $createParagraphNode,
@@ -10,23 +18,27 @@ import {
   TabNode,
   type EditorConfig,
   type LexicalNode,
+  type LexicalUpdateJSON,
   type NodeKey,
   type RangeSelection,
+  type SerializedElementNode,
+  type Spread,
 } from 'lexical';
-import {
-  $createCodeHighlightNode,
-  $getFirstCodeNodeOfLine,
-  $isCodeHighlightNode,
-  $isCodeNode,
-  CodeHighlightNode,
-  CodeNode,
-} from '@lexical/code';
+
 import { $copyCompleteNodeWithChildren } from '../plugins/lib';
 import type { SimpleListItemNode } from './simple-list-item-node';
 import type { SimpleQuoteNode } from './simple-quote-node';
 
+export type SerializedCodePlusNode = Spread<
+  {
+    language: string | null | undefined;
+    theme: string | undefined;
+  },
+  SerializedElementNode
+>;
+
 export class CodePlusNode extends CodeNode {
-  __theme: string;
+  __theme: string | undefined;
   __pendingDelete: boolean;
 
   static getType(): string {
@@ -47,6 +59,28 @@ export class CodePlusNode extends CodeNode {
     return new CodePlusNode(node.__language, node.__theme, node.__key);
   }
 
+  static importJSON(serializedNode: SerializedCodePlusNode): CodePlusNode {
+    return $createCodePlusNode().updateFromJSON(serializedNode);
+  }
+
+  updateFromJSON(
+    serializedNode: LexicalUpdateJSON<SerializedCodePlusNode>,
+  ): this {
+    return super
+      .updateFromJSON(serializedNode)
+      .setLanguage(serializedNode.language)
+      .setTheme(serializedNode.theme);
+  }
+
+  exportJSON(): SerializedCodePlusNode {
+    return {
+      ...super.exportJSON(),
+      language: this.getLanguage(),
+      theme: this.getTheme(),
+      type: 'code-plus',
+    };
+  }
+
   createDOM(config: EditorConfig): HTMLElement {
     const dom = super.createDOM(config);
     return dom;
@@ -56,9 +90,9 @@ export class CodePlusNode extends CodeNode {
     return this.getLatest().__theme;
   }
 
-  setTheme(theme: string): this {
+  setTheme(theme: string | null | undefined): this {
     const writable = this.getWritable();
-    writable.__theme = theme;
+    writable.__theme = theme || 'one-dark-pro';
     return writable;
   }
 
@@ -109,7 +143,6 @@ export class CodePlusNode extends CodeNode {
       let node: null | LexicalNode =
         $getFirstCodeNodeOfLine(firstSelectionNode);
       const insertNodes = [];
-      // eslint-disable-next-line no-constant-condition
       while (true) {
         if ($isTabNode(node)) {
           insertNodes.push($createTabNode());

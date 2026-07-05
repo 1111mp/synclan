@@ -4,13 +4,16 @@ import {
   $copyNode,
   $createParagraphNode,
   $findMatchingParent,
+  $getRoot,
   $getSelection,
   $isParagraphNode,
   $isRangeSelection,
   $isTextNode,
+  CLEAR_EDITOR_COMMAND,
   COMMAND_PRIORITY_HIGH,
   INSERT_PARAGRAPH_COMMAND,
   KEY_ENTER_COMMAND,
+  type EditorState,
 } from 'lexical';
 import { useEffect } from 'react';
 import { useLatest } from 'react-use';
@@ -33,7 +36,7 @@ import {
 } from './lib';
 
 type EnterPluginProps = {
-  onSend?: () => void;
+  onSend?: (editorState: EditorState) => void;
 };
 
 function EnterBehaviorPlugin({ onSend }: EnterPluginProps) {
@@ -57,7 +60,15 @@ function EnterBehaviorPlugin({ onSend }: EnterPluginProps) {
           if (!event.shiftKey) {
             event.preventDefault();
 
-            onChangeRef.current?.();
+            const hasContent = editor
+              .getEditorState()
+              .read(() => $getRoot().getTextContent().trim() !== '');
+
+            if (hasContent) {
+              onChangeRef.current?.(editor.getEditorState());
+              editor.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined);
+            }
+
             return true;
           }
 

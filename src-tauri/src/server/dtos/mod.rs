@@ -30,7 +30,7 @@ fn default_page_size() -> u32 {
 
 fn validate_page_size(value: u32) -> Result<(), ValidationError> {
     match value {
-        10 | 20 | 50 | 100 => Ok(()),
+        10 | 12 | 20 | 30 | 40 | 50 | 100 => Ok(()),
         _ => Err(ValidationError::new("invalid_page_size")),
     }
 }

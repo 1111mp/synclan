@@ -11,7 +11,13 @@ import { getAppInitialData } from '@/services/init';
 
 import App from './app';
 
-if (isWeb) {
+void (async () => {
+  if (!isWeb) {
+    const [config, sysTheme] = await getAppInitialData();
+    // Set the theme in advance to prevent flickering.
+    applyTheme(config.theme !== 'system' ? config.theme : sysTheme, false);
+  }
+
   const queryClient = new QueryClient();
 
   ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
@@ -21,20 +27,4 @@ if (isWeb) {
       </QueryClientProvider>
     </React.StrictMode>,
   );
-} else {
-  void (async () => {
-    const [config, sysTheme] = await getAppInitialData();
-    // Set the theme in advance to prevent flickering.
-    applyTheme(config.theme !== 'system' ? config.theme : sysTheme, false);
-
-    const queryClient = new QueryClient();
-
-    ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
-      <React.StrictMode>
-        <QueryClientProvider client={queryClient}>
-          <App />
-        </QueryClientProvider>
-      </React.StrictMode>,
-    );
-  })();
-}
+})();

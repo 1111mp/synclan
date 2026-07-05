@@ -1,4 +1,3 @@
-import { enableMapSet } from 'immer';
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
@@ -11,8 +10,6 @@ import {
   getOfflineMsgsSummary,
   updateMsgAck,
 } from '@/services/cmd';
-
-enableMapSet();
 
 const MAX_CACHED_IM_DEVICESS = 10;
 

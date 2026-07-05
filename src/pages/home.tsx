@@ -79,7 +79,7 @@ function HomePage() {
             ) : null}
           </div>
         </header>
-        <div className='flex flex-1 flex-col'>
+        <div className='flex flex-1 flex-col [view-transition-name:page-content]'>
           <Outlet />
         </div>
       </SidebarInset>

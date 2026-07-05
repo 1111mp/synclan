@@ -5,6 +5,10 @@
  * LICENSE file in the root directory of this source tree.
  *
  */
+import { $isLinkNode, type LinkNode } from '@lexical/link';
+import { type ListType } from '@lexical/list';
+import { $copyBlockFormatIndent, $isAtNodeEnd } from '@lexical/selection';
+import { $findMatchingParent } from '@lexical/utils';
 import {
   $copyNode,
   $createParagraphNode,
@@ -30,24 +34,21 @@ import {
   type RangeSelection,
   type TextNode,
 } from 'lexical';
-import { $copyBlockFormatIndent, $isAtNodeEnd } from '@lexical/selection';
-import { type ListType } from '@lexical/list';
-import { $isLinkNode, type LinkNode } from '@lexical/link';
+
 import {
   $createCodePlusNode,
-  $createSimpleQuoteNode,
-  $isSimpleQuoteNode,
   $createSimpleListItemNode,
   $createSimpleListNode,
+  $createSimpleQuoteNode,
   $isCodePlusNode,
-  $isSimpleListNode,
   $isSimpleListItemNode,
-  type CodePlusNode,
-  type SimpleListNode,
-  type SimpleListItemNode,
+  $isSimpleListNode,
+  $isSimpleQuoteNode,
   SimpleQuoteNode,
+  type CodePlusNode,
+  type SimpleListItemNode,
+  type SimpleListNode,
 } from '../nodes';
-import { $findMatchingParent } from '@lexical/utils';
 import invariant from './invariant';
 
 declare global {
@@ -253,13 +254,14 @@ export function $getAncestor<NodeType extends LexicalNode = LexicalNode>(
  * @returns The ListNode found.
  */
 export function $getTopListNode(listItem: LexicalNode): SimpleListNode {
-  let list = listItem.getParent<SimpleListNode>();
+  let list = listItem.getParent();
 
-  if (!$isSimpleListNode(list)) {
-    invariant(false, 'A ListItemNode must have a ListNode for a parent.');
-  }
+  invariant(
+    $isSimpleListNode(list),
+    'A ListItemNode must have a ListNode for a parent.',
+  );
 
-  let parent: SimpleListNode | null = list;
+  let parent: ElementNode | SimpleListNode | null = list;
 
   while (parent !== null) {
     parent = parent.getParent();
@@ -269,7 +271,7 @@ export function $getTopListNode(listItem: LexicalNode): SimpleListNode {
     }
   }
 
-  return list;
+  return list as SimpleListNode;
 }
 
 /**
@@ -867,13 +869,14 @@ function $getListNodeDepth(node: SimpleListNode) {
     nextListNode = node;
 
   while (true) {
-    const curNode = nextListNode
-      .getFirstChild<SimpleListItemNode>()
-      ?.getFirstChild();
-    if ($isSimpleListNode(curNode)) {
-      nextListNode = curNode;
-      depth++;
-      continue;
+    const firstChild = nextListNode.getFirstChild();
+    if ($isSimpleListItemNode(firstChild)) {
+      const curNode = firstChild.getFirstChild();
+      if ($isSimpleListNode(curNode)) {
+        nextListNode = curNode;
+        depth++;
+        continue;
+      }
     }
 
     break;

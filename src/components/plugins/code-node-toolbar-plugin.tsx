@@ -1,5 +1,20 @@
+import {
+  autoUpdate,
+  FloatingPortal,
+  offset,
+  size,
+  useFloating,
+} from '@floating-ui/react';
+import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+import { $getNodeByKey, $getSelection, $setSelection } from 'lexical';
+import { BookCopy, CheckIcon, ChevronDown } from 'lucide-react';
 import { useEffect, useLayoutEffect, useMemo, useState, type JSX } from 'react';
 import { createPortal } from 'react-dom';
+import { toast } from 'sonner';
+
+import { cn } from '@/lib/utils';
+
+import { $isCodePlusNode, CodePlusNode } from '../nodes';
 import {
   Button,
   Command,
@@ -12,19 +27,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '../ui';
-import { BookCopy, CheckIcon, ChevronDown } from 'lucide-react';
-import {
-  autoUpdate,
-  FloatingPortal,
-  offset,
-  size,
-  useFloating,
-} from '@floating-ui/react';
-import { toast } from 'sonner';
-import { $getNodeByKey, $getSelection, $setSelection } from 'lexical';
-import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { $isCodePlusNode, CodePlusNode } from '../nodes';
-import { cn } from '@/lib/utils';
 
 function CodeNodeToolbarPlugin(): JSX.Element | null {
   const [nodeKeys, setNodeKeys] = useState<string[]>([]);
@@ -65,7 +67,7 @@ function CodeNodeToolbarPlugin(): JSX.Element | null {
   );
 }
 
-export { CodeNodeToolbarPlugin, $matchLanguage };
+export { $matchLanguage, CodeNodeToolbarPlugin };
 
 function $matchLanguage(input?: string): string {
   if (!input) return 'text';
@@ -245,9 +247,25 @@ const CODE_LANGUAGES: CodeLanguageOption[] = [
   { name: 'YAML', value: 'yaml', shortcuts: ['yaml', 'yml'] },
 ];
 
+const CODE_THEMES = [
+  { name: 'Ayu Dark', value: 'ayu-dark' },
+  { name: 'Ayu Light', value: 'ayu-light' },
+  { name: 'Dark Plus', value: 'dark-plus' },
+  { name: 'Light Plus', value: 'light-plus' },
+  { name: 'GitHub Dark', value: 'github-dark' },
+  { name: 'GitHub Light', value: 'github-light' },
+  { name: 'Houston', value: 'houston' },
+  { name: 'Material Theme Darker', value: 'material-theme-darker' },
+  { name: 'Material Theme Lighter', value: 'material-theme-lighter' },
+  { name: 'Monokai', value: 'monokai' },
+  { name: 'One Dark Pro', value: 'one-dark-pro' },
+  { name: 'One Light', value: 'one-light' },
+];
+
 function CodeToolbar({ nodeKey }: { nodeKey: string }) {
-  const [open, setOpen] = useState<boolean>(false);
   const [language, setLanguage] = useState<string>();
+  const [theme, setTheme] = useState<string>();
+
   const [editor] = useLexicalComposerContext();
 
   const { refs, floatingStyles, update } = useFloating({
@@ -290,8 +308,8 @@ function CodeToolbar({ nodeKey }: { nodeKey: string }) {
 
   useLayoutEffect(() => {
     editor.getEditorState().read(() => {
-      const node = $getNodeByKey<CodePlusNode>(nodeKey);
-      if (node) {
+      const node = $getNodeByKey(nodeKey);
+      if ($isCodePlusNode(node)) {
         setLanguage(node.getLanguage() ?? 'text');
       }
     });
@@ -305,6 +323,14 @@ function CodeToolbar({ nodeKey }: { nodeKey: string }) {
     );
   }, [language]);
 
+  const currentTheme = useMemo(() => {
+    if (!theme) return 'One Dark Pro';
+
+    return (
+      CODE_THEMES.find((opt) => opt.value === theme)?.name ?? 'One Dark Pro'
+    );
+  }, [theme]);
+
   const onSelectLanguage = (value: string) => {
     editor.update(() => {
       const node = $getNodeByKey(nodeKey);
@@ -313,7 +339,16 @@ function CodeToolbar({ nodeKey }: { nodeKey: string }) {
       }
     });
     setLanguage(value);
-    setOpen(false);
+  };
+
+  const onSelectTheme = (value: string) => {
+    editor.update(() => {
+      const node = $getNodeByKey(nodeKey);
+      if ($isCodePlusNode(node)) {
+        node.setTheme(value);
+      }
+    });
+    setTheme(value);
   };
 
   const onCopyCode = async () => {
@@ -346,50 +381,90 @@ function CodeToolbar({ nodeKey }: { nodeKey: string }) {
         className='px-2 select-none'
         style={floatingStyles}
       >
-        <div className='flex justify-between items-center'>
-          <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                className='flex items-center font-light text-muted-foreground hover:text-muted-foreground'
-                variant='ghost'
-                role='combobox'
-                size='xxs'
-              >
-                {currentLanguage}
-                <ChevronDown />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align='start' side='top' className='max-w-48 p-0'>
-              <Command>
-                <CommandInput placeholder='Search Language...'></CommandInput>
-                <CommandList>
-                  <CommandEmpty>No language found.</CommandEmpty>
-                  <CommandGroup>
-                    {CODE_LANGUAGES.map(({ name, value }) => (
-                      <CommandItem
-                        key={name}
-                        value={value}
-                        onSelect={onSelectLanguage}
-                      >
-                        {name}
-                        <CheckIcon
-                          className={cn(
-                            'ml-auto',
-                            value === language ? 'opacity-100' : 'opacity-0',
-                          )}
-                        />
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
+        <div className='flex items-center justify-between'>
+          <div className='flex items-center gap-1'>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  className='text-muted-foreground hover:text-muted-foreground flex items-center font-light'
+                  variant='ghost'
+                  role='combobox'
+                  size='xs'
+                >
+                  {currentLanguage}
+                  <ChevronDown />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align='start' side='top' className='max-w-48 p-0'>
+                <Command>
+                  <CommandInput placeholder='Search Language...'></CommandInput>
+                  <CommandList>
+                    <CommandEmpty>No language found.</CommandEmpty>
+                    <CommandGroup>
+                      {CODE_LANGUAGES.map(({ name, value }) => (
+                        <CommandItem
+                          key={name}
+                          value={value}
+                          onSelect={onSelectLanguage}
+                        >
+                          {name}
+                          <CheckIcon
+                            className={cn(
+                              'ml-auto',
+                              value === language ? 'opacity-100' : 'opacity-0',
+                            )}
+                          />
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  className='text-muted-foreground hover:text-muted-foreground flex items-center font-light'
+                  variant='ghost'
+                  role='combobox'
+                  size='xs'
+                >
+                  {currentTheme}
+                  <ChevronDown />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align='start' side='top' className='max-w-48 p-0'>
+                <Command>
+                  <CommandInput placeholder='Search Theme...'></CommandInput>
+                  <CommandList>
+                    <CommandEmpty>No theme found.</CommandEmpty>
+                    <CommandGroup>
+                      {CODE_THEMES.map(({ name, value }) => (
+                        <CommandItem
+                          key={name}
+                          value={value}
+                          onSelect={onSelectTheme}
+                        >
+                          {name}
+                          <CheckIcon
+                            className={cn(
+                              'ml-auto',
+                              value === theme ? 'opacity-100' : 'opacity-0',
+                            )}
+                          />
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
           <div>
             <Button
-              className='flex items-center font-light text-muted-foreground hover:text-muted-foreground hover:bg-gray-75'
+              className='text-muted-foreground hover:text-muted-foreground hover:bg-gray-75 flex items-center font-light'
               variant='ghost'
-              size='xxs'
+              size='xs'
               onClick={onCopyCode}
             >
               <BookCopy />

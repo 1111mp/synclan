@@ -1,3 +1,4 @@
+import { ListNode, type ListType } from '@lexical/list';
 import {
   $applyNodeReplacement,
   ElementNode,
@@ -5,14 +6,14 @@ import {
   type LexicalNode,
   type NodeKey,
 } from 'lexical';
-import { ListNode, type ListType } from '@lexical/list';
+
 import { $isSimpleListItemNode } from './simple-list-item-node';
 
 // To avoid merge the next sibling list if same type.
 export class SimpleListNode extends ListNode {
-  $config() {
+  $config(): any {
     return this.config('simple-list', {
-      $transform: (node: SimpleListNode) => {
+      $transform: (node: SimpleListNode): void => {
         updateChildrenListItemValue(node);
       },
       extends: ElementNode,

@@ -2,7 +2,7 @@ import { createContext, useContext, type ReactNode } from 'react';
 
 import { useSocketIO, type ReadyState, type SendMessage } from '@/hooks';
 import { WS_URL } from '@/lib/constant';
-import { useDeviceStore, useIMStore } from '@/stores';
+import { useDeviceStore, useIMStore, useMessageAnimationStore } from '@/stores';
 
 type AppContext = {
   socketState: ReadyState;
@@ -22,7 +22,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     },
     onMessage(message) {
       if (!current?.id) return;
-      console.log('----message-----', message);
+      useMessageAnimationStore.getState().add(message.uuid);
       addMessage(message.sender, message, current.id);
     },
   });

@@ -103,7 +103,7 @@ function TextFormatToolbar({
 }: Omit<TextFormatFloatingToolbarProps, 'isText'>) {
   return (
     <div className='flex items-center space-x-1 p-2'>
-      <Tooltip delayDuration={700}>
+      <Tooltip>
         <TooltipTrigger asChild>
           <Button
             className={cn(
@@ -121,12 +121,12 @@ function TextFormatToolbar({
             <Bold />
           </Button>
         </TooltipTrigger>
-        <TooltipContent className='text-center'>
+        <TooltipContent className='flex flex-col'>
           <p>粗体（&#x2318;B）</p>
           <p>Markdown：**文字** 空格</p>
         </TooltipContent>
       </Tooltip>
-      <Tooltip delayDuration={700}>
+      <Tooltip>
         <TooltipTrigger asChild>
           <Button
             className={cn(
@@ -144,12 +144,12 @@ function TextFormatToolbar({
             <Strikethrough />
           </Button>
         </TooltipTrigger>
-        <TooltipContent className='text-center'>
-          <p>粗体（&#x2318;+Shift+X）</p>
+        <TooltipContent className='flex flex-col'>
+          <p>删除线（&#x2318;+Shift+X）</p>
           <p>Markdown：~~文字~~ 空格</p>
         </TooltipContent>
       </Tooltip>
-      <Tooltip delayDuration={700}>
+      <Tooltip>
         <TooltipTrigger asChild>
           <Button
             className={cn(
@@ -167,12 +167,12 @@ function TextFormatToolbar({
             <Italic />
           </Button>
         </TooltipTrigger>
-        <TooltipContent className='text-center'>
-          <p>粗体（&#x2318;I）</p>
+        <TooltipContent className='flex flex-col'>
+          <p>斜体（&#x2318;I）</p>
           <p>Markdown：*文字* 空格</p>
         </TooltipContent>
       </Tooltip>
-      <Tooltip delayDuration={700}>
+      <Tooltip>
         <TooltipTrigger asChild>
           <Button
             className={cn(
@@ -190,12 +190,12 @@ function TextFormatToolbar({
             <Underline />
           </Button>
         </TooltipTrigger>
-        <TooltipContent className='text-center'>
-          <p>粗体（&#x2318;U）</p>
+        <TooltipContent className='flex flex-col'>
+          <p>下划线（&#x2318;U）</p>
           <p>Markdown：~文字~ 空格</p>
         </TooltipContent>
       </Tooltip>
-      <Tooltip delayDuration={700}>
+      <Tooltip>
         <TooltipTrigger asChild>
           <Button
             className={cn(
@@ -219,12 +219,12 @@ function TextFormatToolbar({
             <ListOrdered />
           </Button>
         </TooltipTrigger>
-        <TooltipContent className='text-center'>
+        <TooltipContent className='flex flex-col'>
           <p>有序列表（&#x2318;+Shift+7）</p>
           <p>Markdown：1. 空格</p>
         </TooltipContent>
       </Tooltip>
-      <Tooltip delayDuration={700}>
+      <Tooltip>
         <TooltipTrigger asChild>
           <Button
             className={cn(
@@ -248,12 +248,12 @@ function TextFormatToolbar({
             <List />
           </Button>
         </TooltipTrigger>
-        <TooltipContent className='text-center'>
+        <TooltipContent className='flex flex-col'>
           <p>无序列表（&#x2318;+Shift+8）</p>
           <p>Markdown：- 空格</p>
         </TooltipContent>
       </Tooltip>
-      <Tooltip delayDuration={700}>
+      <Tooltip>
         <TooltipTrigger asChild>
           <Button
             className={cn(
@@ -277,12 +277,12 @@ function TextFormatToolbar({
             <Quote />
           </Button>
         </TooltipTrigger>
-        <TooltipContent className='text-center'>
+        <TooltipContent className='flex flex-col'>
           <p>引用（&#x2318;+Shift+&gt;）</p>
           <p>Markdown：&gt; 空格</p>
         </TooltipContent>
       </Tooltip>
-      <Tooltip delayDuration={700}>
+      <Tooltip>
         <TooltipTrigger asChild>
           <Button
             className={cn(
@@ -323,12 +323,12 @@ function TextFormatToolbar({
             <Link />
           </Button>
         </TooltipTrigger>
-        <TooltipContent className='text-center'>
+        <TooltipContent className='flex flex-col'>
           <p>链接（&#x2318;+Shift+U）</p>
           <p>Markdown：[文字](链接) 空格</p>
         </TooltipContent>
       </Tooltip>
-      <Tooltip delayDuration={700}>
+      <Tooltip>
         <TooltipTrigger asChild>
           <Button
             variant='ghost'
@@ -358,8 +358,8 @@ function TextFormatToolbar({
             <Braces />
           </Button>
         </TooltipTrigger>
-        <TooltipContent className='text-center'>
-          <p>链接（&#x2318;+&#x2325;+C）</p>
+        <TooltipContent className='flex flex-col'>
+          <p>代码块（&#x2318;+&#x2325;+C）</p>
           <p>Markdown：``` 空格 或 ```代码语言 空格</p>
         </TooltipContent>
       </Tooltip>

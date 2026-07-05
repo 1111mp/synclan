@@ -6,6 +6,7 @@ import {
   type NodeKey,
   type RangeSelection,
 } from 'lexical';
+
 import { $isSimpleQuoteNode } from './simple-quote-node';
 
 export class SimpleListItemNode extends ListItemNode {

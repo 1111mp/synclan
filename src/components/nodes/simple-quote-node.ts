@@ -1,9 +1,9 @@
+import { QuoteNode } from '@lexical/rich-text';
 import {
   $applyNodeReplacement,
   // $createParagraphNode,
   type LexicalNode,
 } from 'lexical';
-import { QuoteNode } from '@lexical/rich-text';
 
 export class SimpleQuoteNode extends QuoteNode {
   // __pendingDelete: boolean = false;

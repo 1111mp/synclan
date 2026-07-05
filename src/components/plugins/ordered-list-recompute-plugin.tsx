@@ -1,8 +1,9 @@
-import { useEffect, useRef } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+import { mergeRegister } from '@lexical/utils';
+import { useEffect, useRef } from 'react';
+
 import { SimpleListItemNode, SimpleListNode } from '../nodes';
 import { $recomputeOrderedListNumbers } from './lib';
-import { mergeRegister } from '@lexical/utils';
 
 export function OrderedListRecomputePlugin() {
   const [editor] = useLexicalComposerContext();

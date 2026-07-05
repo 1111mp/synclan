@@ -1,12 +1,14 @@
 import { cva, type VariantProps } from 'class-variance-authority';
-import { emojiToImage, getImagePath, type SkinToneKey } from './lib';
+
 import { cn } from '@/lib/utils';
+
+import { emojiToImage, getImagePath, type SkinToneKey } from './lib';
 
 const variants = cva('', {
   variants: {
     size: {
       16: 'size-4',
-      18: 'size-[18px]',
+      18: 'size-4.5',
       20: 'size-5',
       24: 'size-6',
       28: 'size-7',

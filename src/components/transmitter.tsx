@@ -1,15 +1,20 @@
 import { CodeHighlightNode, CodeNode } from '@lexical/code';
+import { AutoFocusExtension, ClearEditorExtension } from '@lexical/extension';
+import { HistoryExtension } from '@lexical/history';
 import { AutoLinkNode, LinkNode } from '@lexical/link';
 import { ListItemNode, ListNode } from '@lexical/list';
+import { LexicalExtensionComposer } from '@lexical/react/LexicalExtensionComposer';
+import { HeadingNode, QuoteNode, RichTextExtension } from '@lexical/rich-text';
 import {
-  LexicalComposer,
-  type InitialConfigType,
-} from '@lexical/react/LexicalComposer';
-import { HeadingNode, QuoteNode } from '@lexical/rich-text';
-import { LineBreakNode, ParagraphNode } from 'lexical';
+  $getRoot,
+  CLEAR_EDITOR_COMMAND,
+  defineExtension,
+  LineBreakNode,
+  ParagraphNode,
+} from 'lexical';
 import { CaseSensitive, Maximize2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useMemo, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
 import {
   CompositionInput,
@@ -35,9 +40,17 @@ import {
   SimpleListNode,
   SimpleQuoteNode,
 } from './nodes';
-import { FixedTextFormatToolbar } from './plugins';
+import { CodeHighlightExtension, FixedTextFormatToolbar } from './plugins';
 
-export const EDITOR_INITIAL_CONFIG: Omit<InitialConfigType, 'onError'> = {
+export const SynclanEditorExtension = defineExtension({
+  dependencies: [
+    AutoFocusExtension,
+    RichTextExtension,
+    HistoryExtension,
+    ClearEditorExtension,
+    CodeHighlightExtension,
+  ],
+  name: 'synclan-editor',
   namespace: 'synclan-editor',
   nodes: [
     AutoLinkNode,
@@ -76,7 +89,7 @@ export const EDITOR_INITIAL_CONFIG: Omit<InitialConfigType, 'onError'> = {
     LineBreakNode,
   ],
   theme: {
-    code: 'block relative pt-7 pb-4 pl-[72px] pr-2 my-2 border rounded-md bg-muted! text-muted-foreground! indent-0 before:box-border before:absolute before:top-0 before:left-0 before:content-[attr(data-gutter)] before:w-14 before:pt-[29px] before:px-2 before:pb-0 before:font-thin before:text-right',
+    code: 'block relative pt-7 pb-4 pl-[72px] pr-2 my-2 border rounded-md indent-0 before:box-border before:absolute before:top-0 before:left-0 before:content-[attr(data-gutter)] before:w-14 before:pt-[29px] before:px-2 before:pb-0 before:font-thin before:text-right',
     paragraph: 'mt-0 mb-0',
     link: 'font-light text-blue-500 no-underline cursor-pointer hover:underline',
     list: {
@@ -98,7 +111,7 @@ export const EDITOR_INITIAL_CONFIG: Omit<InitialConfigType, 'onError'> = {
       underlineStrikethrough: '[text-decoration-line:underline_line-through]',
     },
   },
-};
+});
 
 function Transmitter({
   onSend,
@@ -113,20 +126,23 @@ function Transmitter({
 
   const compositionInputRef = useRef<CompositionInputRef>(null);
 
-  const initialConfig = useMemo<InitialConfigType>(
-    () => ({
-      ...EDITOR_INITIAL_CONFIG,
-      onError(error) {
-        console.log('error', error);
-      },
-    }),
-    [],
-  );
+  // const initialConfig = useMemo<InitialConfigType>(
+  //   () => ({
+  //     ...EDITOR_INITIAL_CONFIG,
+  //     onError(error) {
+  //       console.log('error', error);
+  //     },
+  //   }),
+  //   [],
+  // );
 
   const multiLine = lineOverflow || isFixedTools;
 
   return (
-    <LexicalComposer initialConfig={initialConfig}>
+    <LexicalExtensionComposer
+      extension={SynclanEditorExtension}
+      contentEditable={null}
+    >
       <div
         className={cn(
           'flex flex-wrap border rounded-lg bg-card/60 backdrop-blur-sm',
@@ -226,13 +242,18 @@ function Transmitter({
                     onClick={async () => {
                       if (isEmpty) return;
 
-                      const state =
-                        compositionInputRef.current?.getEditorState();
-                      if (!state) return;
+                      const editor = compositionInputRef.current?.getEditor();
+                      if (!editor) return;
 
-                      const content = JSON.stringify(state.toJSON());
-                      if (!content) return;
+                      const hasContent = editor
+                        .getEditorState()
+                        .read(() => $getRoot().getTextContent().trim() !== '');
+                      if (!hasContent) return;
 
+                      const content = JSON.stringify(
+                        editor.getEditorState().toJSON(),
+                      );
+                      editor.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined);
                       await onSend?.(content);
                     }}
                   >
@@ -268,7 +289,7 @@ function Transmitter({
           </motion.p>
         )}
       </AnimatePresence>
-    </LexicalComposer>
+    </LexicalExtensionComposer>
   );
 }
 

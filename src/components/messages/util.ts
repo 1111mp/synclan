@@ -13,11 +13,11 @@ export function renderTime(time: number) {
     }
 
     if (daysDiff === 1) {
-      return date.format('[昨天] HH:mm');
+      return date.format('昨天 HH:mm');
     }
 
     if (daysDiff === 2) {
-      return date.format('[前天] HH:mm');
+      return date.format('前天 HH:mm');
     }
 
     if (daysDiff < 7) {
@@ -28,6 +28,13 @@ export function renderTime(time: number) {
   }
 
   return date.format('YYYY-MM-DD');
+}
+
+export function renderMessageTimee(time: number, isNewGroup: boolean = false) {
+  if (isNewGroup) {
+    return renderTime(time);
+  }
+  return dayjs(time).format('HH:mm');
 }
 
 export function isSameDay(time: number, diffTime?: number) {

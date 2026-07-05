@@ -1,6 +1,8 @@
 export * from './aspect-ratio';
+export * from './attachment';
 export * from './avatar';
 export * from './breadcrumb';
+export * from './bubble';
 export * from './button';
 export * from './card';
 export * from './carousel';
@@ -14,6 +16,8 @@ export * from './input';
 export * from './input-group';
 export * from './item';
 export * from './label';
+export * from './message';
+export * from './message-scroller';
 export * from './popover';
 export * from './resizable';
 export * from './scroll-area';

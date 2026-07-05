@@ -30,7 +30,7 @@ use std::{
 };
 use tower_http::{
     cors::{AllowOrigin, CorsLayer},
-    services::ServeDir,
+    services::{ServeDir, ServeFile},
 };
 use utoipa::OpenApi;
 use utoipa_axum::router::OpenApiRouter;
@@ -163,12 +163,14 @@ impl HttpServer {
         let resources = dirs::app_resources_dir()?;
         let web_static_dir = resources.join("web");
         let synclan = Config::synclan().await.latest_arc();
+        let static_server =
+            ServeDir::new(&web_static_dir).not_found_service(ServeFile::new(web_static_dir.join("index.html")));
 
         let mut app = router
             // swagger ui
             .merge(SwaggerUi::new("/api/docs").url("/api/docs/openapi.json", api))
             // web static server
-            .fallback_service(ServeDir::new(web_static_dir))
+            .fallback_service(static_server)
             .layer(layer)
             .layer(
                 CorsLayer::new()

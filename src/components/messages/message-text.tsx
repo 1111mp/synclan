@@ -3,7 +3,7 @@ import { LexicalExtensionComposer } from '@lexical/react/LexicalExtensionCompose
 import { defineExtension, type EditorState, type LexicalEditor } from 'lexical';
 import { useMemo } from 'react';
 
-import { EDITOR_INITIAL_CONFIG } from '@/components/transmitter';
+import { SynclanEditorExtension } from '@/components/transmitter';
 
 import { parseTextMessageContent } from './util';
 
@@ -33,10 +33,13 @@ function LexicalMessage({
   const extension = useMemo(
     () =>
       defineExtension({
-        ...EDITOR_INITIAL_CONFIG,
+        dependencies: [SynclanEditorExtension],
         $initialEditorState: initialState,
-        name: 'synclan-editor-extension',
+        name: 'synclan-editor/message-extension',
         editable: false,
+        theme: {
+          code: 'block relative pt-7 pb-4 pl-[72px] pr-2 my-0 border rounded-md indent-0 before:box-border before:absolute before:top-0 before:left-0 before:content-[attr(data-gutter)] before:w-14 before:pt-[29px] before:px-2 before:pb-0 before:font-thin before:text-right',
+        },
       }),
     [initialState],
   );

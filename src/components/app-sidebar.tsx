@@ -50,7 +50,9 @@ function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     if (params?.id === id) return;
 
     setActiveConversation(id);
-    void navigate(`/devices/${id}`);
+    void navigate(`/devices/${id}`, {
+      viewTransition: true,
+    });
   };
 
   return (

@@ -1,4 +1,5 @@
 import { User } from 'lucide-react';
+import { motion, useReducedMotion } from 'motion/react';
 
 import {
   Avatar,
@@ -9,10 +10,17 @@ import {
   Message,
   MessageAvatar,
   MessageContent,
+  MessageScrollerItem,
 } from '@/components/ui';
+import {
+  MESSAGE_ANIMATIONS,
+  type MessageAnimationPreset,
+} from '@/lib/message-animations';
 import { cn } from '@/lib/utils';
+import { useMessageAnimationStore } from '@/stores';
 
 import type { MessageContextMenuInfo } from './message-context-menu';
+import { MessageExpandable } from './message-expandable';
 import { ImageMessage } from './message-image';
 import { TextMessage } from './message-text';
 import { VideoMessage } from './message-video';
@@ -22,19 +30,75 @@ import {
   THRESHOLD,
 } from './util';
 
-type Props = {
-  message: IMessage;
-  previousMessage?: IMessage;
-  align?: 'start' | 'end';
-  onOpenContextMenu?: (info: MessageContextMenuInfo) => void;
-};
+const MotionMessageScrollerItem = motion.create(MessageScrollerItem);
 
-function MessageWrapper({
+function MessageAnimatedWrapper({
   message,
   previousMessage,
-  align = 'start',
+  animationPreset = MESSAGE_ANIMATIONS['blur-fade'],
+  assistantVariant = 'ghost',
+  scrollAnchor,
+  userVariant = 'muted',
+  isUserMessage = false,
   onOpenContextMenu,
-}: Props) {
+  ...props
+}: Omit<
+  React.ComponentProps<typeof MotionMessageScrollerItem>,
+  'animate' | 'children' | 'exit' | 'initial' | 'messageId' | 'variants'
+> & {
+  animationPreset?: MessageAnimationPreset;
+  assistantVariant?: React.ComponentProps<typeof Bubble>['variant'];
+  message: IMessage;
+  previousMessage?: IMessage;
+  userVariant?: React.ComponentProps<typeof Bubble>['variant'];
+  isUserMessage?: boolean;
+  onOpenContextMenu?: (info: MessageContextMenuInfo) => void;
+}) {
+  const isNewMessage = useMessageAnimationStore((s) => s.has(message.uuid));
+  const shouldReduceMotion = useReducedMotion();
+
+  const shouldAnimate = isNewMessage && !shouldReduceMotion;
+
+  return (
+    <MotionMessageScrollerItem
+      messageId={message.uuid}
+      scrollAnchor={scrollAnchor ?? true}
+      variants={animationPreset.variants}
+      animate='animate'
+      initial={shouldAnimate ? 'initial' : false}
+      exit={shouldAnimate ? 'exit' : undefined}
+      onAnimationComplete={() => {
+        useMessageAnimationStore.getState().remove(message.uuid);
+      }}
+      {...props}
+    >
+      <MessageAnimatedRow
+        message={message}
+        previousMessage={previousMessage}
+        isUserMessage={isUserMessage}
+        assistantVariant={assistantVariant}
+        userVariant={userVariant}
+        onOpenContextMenu={onOpenContextMenu}
+      />
+    </MotionMessageScrollerItem>
+  );
+}
+
+function MessageAnimatedRow({
+  message,
+  previousMessage,
+  assistantVariant,
+  userVariant,
+  isUserMessage = false,
+  onOpenContextMenu,
+}: {
+  assistantVariant: React.ComponentProps<typeof Bubble>['variant'];
+  message: IMessage;
+  previousMessage?: IMessage;
+  userVariant: React.ComponentProps<typeof Bubble>['variant'];
+  isUserMessage?: boolean;
+  onOpenContextMenu?: (info: MessageContextMenuInfo) => void;
+}) {
   const renderMessage = () => {
     if (message.type === 'text') {
       return <TextMessage message={message} />;
@@ -50,6 +114,8 @@ function MessageWrapper({
 
     return null;
   };
+
+  const align = isUserMessage ? 'end' : 'start';
 
   const isSameUser = previousMessage?.sender === message.sender;
 
@@ -88,7 +154,8 @@ function MessageWrapper({
       </MessageAvatar>
       <MessageContent>
         <Bubble
-          variant='secondary'
+          className='max-w-[90%]'
+          variant={isUserMessage ? userVariant : assistantVariant}
           onContextMenu={(evt) => {
             evt.preventDefault();
 
@@ -98,7 +165,9 @@ function MessageWrapper({
             });
           }}
         >
-          <BubbleContent>{renderMessage()}</BubbleContent>
+          <BubbleContent>
+            <MessageExpandable>{renderMessage()}</MessageExpandable>
+          </BubbleContent>
         </Bubble>
       </MessageContent>
       <p
@@ -119,4 +188,4 @@ function MessageWrapper({
   );
 }
 
-export { MessageWrapper };
+export { MessageAnimatedWrapper };

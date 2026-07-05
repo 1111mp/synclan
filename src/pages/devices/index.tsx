@@ -1,12 +1,6 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { InView } from 'react-intersection-observer';
 import { useParams } from 'react-router';
 import { useMeasure } from 'react-use';
@@ -14,24 +8,36 @@ import { v4 as uuidv4 } from 'uuid';
 import { useShallow } from 'zustand/react/shallow';
 
 import { useAppContext } from '@/app-context';
-import { MessageWrapper, Transmitter } from '@/components';
-import { Toaster } from '@/components/ui';
+import { Transmitter } from '@/components';
+import {
+  MessageAnimatedWrapper,
+  MessageContextMenu,
+  type MessageContextMenuRef,
+} from '@/components/messages';
+import {
+  MessageScroller,
+  MessageScrollerButton,
+  MessageScrollerContent,
+  MessageScrollerProvider,
+  MessageScrollerViewport,
+  Toaster,
+} from '@/components/ui';
 import { HttpStatus } from '@/lib/types';
 import { getMessages } from '@/services/cmd';
-import { useDeviceStore, useIMStore } from '@/stores';
+import { useDeviceStore, useIMStore, useMessageAnimationStore } from '@/stores';
 
 function loader() {}
 
 function DevicesPage() {
-  const [didInitialScroll, setDidInitialScroll] = useState<boolean>(false);
-
   const params = useParams();
 
   const mounted = useRef<boolean>(false);
-  const parentRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
   const latestMessageInViewRef = useRef<boolean>(false);
   const isFetching = useRef<boolean>(false);
   const [footerRef, { height: footerHeight }] = useMeasure<HTMLElement>();
+
+  const msgCtxMenu = useRef<MessageContextMenuRef>(null);
 
   const { sendMessage } = useAppContext();
 
@@ -60,16 +66,22 @@ function DevicesPage() {
   } = useInfiniteQuery({
     queryKey: ['messages', params.id],
     // 首次进入没有 last_id，传 undefined
-    initialPageParam: undefined as number | undefined,
+    initialPageParam: { lastId: undefined as number | undefined, pageSize: 40 },
     refetchOnWindowFocus: false,
     queryFn: ({ pageParam }) =>
       getMessages({
         selfId: current?.id || '',
         targetId: params.id || '',
-        lastId: pageParam,
-        pageSize: 20,
+        lastId: pageParam.lastId,
+        pageSize: pageParam.pageSize,
       }),
-    getPreviousPageParam: (firstPage) => firstPage.nextCursor,
+    getPreviousPageParam: (firstPage) => {
+      if (!firstPage.nextCursor) return undefined;
+      return {
+        lastId: firstPage.nextCursor,
+        pageSize: 12,
+      };
+    },
     getNextPageParam: () => undefined,
     enabled: !!params.id && !!current?.id && !isHydrated,
   });
@@ -93,12 +105,12 @@ function DevicesPage() {
 
   const virtualizer = useVirtualizer({
     count: messages.length,
-    overscan: 6,
+    overscan: 8,
     // paddingStart: 12,
-    paddingEnd: footerHeight + 16,
+    paddingEnd: 16,
     // gap: 12,
-    estimateSize: () => 74,
-    getScrollElement: () => parentRef.current,
+    estimateSize: () => 100,
+    getScrollElement: () => viewportRef.current,
     getItemKey: useCallback(
       (index: number) => messages[index]!.uuid,
       [messages],
@@ -111,15 +123,9 @@ function DevicesPage() {
 
   useEffect(() => {
     if (!params.id || mounted.current) return;
+    mounted.current = true;
     setActiveConversation(params.id);
   }, [params.id, setActiveConversation]);
-
-  useLayoutEffect(() => {
-    if (didInitialScroll) return;
-    mounted.current = true;
-    virtualizer.scrollToEnd();
-    setDidInitialScroll(true);
-  }, [didInitialScroll, virtualizer]);
 
   useEffect(() => {
     if (footerHeight <= 46 || !latestMessageInViewRef.current) return;
@@ -141,6 +147,7 @@ function DevicesPage() {
       createdAt: now,
       updatedAt: now,
     };
+    useMessageAnimationStore.getState().add(message.uuid);
     addMessage(deviceId, message, current.id);
 
     try {
@@ -156,86 +163,97 @@ function DevicesPage() {
   const virtualItems = virtualizer.getVirtualItems();
 
   return (
-    <div
-      className='flex flex-col overflow-hidden'
-      style={{
-        height: 'calc(100vh - 64px)',
-      }}
-    >
+    <MessageScrollerProvider defaultScrollPosition='end'>
       <div
-        ref={parentRef}
-        className='min-h-0 w-full overflow-x-hidden overflow-y-auto'
-        onScroll={(event) => {
-          if (
-            !mounted.current ||
-            virtualizer.isAtEnd(80) ||
-            isFetchingPreviousPage ||
-            !hasPreviousPage ||
-            isFetching.current
-          )
-            return;
-
-          if (
-            event.currentTarget &&
-            (event.currentTarget as HTMLElement).scrollTop < 120
-          ) {
-            isFetching.current = true;
-            void fetchPreviousPage().finally(() => {
-              setTimeout(() => {
-                isFetching.current = false;
-              }, 300);
-            });
-          }
+        className='relative flex flex-col overflow-hidden'
+        style={{
+          height: 'calc(100vh - 64px)',
         }}
       >
-        <div ref={virtualizer.containerRef} className='relative w-full'>
-          {virtualItems.map((virtualItem) => {
-            const message = messages[virtualItem.index],
-              previousMessage = messages[virtualItem.index - 1] || void 0,
-              right = message.sender === current?.id,
-              isLatest = virtualItem.index === messages.length - 1;
+        <MessageScroller>
+          <MessageScrollerViewport
+            ref={viewportRef}
+            className='min-h-0 w-full overflow-x-hidden overflow-y-auto'
+            onScroll={(event) => {
+              msgCtxMenu.current?.hide();
 
-            return (
-              <div
-                key={virtualItem.key}
-                data-index={virtualItem.index}
-                ref={virtualizer.measureElement}
-                className='absolute top-0 left-0 w-full'
-              >
-                {isLatest ? (
-                  <InView
-                    as='div'
-                    onChange={(inView) => {
-                      latestMessageInViewRef.current = inView;
-                    }}
-                  >
-                    <MessageWrapper
-                      message={message}
-                      previousMessage={previousMessage}
-                      position={right ? 'right' : 'left'}
-                    />
-                  </InView>
-                ) : (
-                  <MessageWrapper
-                    message={message}
-                    previousMessage={previousMessage}
-                    position={right ? 'right' : 'left'}
-                  />
-                )}
+              if (
+                !mounted.current ||
+                virtualizer.isAtEnd(80) ||
+                isFetchingPreviousPage ||
+                !hasPreviousPage ||
+                isFetching.current
+              )
+                return;
+
+              if (
+                event.currentTarget &&
+                (event.currentTarget as HTMLElement).scrollTop < 120
+              ) {
+                isFetching.current = true;
+                void fetchPreviousPage().finally(() => {
+                  setTimeout(() => {
+                    isFetching.current = false;
+                  }, 300);
+                });
+              }
+            }}
+          >
+            <MessageScrollerContent
+              // aria-busy={isBusy}
+              className='block min-h-full'
+            >
+              <div ref={virtualizer.containerRef} className='relative w-full'>
+                {virtualItems.map((virtualItem) => {
+                  const message = messages[virtualItem.index],
+                    previousMessage = messages[virtualItem.index - 1] || void 0,
+                    isUserMessage = message.sender === current?.id,
+                    isLatest = virtualItem.index === messages.length - 1;
+
+                  return (
+                    <div
+                      key={virtualItem.key}
+                      data-index={virtualItem.index}
+                      ref={virtualizer.measureElement}
+                      className='absolute top-0 left-0 w-full'
+                    >
+                      <InView
+                        as='div'
+                        skip={!isLatest}
+                        onChange={(inView) => {
+                          latestMessageInViewRef.current = inView;
+                        }}
+                      >
+                        <MessageAnimatedWrapper
+                          message={message}
+                          userVariant='muted'
+                          assistantVariant='muted'
+                          isUserMessage={isUserMessage}
+                          previousMessage={previousMessage}
+                          onOpenContextMenu={(info) => {
+                            msgCtxMenu.current?.open(info);
+                          }}
+                        />
+                      </InView>
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
-        </div>
-      </div>
+            </MessageScrollerContent>
+          </MessageScrollerViewport>
+          <MessageScrollerButton />
+        </MessageScroller>
 
-      <footer
-        ref={footerRef}
-        className='footer-gradient absolute bottom-0 w-full shrink-0 pr-4 pb-2 pl-2'
-      >
-        <Transmitter onSend={onSend} />
-      </footer>
-      <Toaster />
-    </div>
+        <footer
+          ref={footerRef}
+          className='footer-gradient w-full shrink-0 pr-4 pb-2 pl-2'
+        >
+          <Transmitter onSend={onSend} />
+        </footer>
+        <MessageContextMenu ref={msgCtxMenu} />
+        <Toaster />
+      </div>
+    </MessageScrollerProvider>
   );
 }
 

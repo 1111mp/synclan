@@ -1,4 +1,9 @@
-import { FloatingPortal, offset, useFloating } from '@floating-ui/react';
+import {
+  autoUpdate,
+  FloatingPortal,
+  offset,
+  useFloating,
+} from '@floating-ui/react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import {
   LexicalTypeaheadMenuPlugin,
@@ -8,11 +13,9 @@ import {
 import { $getSelection, $isRangeSelection, type TextNode } from 'lexical';
 import { useMemo, useState } from 'react';
 
+import { Emoji, search } from '@/components/emoji';
+import { $createEmojiNode } from '@/components/nodes';
 import { cn } from '@/lib/utils';
-
-import { Emoji } from '../emoji';
-import { search } from '../emoji/lib';
-import { $createEmojiNode } from '../nodes';
 
 class EmojiOption extends MenuOption {
   shortName: string;
@@ -35,6 +38,7 @@ function EmojiPickerPlugin() {
   const { refs, floatingStyles } = useFloating({
     placement: 'top-start',
     middleware: [offset(10)],
+    whileElementsMounted: autoUpdate,
   });
 
   const options = useMemo(() => {
@@ -84,7 +88,6 @@ function EmojiPickerPlugin() {
         { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex },
       ) => {
         if (!anchorElementRef.current || !options.length) return null;
-
         return (
           <FloatingPortal>
             <div
@@ -92,26 +95,30 @@ function EmojiPickerPlugin() {
               className='bg-popover min-w-52 rounded-lg py-2 shadow-lg'
               style={floatingStyles}
             >
-              <ul className='no-scrollbar max-h-56 overflow-y-auto'>
+              <ul className='no-scrollbar max-h-72 overflow-y-auto px-1.5'>
                 {options.map((emoji, index) => {
                   const isSelected = selectedIndex === index;
                   return (
                     <li
                       key={emoji.shortName}
+                      ref={(node) => {
+                        if (isSelected && node) {
+                          node.scrollIntoView({
+                            block: 'nearest',
+                          });
+                        }
+                      }}
                       className={cn(
-                        'flex px-3 py-1 space-x-2 items-center cursor-pointer',
-                        isSelected && 'bg-gray-05 dark:bg-gray-60/30',
+                        'relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none',
+                        isSelected && 'bg-muted text-foreground',
                       )}
                       role='option'
                       tabIndex={-1}
                       aria-selected={isSelected}
-                      ref={(el) => {
-                        if (isSelected && el) {
-                          el.scrollIntoView({ block: 'nearest' });
+                      onMouseMove={() => {
+                        if (selectedIndex !== index) {
+                          setHighlightedIndex(index);
                         }
-                      }}
-                      onMouseEnter={() => {
-                        setHighlightedIndex(index);
                       }}
                       onClick={() => {
                         setHighlightedIndex(index);

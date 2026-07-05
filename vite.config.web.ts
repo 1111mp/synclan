@@ -26,9 +26,12 @@ export default defineConfig(async ({ mode }) => ({
         {
           src: resolve(
             __dirname,
-            'node_modules/emoji-datasource-apple/img/apple/64/',
+            'node_modules/emoji-datasource-apple/img/apple/64/**/*',
           ),
           dest: 'emoji-datasource-apple/img/apple/64/',
+          rename: {
+            stripBase: true,
+          },
         },
       ],
     }),

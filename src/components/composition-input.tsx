@@ -1,8 +1,6 @@
-import { AutoFocusPlugin } from '@lexical/react/LexicalAutoFocusPlugin';
 import { AutoLinkPlugin } from '@lexical/react/LexicalAutoLinkPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { EditorRefPlugin } from '@lexical/react/LexicalEditorRefPlugin';
-import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
 import {
   createEmptyHistoryState,
   HistoryPlugin,
@@ -10,15 +8,8 @@ import {
 } from '@lexical/react/LexicalHistoryPlugin';
 import { ListPlugin } from '@lexical/react/LexicalListPlugin';
 import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
-import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { TabIndentationPlugin } from '@lexical/react/LexicalTabIndentationPlugin';
-import {
-  $getRoot,
-  $getSelection,
-  $isRangeSelection,
-  type EditorState,
-  type LexicalEditor,
-} from 'lexical';
+import { $getSelection, $isRangeSelection, type LexicalEditor } from 'lexical';
 import { useImperativeHandle, useRef, useState, type Ref } from 'react';
 
 import { cn } from '@/lib/utils';
@@ -28,7 +19,6 @@ import { $createEmojiNode } from './nodes';
 import {
   AutoLinePlugin,
   CodeBehaviorPlugin,
-  CodeHighlightShikiPlugin,
   CodeNodeToolbarPlugin,
   EmojiPickerPlugin,
   EmptyBlockToParagraphPlugin,
@@ -64,7 +54,7 @@ type CompositionInputProps = {
 };
 
 type CompositionInputRef = {
-  getEditorState(): EditorState | void;
+  getEditor(): LexicalEditor | null;
   onPickEmoji: EmojiPickerProps['onPickEmoji'];
 };
 
@@ -82,11 +72,11 @@ function CompositionInput({
   const historyState = useRef<HistoryState>(createEmptyHistoryState());
 
   useImperativeHandle(ref, () => ({
-    getEditorState: onGetEditorState,
+    getEditor: onGetEditor,
     onPickEmoji: onPickEmojiHandle,
   }));
 
-  const onGetEditorState = () => editorRef.current?.getEditorState();
+  const onGetEditor = () => editorRef.current;
 
   const onPickEmojiHandle: EmojiPickerProps['onPickEmoji'] = ({
     shortName,
@@ -114,26 +104,21 @@ function CompositionInput({
       id='synclan-composition-scroll-wrapper'
       className='relative max-h-56 overflow-y-auto px-3'
     >
-      <ShortcutsPlugin />
-      <RichTextPlugin
-        contentEditable={
-          <ContentEditable
-            className={cn(
-              'w-full max-w-none text-sm leading-5.5 text-foreground outline-none focus:outline-none',
-            )}
-            aria-placeholder='Enter Message'
-            placeholder={
-              <p className='text-muted-foreground pointer-events-none absolute top-0 inline-block text-sm select-none'>
-                Send Message
-              </p>
-            }
-          />
+      <ContentEditable
+        className={cn(
+          'w-full max-w-none text-sm leading-5.5 text-foreground outline-none focus:outline-none',
+        )}
+        aria-placeholder='Enter Message'
+        placeholder={
+          <p className='text-muted-foreground pointer-events-none absolute top-0 inline-block text-sm select-none'>
+            Send Message
+          </p>
         }
-        ErrorBoundary={LexicalErrorBoundary}
       />
+      <ShortcutsPlugin />
       <EditorRefPlugin editorRef={editorRef} />
       <HistoryPlugin externalHistoryState={historyState.current} />
-      <AutoFocusPlugin />
+      {/*<AutoFocusPlugin />*/}
       <AutoLinkPlugin
         matchers={[
           (text) => {
@@ -169,7 +154,7 @@ function CompositionInput({
           CODE_PLUS,
         ]}
       />
-      <CodeHighlightShikiPlugin />
+      {/*<CodeHighlightShikiPlugin />*/}
       <CodeNodeToolbarPlugin />
       <CodeBehaviorPlugin />
       <FixTextFormatPlugin />
@@ -189,20 +174,10 @@ function CompositionInput({
       <IsFocusedPlugin onFocusChange={onFocusChange} />
       {/*<OnChangePlugin onChange={onChange} />*/}
       <EnterBehaviorPlugin
-        onSend={() => {
-          const editor = editorRef.current;
-          if (!editor) return;
+        onSend={(editorState) => {
+          if (editorState.isEmpty()) return;
 
-          let content = '';
-          editor.read(() => {
-            content = JSON.stringify(editor.getEditorState().toJSON());
-          });
-
-          if (!content) return;
-          editor.update(() => {
-            $getRoot().clear();
-          });
-
+          const content = JSON.stringify(editorState.toJSON());
           void onSend?.(content);
         }}
       />

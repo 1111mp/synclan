@@ -26,6 +26,14 @@ export const router = isWeb
             path: 'devices/:id',
             lazy: () => import('@/pages/devices'),
           },
+          {
+            path: 'account',
+            lazy: () => import('@/pages/account'),
+          },
+          {
+            path: 'settings',
+            lazy: () => import('@/pages/settings'),
+          },
         ],
       },
     ])
@@ -42,6 +50,14 @@ export const router = isWeb
             {
               path: 'devices/:id',
               lazy: () => import('@/pages/devices'),
+            },
+            {
+              path: 'account',
+              lazy: () => import('@/pages/account'),
+            },
+            {
+              path: 'settings',
+              lazy: () => import('@/pages/settings'),
             },
           ],
         },

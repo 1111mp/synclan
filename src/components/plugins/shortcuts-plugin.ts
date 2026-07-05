@@ -1,4 +1,6 @@
-import { useEffect, type JSX } from 'react';
+import { $isLinkNode } from '@lexical/link';
+import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+import { IS_APPLE } from '@lexical/utils';
 import {
   $addUpdateTag,
   $findMatchingParent,
@@ -12,9 +14,8 @@ import {
   SKIP_SELECTION_FOCUS_TAG,
   type LexicalEditor,
 } from 'lexical';
-import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { IS_APPLE } from '@lexical/utils';
-import { $isLinkNode } from '@lexical/link';
+import { useEffect, type JSX } from 'react';
+
 import {
   $createCodePlusNode,
   $isSimpleListItemNode,
@@ -22,17 +23,17 @@ import {
   $isSimpleQuoteNode,
 } from '../nodes';
 import {
+  $copyCompleteNodeWithChildren,
+  $findNearestCodeNode,
   $findNearestListNode,
-  $toggleButtletedList,
-  $toggleOrderedList,
-  $toggleQuoteNode,
   $getSelectedNode,
   $selectionContainsOnlyText,
-  $findNearestCodeNode,
   $selectionJustContainsSameCodeNode,
-  $toggleCodeNode,
   $splitNodesFromOneLine,
-  $copyCompleteNodeWithChildren,
+  $toggleButtletedList,
+  $toggleCodeNode,
+  $toggleOrderedList,
+  $toggleQuoteNode,
 } from './lib';
 import {
   SHORTCUT_LINK_CREATE_COMMAND,
@@ -271,11 +272,11 @@ function ShortcutsPlugin(): JSX.Element | null {
 }
 
 export {
-  ShortcutsPlugin,
   isFormatBulletList,
-  isFormatNumberedList,
   isFormatCode,
+  isFormatNumberedList,
   isFormatQuote,
-  isStrikeThrough,
   isInsertLink,
+  isStrikeThrough,
+  ShortcutsPlugin,
 };

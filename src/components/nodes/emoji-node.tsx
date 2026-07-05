@@ -1,17 +1,18 @@
 import {
   $applyNodeReplacement,
   DecoratorNode,
+  type DOMConversionMap,
+  type DOMConversionOutput,
+  type DOMExportOutput,
+  ElementNode,
+  type LexicalNode,
   type NodeKey,
   type SerializedLexicalNode,
   type Spread,
-  type LexicalNode,
-  type DOMExportOutput,
-  type DOMConversionMap,
-  type DOMConversionOutput,
-  ElementNode,
 } from 'lexical';
-import { Emoji } from '../emoji';
 import { renderToStaticMarkup } from 'react-dom/server';
+
+import { Emoji } from '../emoji';
 
 export type SerializedEmojiNode = Spread<
   { shortName: string; skinTone: number },

@@ -21,41 +21,25 @@ export default defineConfig(async ({ mode }) => ({
     babel({
       presets: [reactCompilerPreset()],
     }),
-    createHtmlPlugin({
-      pages: [
-        {
-          entry: 'main.tsx',
-          filename: 'index.html',
-          template: 'index.html',
-        },
-        {
-          entry: 'preview/main.tsx',
-          filename: 'preview.html',
-          template: 'preview.html',
-        },
-      ],
-    }),
+    createHtmlPlugin(),
     tailwindcss(),
     viteStaticCopy({
       targets: [
         {
           src: resolve(
             __dirname,
-            'node_modules/emoji-datasource-apple/img/apple/64/',
+            'node_modules/emoji-datasource-apple/img/apple/64/**/*',
           ),
           dest: 'emoji-datasource-apple/img/apple/64/',
+          rename: {
+            stripBase: true,
+          },
         },
       ],
     }),
   ],
 
   build: {
-    rollupOptions: {
-      input: {
-        main: resolve(__dirname, 'src/index.html'),
-        preview: resolve(__dirname, 'src/preview.html'),
-      },
-    },
     emptyOutDir: true,
     outDir: '../dist/ui',
   },
