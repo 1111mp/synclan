@@ -34,3 +34,9 @@ interface IConversations {
   lastAccessed: number;
   lastMessage?: IMessage;
 }
+
+type Attachment = {
+  id: string;
+  src: string;
+  name: string;
+};

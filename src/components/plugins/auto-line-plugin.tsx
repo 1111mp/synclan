@@ -10,7 +10,7 @@ import {
 import { useEffect } from 'react';
 import { useLatest } from 'react-use';
 
-import { $isCodePlusNode } from '../nodes';
+import { $isCodePlusNode, $isImageNode } from '../nodes';
 
 type AutoLinePluginProps = {
   onLineChange?: (changed: boolean) => void;
@@ -35,7 +35,7 @@ function AutoLinePlugin({ onLineChange }: AutoLinePluginProps) {
           }
 
           const node = root.getChildAtIndex(0);
-          if ($nodeOrChildrenContainCodeNode(node)) {
+          if ($nodeOrChildrenContainCodeOrImgNode(node)) {
             latestLineChange.current?.(true);
             return;
           }
@@ -51,18 +51,20 @@ function AutoLinePlugin({ onLineChange }: AutoLinePluginProps) {
 
 export { AutoLinePlugin, type AutoLinePluginProps };
 
-function $nodeOrChildrenContainCodeNode(node: LexicalNode | null): boolean {
+function $nodeOrChildrenContainCodeOrImgNode(
+  node: LexicalNode | null,
+): boolean {
   if (node === null) return false;
 
-  if ($isCodePlusNode(node)) return true;
+  if ($isCodePlusNode(node) || $isImageNode(node)) return true;
 
   if (!$isElementNode(node)) return false;
 
   const children = node.getChildren();
   for (const child of children) {
-    if ($isCodePlusNode(child)) return true;
+    if ($isCodePlusNode(node) || $isImageNode(node)) return true;
 
-    if ($nodeOrChildrenContainCodeNode(child)) return true;
+    if ($nodeOrChildrenContainCodeOrImgNode(child)) return true;
   }
 
   return false;

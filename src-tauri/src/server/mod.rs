@@ -200,7 +200,7 @@ impl HttpServer {
         if let Some(file_upload_dir) = &synclan.file_upload_dir {
             // uploads files static server
             app = app.nest_service(
-                "/uploads",
+                "/attachments",
                 ServeDir::new(file_upload_dir)
                     .not_found_service((async || (StatusCode::NOT_FOUND, "Not found")).into_service()),
             );

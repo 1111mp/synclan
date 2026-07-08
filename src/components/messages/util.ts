@@ -1,6 +1,8 @@
 import dayjs from 'dayjs';
 import type { EditorState } from 'lexical';
 
+import type { EditorStateJSON } from '@/lib/attachment';
+
 export function renderTime(time: number) {
   const date = dayjs(time),
     now = dayjs(),
@@ -55,11 +57,23 @@ export const MEDIA_MAX_WIDTH = 640;
 
 export const THRESHOLD = 5 * 60 * 1000;
 
-export function parseTextMessageContent(content: string) {
+export function parseTextMessageContent(content?: string) {
+  if (!content) return '';
+
   try {
     return JSON.parse(content) as EditorState;
   } catch {
     return content;
+  }
+}
+
+export function parseTextMessageContentForSend(
+  content: string,
+): EditorStateJSON | null {
+  try {
+    return JSON.parse(content);
+  } catch {
+    return null;
   }
 }
 

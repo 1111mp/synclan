@@ -55,12 +55,13 @@ struct FileUpload {
 // Step 5: Define a handler that takes the custom multipart as argument.
 // If the request is malformed, a `MultipartException` will be returned.
 async fn upload_handler(input: SelfTypedMultipart<FileUpload>) -> Result<HttpResponse<String>, HttpException> {
-    let file_upload_dir = Config::synclan().await.data_arc().file_upload_dir.clone();
+    let synclan = Config::synclan().await.data_arc();
+    let file_upload_dir = synclan.file_upload_dir.as_ref();
     let file_upload_dir = file_upload_dir.ok_or_else(|| {
         HttpException::ServiceUnavailableException(Some("File upload directory is not configured.".to_owned()))
     })?;
     let date_str = chrono::Local::now().format("%Y-%m-%d").to_string();
-    let mut path = Path::new(&file_upload_dir).join(&date_str);
+    let mut path = Path::new(file_upload_dir).join(&date_str);
 
     fs::create_dir_all(&path).await?;
 

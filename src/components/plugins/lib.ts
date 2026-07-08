@@ -41,6 +41,7 @@ import {
   $createSimpleListNode,
   $createSimpleQuoteNode,
   $isCodePlusNode,
+  $isEmojiNode,
   $isSimpleListItemNode,
   $isSimpleListNode,
   $isSimpleQuoteNode,
@@ -129,6 +130,7 @@ export function $selectionContainsOnlyText(selection: RangeSelection): boolean {
     if ($isTextNode(n)) return true;
     if ($isLineBreakNode(n)) return true;
     if ($isParagraphNode(n)) return true;
+    if ($isEmojiNode(n)) return true;
 
     return false;
   });

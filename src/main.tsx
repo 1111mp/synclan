@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 
-import './global.css';
+import './styles/global.css';
 
 import { isWeb } from '@/lib/constant';
 import { applyTheme } from '@/lib/utils';

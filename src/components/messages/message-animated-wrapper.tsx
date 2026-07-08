@@ -27,6 +27,7 @@ import { VideoMessage } from './message-video';
 import {
   isSameDay as isSameDayHandler,
   renderMessageTimee,
+  renderTime,
   THRESHOLD,
 } from './util';
 
@@ -131,60 +132,67 @@ function MessageAnimatedRow({
     !previousMessage || !isSameUser || isNewDay || isTimeGapExceeded;
 
   return (
-    <Message
-      align={align}
-      className={cn(
-        'relative px-4 pb-1',
-        isSameUser && !isNewGroup ? 'pt-1' : 'pt-4',
+    <>
+      {isNewDay && (
+        <div className='flex items-center justify-center pt-3 text-xs font-normal'>
+          {renderTime(message.createdAt)}
+        </div>
       )}
-    >
-      <MessageAvatar className='min-w-10 self-start'>
-        {isNewGroup && (
-          <Avatar size='lg'>
-            <AvatarImage
-              className='rounded-full'
-              src='https://github.com/shadcn.png'
-              alt='@me'
-            />
-            <AvatarFallback>
-              <User />
-            </AvatarFallback>
-          </Avatar>
-        )}
-      </MessageAvatar>
-      <MessageContent>
-        <Bubble
-          className='max-w-[90%]'
-          variant={isUserMessage ? userVariant : assistantVariant}
-          onContextMenu={(evt) => {
-            evt.preventDefault();
-
-            onOpenContextMenu?.({
-              x: evt.clientX,
-              y: evt.clientY,
-            });
-          }}
-        >
-          <BubbleContent>
-            <MessageExpandable>{renderMessage()}</MessageExpandable>
-          </BubbleContent>
-        </Bubble>
-      </MessageContent>
-      <p
+      <Message
+        align={align}
         className={cn(
-          'pointer-events-none absolute opacity-0 transition-opacity duration-150 group-hover/message:opacity-100 text-xs text-muted-foreground whitespace-nowrap',
-          isNewGroup
-            ? align === 'start'
-              ? 'top-0 left-0 ml-16'
-              : 'top-0 right-0 mr-16'
-            : align === 'start'
-              ? 'top-1/2 left-0 -translate-y-1/2 ml-7'
-              : 'top-1/2 right-0 -translate-y-1/2 mr-6',
+          'relative px-4 pb-1',
+          isSameUser && !isNewGroup ? 'pt-1' : 'pt-4',
         )}
       >
-        {renderMessageTimee(message.createdAt, isNewGroup)}
-      </p>
-    </Message>
+        <MessageAvatar className='min-w-10 self-start'>
+          {isNewGroup && (
+            <Avatar size='lg'>
+              <AvatarImage
+                className='rounded-full'
+                src='https://github.com/shadcn.png'
+                alt='@me'
+              />
+              <AvatarFallback>
+                <User />
+              </AvatarFallback>
+            </Avatar>
+          )}
+        </MessageAvatar>
+        <MessageContent>
+          <Bubble
+            className='max-w-[90%]'
+            variant={isUserMessage ? userVariant : assistantVariant}
+            onContextMenu={(evt) => {
+              evt.preventDefault();
+
+              onOpenContextMenu?.({
+                x: evt.clientX,
+                y: evt.clientY,
+              });
+            }}
+          >
+            <BubbleContent className='editor-shell'>
+              <MessageExpandable>{renderMessage()}</MessageExpandable>
+            </BubbleContent>
+          </Bubble>
+        </MessageContent>
+        <p
+          className={cn(
+            'pointer-events-none absolute opacity-0 transition-opacity duration-150 group-hover/message:opacity-100 text-xs text-muted-foreground whitespace-nowrap',
+            isNewGroup
+              ? align === 'start'
+                ? 'top-0 left-0 ml-16'
+                : 'top-0 right-0 mr-16'
+              : align === 'start'
+                ? 'top-1/2 left-0 -translate-y-1/2 ml-7'
+                : 'top-1/2 right-0 -translate-y-1/2 mr-6',
+          )}
+        >
+          {renderMessageTimee(message.createdAt, isNewGroup)}
+        </p>
+      </Message>
+    </>
   );
 }
 

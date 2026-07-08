@@ -686,6 +686,7 @@ function useFormatToolbar(editor: LexicalEditor) {
           if ($selectionContainsOnlyText(selection)) {
             setIsOnlyText(true);
           } else {
+            setIsText(false);
             setIsOnlyText(false);
           }
         } else {

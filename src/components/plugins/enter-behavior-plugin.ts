@@ -4,7 +4,6 @@ import {
   $copyNode,
   $createParagraphNode,
   $findMatchingParent,
-  $getRoot,
   $getSelection,
   $isParagraphNode,
   $isRangeSelection,
@@ -25,6 +24,7 @@ import {
   $isSimpleQuoteNode,
   type SimpleListNode,
 } from '../nodes';
+import { $isEmpty } from './is-empty-plugin';
 import {
   $copyCompleteNodeWithChildren,
   $findNearestCodeNode,
@@ -42,7 +42,7 @@ type EnterPluginProps = {
 function EnterBehaviorPlugin({ onSend }: EnterPluginProps) {
   const [editor] = useLexicalComposerContext();
 
-  const onChangeRef = useLatest(onSend);
+  const onSendHandler = useLatest(onSend);
 
   useEffect(() => {
     return editor.registerCommand<KeyboardEvent | null>(
@@ -60,12 +60,10 @@ function EnterBehaviorPlugin({ onSend }: EnterPluginProps) {
           if (!event.shiftKey) {
             event.preventDefault();
 
-            const hasContent = editor
-              .getEditorState()
-              .read(() => $getRoot().getTextContent().trim() !== '');
+            const isEmpty = editor.getEditorState().read(() => $isEmpty());
 
-            if (hasContent) {
-              onChangeRef.current?.(editor.getEditorState());
+            if (!isEmpty) {
+              onSendHandler.current?.(editor.getEditorState());
               editor.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined);
             }
 
@@ -328,7 +326,7 @@ function EnterBehaviorPlugin({ onSend }: EnterPluginProps) {
       },
       COMMAND_PRIORITY_HIGH,
     );
-  }, [editor, onChangeRef]);
+  }, [editor, onSendHandler]);
 
   return null;
 }

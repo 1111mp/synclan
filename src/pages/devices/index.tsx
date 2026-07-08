@@ -1,14 +1,16 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { useCallback, useEffect, useRef } from 'react';
+import { debounce } from 'lodash-es';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { InView } from 'react-intersection-observer';
 import { useParams } from 'react-router';
 import { useMeasure } from 'react-use';
+import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
 import { useShallow } from 'zustand/react/shallow';
 
 import { useAppContext } from '@/app-context';
-import { Transmitter } from '@/components';
+import { Transmitter, type CompositionInputProps } from '@/components';
 import {
   MessageAnimatedWrapper,
   MessageContextMenu,
@@ -22,6 +24,7 @@ import {
   MessageScrollerViewport,
   Toaster,
 } from '@/components/ui';
+import { prepareMessageContent } from '@/lib/attachment';
 import { HttpStatus } from '@/lib/types';
 import { getMessages } from '@/services/cmd';
 import { useDeviceStore, useIMStore, useMessageAnimationStore } from '@/stores';
@@ -36,7 +39,7 @@ function DevicesPage() {
   const latestMessageInViewRef = useRef<boolean>(false);
   const isFetching = useRef<boolean>(false);
   const [footerRef, { height: footerHeight }] = useMeasure<HTMLElement>();
-
+  const autoScrollEnabledRef = useRef<boolean>(false);
   const msgCtxMenu = useRef<MessageContextMenuRef>(null);
 
   const { sendMessage } = useAppContext();
@@ -109,7 +112,7 @@ function DevicesPage() {
     // paddingStart: 12,
     paddingEnd: 16,
     // gap: 12,
-    estimateSize: () => 100,
+    estimateSize: () => 160,
     getScrollElement: () => viewportRef.current,
     getItemKey: useCallback(
       (index: number) => messages[index]!.uuid,
@@ -120,6 +123,36 @@ function DevicesPage() {
     scrollEndThreshold: 120,
     directDomUpdates: true,
   });
+
+  const debouncedAction = useMemo(() => {
+    return debounce(() => {
+      autoScrollEnabledRef.current = true;
+    }, 1000);
+  }, []);
+
+  useEffect(() => {
+    const handleRefresh = () => {
+      if (autoScrollEnabledRef.current) return;
+      setTimeout(() => {
+        virtualizer.scrollToEnd();
+      }, 30);
+      debouncedAction();
+    };
+
+    window.__refreshVirtualList = handleRefresh;
+
+    return () => {
+      window.__refreshVirtualList = undefined;
+      debouncedAction.cancel();
+    };
+  }, [virtualizer, debouncedAction]);
+
+  useEffect(() => {
+    if (!params.id) return;
+
+    debouncedAction.cancel();
+    autoScrollEnabledRef.current = false;
+  }, [params.id, debouncedAction]);
 
   useEffect(() => {
     if (!params.id || mounted.current) return;
@@ -133,9 +166,17 @@ function DevicesPage() {
     virtualizer.scrollToEnd({ behavior: 'smooth' });
   }, [footerHeight, virtualizer]);
 
-  const onSend = async (content: string) => {
+  const onSend: CompositionInputProps['onSend'] = async (
+    content,
+    attachments,
+  ) => {
     const deviceId = params.id;
-    if (!content.trim() || !deviceId || !current) return;
+    if (!deviceId || !current) return;
+
+    const trimmedContent = content.trim();
+    if (!trimmedContent) {
+      return;
+    }
 
     const now = Date.now();
     const message: IMessage = {
@@ -143,15 +184,29 @@ function DevicesPage() {
       type: 'text',
       sender: current.id,
       receiver: deviceId,
-      content: content.trim(),
+      content: trimmedContent,
       createdAt: now,
       updatedAt: now,
     };
     useMessageAnimationStore.getState().add(message.uuid);
     addMessage(deviceId, message, current.id);
 
+    let finalContent: string;
     try {
-      const result = await sendMessage(message);
+      finalContent = await prepareMessageContent(trimmedContent, attachments);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to upload attachment',
+      );
+      return;
+    }
+
+    try {
+      const result = await sendMessage({
+        ...message,
+        content: finalContent,
+        updatedAt: Date.now(),
+      });
       if (result.statusCode === HttpStatus.OK && result.data) {
         reconcileServerMessage(deviceId, message.uuid, result.data);
       }

@@ -19,6 +19,7 @@ import { VideoMessage } from './message-video';
 import {
   isSameDay as isSameDayHandler,
   renderMessageTimee,
+  renderTime,
   THRESHOLD,
 } from './util';
 
@@ -72,6 +73,9 @@ function MessageWrapper({
         isSameUser && !isNewGroup ? 'pt-1' : 'pt-4',
       )}
     >
+      <div className='flex items-center justify-center pt-3 text-xs font-normal'>
+        {renderTime(message.createdAt)}
+      </div>
       <MessageAvatar className='min-w-10 self-start'>
         {isNewGroup && (
           <Avatar size='lg'>

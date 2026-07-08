@@ -33,6 +33,10 @@ declare global {
   const OS_ARCH: Architecture;
   const OS_PLATFORM: Platform;
   const EMOJI_ROOT_PATH: string;
+
+  interface Window {
+    __refreshVirtualList?: () => void;
+  }
 }
 
 export {};

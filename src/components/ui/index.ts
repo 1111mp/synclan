@@ -12,6 +12,7 @@ export * from './context-menu';
 export * from './dialog';
 export * from './dropdown-menu';
 export * from './field';
+export * from './image-resizer';
 export * from './input';
 export * from './input-group';
 export * from './item';

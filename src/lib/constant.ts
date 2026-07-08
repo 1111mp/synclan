@@ -9,3 +9,7 @@ export const BASE_URL = import.meta.env.DEV
 export const WS_URL = import.meta.env.DEV
   ? 'ws://127.0.0.1:53317/socket'
   : `${isSecure ? 'wss' : 'ws'}://${window.location.host}/socket`;
+
+export const ATTACHMENTS_BASE_URL = import.meta.env.DEV
+  ? 'http://127.0.0.1:53317/attachments'
+  : `${window.location.origin}/attachments`;

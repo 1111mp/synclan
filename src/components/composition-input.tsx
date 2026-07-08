@@ -9,13 +9,18 @@ import {
 import { ListPlugin } from '@lexical/react/LexicalListPlugin';
 import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
 import { TabIndentationPlugin } from '@lexical/react/LexicalTabIndentationPlugin';
-import { $getSelection, $isRangeSelection, type LexicalEditor } from 'lexical';
+import {
+  $getSelection,
+  $isRangeSelection,
+  $nodesOfType,
+  type LexicalEditor,
+} from 'lexical';
 import { useImperativeHandle, useRef, useState, type Ref } from 'react';
 
 import { cn } from '@/lib/utils';
 
 import { type EmojiPickerProps } from './emoji';
-import { $createEmojiNode } from './nodes';
+import { $createEmojiNode, ImageNode } from './nodes';
 import {
   AutoLinePlugin,
   CodeBehaviorPlugin,
@@ -50,7 +55,7 @@ type CompositionInputProps = {
   onEmptyChange?: IsEmptyPluginProps['onChange'];
   onFocusChange?: IsFocusedPluginProps['onFocusChange'];
   onLineChange?: AutoLinePluginProps['onLineChange'];
-  onSend?: (content: string) => Promise<void>;
+  onSend?: (content: string, attachments: Attachment[]) => Promise<void>;
 };
 
 type CompositionInputRef = {
@@ -105,6 +110,7 @@ function CompositionInput({
       className='relative max-h-56 overflow-y-auto px-3'
     >
       <ContentEditable
+        id='synclan-editor'
         className={cn(
           'w-full max-w-none text-sm leading-5.5 text-foreground outline-none focus:outline-none',
         )}
@@ -177,8 +183,21 @@ function CompositionInput({
         onSend={(editorState) => {
           if (editorState.isEmpty()) return;
 
+          const attachments: Attachment[] = [];
+          editorState.read(() => {
+            const nodes = $nodesOfType(ImageNode);
+            nodes.forEach((node) => {
+              if (node.__attachmentId) {
+                attachments.push({
+                  id: node.__attachmentId,
+                  src: node.getSrc(),
+                  name: node.__altText,
+                });
+              }
+            });
+          });
           const content = JSON.stringify(editorState.toJSON());
-          void onSend?.(content);
+          void onSend?.(content, attachments);
         }}
       />
     </div>

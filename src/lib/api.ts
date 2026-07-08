@@ -48,7 +48,9 @@ async function request<T>(
 
   const headers = new Headers(options.headers);
 
-  headers.set('Content-Type', 'application/json');
+  if (!(options.body instanceof FormData)) {
+    headers.set('Content-Type', 'application/json');
+  }
 
   if (token) {
     headers.set('Authorization', `Bearer ${token}`);
@@ -94,6 +96,13 @@ export const api = {
     return request<ApiResponse<T>>(path, {
       method: 'POST',
       body: body ? JSON.stringify(body) : undefined,
+    });
+  },
+
+  upload<T>(path: string, formData: FormData) {
+    return request<ApiResponse<T>>(path, {
+      method: 'POST',
+      body: formData,
     });
   },
 

@@ -13,11 +13,10 @@ type Props = {
 
 function TextMessage({ message }: Props) {
   const { content } = message;
-  if (!content) {
-    return <p className='wrap-break-word select-text'>{content}</p>;
-  }
 
-  const initialState = parseTextMessageContent(content);
+  // oxlint-disable-next-line react-hooks/exhaustive-deps
+  const initialState = useMemo(() => parseTextMessageContent(content), []);
+
   if (typeof initialState === 'string') {
     return <p className='wrap-break-word select-text'>{content}</p>;
   }

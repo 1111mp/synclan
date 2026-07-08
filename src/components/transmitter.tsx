@@ -1,3 +1,4 @@
+import { ClipboardDOMImportExtension } from '@lexical/clipboard';
 import { CodeHighlightNode, CodeNode } from '@lexical/code';
 import { AutoFocusExtension, ClearEditorExtension } from '@lexical/extension';
 import { HistoryExtension } from '@lexical/history';
@@ -6,7 +7,7 @@ import { ListItemNode, ListNode } from '@lexical/list';
 import { LexicalExtensionComposer } from '@lexical/react/LexicalExtensionComposer';
 import { HeadingNode, QuoteNode, RichTextExtension } from '@lexical/rich-text';
 import {
-  $getRoot,
+  $nodesOfType,
   CLEAR_EDITOR_COMMAND,
   defineExtension,
   LineBreakNode,
@@ -19,8 +20,13 @@ import { useRef, useState } from 'react';
 import {
   CompositionInput,
   EmojiButton,
+  type CompositionInputProps,
   type CompositionInputRef,
 } from '@/components';
+import {
+  DragDropPasteExtension,
+  ImagesExtension,
+} from '@/components/extensions';
 import {
   Button,
   Tooltip,
@@ -36,11 +42,16 @@ import {
   $createSimpleQuoteNode,
   CodePlusNode,
   EmojiNode,
+  ImageNode,
   SimpleListItemNode,
   SimpleListNode,
   SimpleQuoteNode,
 } from './nodes';
-import { CodeHighlightExtension, FixedTextFormatToolbar } from './plugins';
+import {
+  $isEmpty,
+  CodeHighlightExtension,
+  FixedTextFormatToolbar,
+} from './plugins';
 
 export const SynclanEditorExtension = defineExtension({
   dependencies: [
@@ -49,6 +60,9 @@ export const SynclanEditorExtension = defineExtension({
     HistoryExtension,
     ClearEditorExtension,
     CodeHighlightExtension,
+    ImagesExtension,
+    DragDropPasteExtension,
+    ClipboardDOMImportExtension,
   ],
   name: 'synclan-editor',
   namespace: 'synclan-editor',
@@ -87,6 +101,7 @@ export const SynclanEditorExtension = defineExtension({
     CodeHighlightNode,
     EmojiNode,
     LineBreakNode,
+    ImageNode,
   ],
   theme: {
     code: 'block relative pt-7 pb-4 pl-[72px] pr-2 my-2 border rounded-md indent-0 before:box-border before:absolute before:top-0 before:left-0 before:content-[attr(data-gutter)] before:w-14 before:pt-[29px] before:px-2 before:pb-0 before:font-thin before:text-right',
@@ -110,14 +125,11 @@ export const SynclanEditorExtension = defineExtension({
       underline: 'underline',
       underlineStrikethrough: '[text-decoration-line:underline_line-through]',
     },
+    image: 'editor-image',
   },
 });
 
-function Transmitter({
-  onSend,
-}: {
-  onSend?: (content: string) => Promise<void>;
-}) {
+function Transmitter({ onSend }: { onSend?: CompositionInputProps['onSend'] }) {
   const [isEmpty, setIsEmpty] = useState<boolean>(true);
   const [focused, setFocueed] = useState<boolean>(true);
   const [lineOverflow, setLineOverflow] = useState<boolean>(false);
@@ -151,7 +163,7 @@ function Transmitter({
       >
         <div
           className={cn(
-            'flex-[1_1_auto] max-w-full mt-2.5',
+            'editor-shell flex-[1_1_auto] max-w-full mt-2.5',
             multiLine && 'w-full',
           )}
         >
@@ -167,9 +179,9 @@ function Transmitter({
             onFocusChange={(focus) => {
               setFocueed(focus);
             }}
-            onSend={async (content) => {
+            onSend={async (content, attachments) => {
               if (isEmpty) return;
-              await onSend?.(content);
+              await onSend?.(content, attachments);
             }}
           />
         </div>
@@ -245,16 +257,27 @@ function Transmitter({
                       const editor = compositionInputRef.current?.getEditor();
                       if (!editor) return;
 
-                      const hasContent = editor
-                        .getEditorState()
-                        .read(() => $getRoot().getTextContent().trim() !== '');
-                      if (!hasContent) return;
+                      const attachments: Attachment[] = [];
+                      const empty = editor.getEditorState().read(() => {
+                        const nodes = $nodesOfType(ImageNode);
+                        nodes.forEach((node) => {
+                          if (node.__attachmentId) {
+                            attachments.push({
+                              id: node.__attachmentId,
+                              src: node.getSrc(),
+                              name: node.__altText,
+                            });
+                          }
+                        });
+                        return $isEmpty();
+                      });
+                      if (empty) return;
 
                       const content = JSON.stringify(
                         editor.getEditorState().toJSON(),
                       );
                       editor.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined);
-                      await onSend?.(content);
+                      await onSend?.(content, attachments);
                     }}
                   >
                     <svg

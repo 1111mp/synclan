@@ -90,7 +90,9 @@ function MessageContextMenu({ ref }: Props) {
   };
 
   const onHideHandler = () => {
-    setIsOpen(false);
+    if (isOpen) {
+      setIsOpen(false);
+    }
   };
 
   return (

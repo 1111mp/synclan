@@ -1,4 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
+import { dataUriToBuffer } from 'data-uri-to-buffer';
+import { v4 as uuidv4 } from 'uuid';
 
 import { api } from '@/lib/api';
 import { isWeb } from '@/lib/constant';
@@ -204,4 +206,20 @@ export async function updateMsgAck(payload: MessageAck) {
     return;
   }
   return invoke<void>('update_ack', { payload });
+}
+
+export async function uploadAttachment(attachment: Attachment) {
+  const parsed = dataUriToBuffer(attachment.src);
+  const blob = new Blob([parsed.buffer], { type: parsed.type });
+  const filename = `${uuidv4()}__${attachment.name}`;
+  const formData = new FormData();
+  formData.append('name', filename);
+  formData.append('file', blob);
+
+  const resp = await api.upload<string>('/upload', formData);
+  const payload = resp.payload ?? null;
+  if (payload === null) {
+    throw new Error('Failed to upload attachment');
+  }
+  return payload;
 }
