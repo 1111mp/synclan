@@ -1,7 +1,7 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { debounce } from 'lodash-es';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { InView } from 'react-intersection-observer';
 import { useParams } from 'react-router';
 import { useMeasure } from 'react-use';
@@ -32,7 +32,7 @@ import { useDeviceStore, useIMStore, useMessageAnimationStore } from '@/stores';
 function loader() {}
 
 function DevicesPage() {
-  const params = useParams();
+  const [autoHistoryEnabled, setAutoHistoryEnabled] = useState<boolean>(false);
 
   const mounted = useRef<boolean>(false);
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -41,6 +41,8 @@ function DevicesPage() {
   const [footerRef, { height: footerHeight }] = useMeasure<HTMLElement>();
   const autoScrollEnabledRef = useRef<boolean>(false);
   const msgCtxMenu = useRef<MessageContextMenuRef>(null);
+
+  const params = useParams();
 
   const { sendMessage } = useAppContext();
 
@@ -71,13 +73,15 @@ function DevicesPage() {
     // 首次进入没有 last_id，传 undefined
     initialPageParam: { lastId: undefined as number | undefined, pageSize: 40 },
     refetchOnWindowFocus: false,
-    queryFn: ({ pageParam }) =>
-      getMessages({
+    queryFn: ({ pageParam }) => {
+      console.log('queryFn', pageParam);
+      return getMessages({
         selfId: current?.id || '',
         targetId: params.id || '',
         lastId: pageParam.lastId,
         pageSize: pageParam.pageSize,
-      }),
+      });
+    },
     getPreviousPageParam: (firstPage) => {
       if (!firstPage.nextCursor) return undefined;
       return {
@@ -124,15 +128,21 @@ function DevicesPage() {
     directDomUpdates: true,
   });
 
+  useEffect(() => {
+    if (autoHistoryEnabled) return;
+    virtualizer.scrollToIndex(messages.length - 1);
+  }, [virtualizer, messages.length, autoHistoryEnabled]);
+
   const debouncedAction = useMemo(() => {
     return debounce(() => {
       autoScrollEnabledRef.current = true;
-    }, 1000);
+    }, 120);
   }, []);
 
   useEffect(() => {
     const handleRefresh = () => {
-      if (autoScrollEnabledRef.current) return;
+      if (autoScrollEnabledRef.current || !latestMessageInViewRef.current)
+        return;
       setTimeout(() => {
         virtualizer.scrollToEnd();
       }, 30);
@@ -146,6 +156,14 @@ function DevicesPage() {
       debouncedAction.cancel();
     };
   }, [virtualizer, debouncedAction]);
+
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      setAutoHistoryEnabled(true);
+    }, 250);
+
+    return () => window.clearTimeout(id);
+  }, []);
 
   useEffect(() => {
     if (!params.id) return;
@@ -233,6 +251,7 @@ function DevicesPage() {
               msgCtxMenu.current?.hide();
 
               if (
+                !autoHistoryEnabled ||
                 !mounted.current ||
                 virtualizer.isAtEnd(80) ||
                 isFetchingPreviousPage ||

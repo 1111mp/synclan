@@ -1,3 +1,5 @@
+import { isWeb } from '@/lib/constant';
+
 import { getWebviewWindowTheme } from './api';
 import { getSynclanConfig } from './cmd';
 
@@ -22,24 +24,26 @@ declare global {
 export async function getAppInitialData(): Promise<
   [ISynclanConfig, AppBaseTheme]
 > {
-  /**
-   * Indicates whether initialization data has already been used
-   * within the current WebView lifecycle.
-   *
-   * sessionStorage behavior:
-   * - Persists across page reloads (F5)
-   * - Cleared when the window/app is closed
-   */
-  const isInitial = sessionStorage.getItem('__SYNCLAN_INITIAL__');
-  const hasInitData =
-    window.__SYNCLAN_INITIAL_SETTINGS__ && window.__SYNCLAN_INITIAL_THEME__;
-  // First load (app just started)
-  if (isInitial === 'no' && hasInitData) {
-    sessionStorage.setItem('__SYNCLAN_INITIAL__', 'yes');
-    return [
-      window.__SYNCLAN_INITIAL_SETTINGS__,
-      window.__SYNCLAN_INITIAL_THEME__,
-    ];
+  if (!isWeb) {
+    /**
+     * Indicates whether initialization data has already been used
+     * within the current WebView lifecycle.
+     *
+     * sessionStorage behavior:
+     * - Persists across page reloads (F5)
+     * - Cleared when the window/app is closed
+     */
+    const isInitial = sessionStorage.getItem('__SYNCLAN_INITIAL__');
+    const hasInitData =
+      window.__SYNCLAN_INITIAL_SETTINGS__ && window.__SYNCLAN_INITIAL_THEME__;
+    // First load (app just started)
+    if (isInitial === 'no' && hasInitData) {
+      sessionStorage.setItem('__SYNCLAN_INITIAL__', 'yes');
+      return [
+        window.__SYNCLAN_INITIAL_SETTINGS__,
+        window.__SYNCLAN_INITIAL_THEME__,
+      ];
+    }
   }
 
   // Page reload (or subsequent loads)

@@ -5,18 +5,15 @@ import ReactDOM from 'react-dom/client';
 
 import './styles/global.css';
 
-import { isWeb } from '@/lib/constant';
 import { applyTheme } from '@/lib/utils';
 import { getAppInitialData } from '@/services/init';
 
 import App from './app';
 
 void (async () => {
-  if (!isWeb) {
-    const [config, sysTheme] = await getAppInitialData();
-    // Set the theme in advance to prevent flickering.
-    applyTheme(config.theme !== 'system' ? config.theme : sysTheme, false);
-  }
+  const [config, sysTheme] = await getAppInitialData();
+  // Set the theme in advance to prevent flickering.
+  applyTheme(config.theme !== 'system' ? config.theme : sysTheme, false);
 
   const queryClient = new QueryClient();
 

@@ -176,6 +176,10 @@ function LazyImage({
 }
 
 function BrokenImage(): JSX.Element {
+  const handleImageLoad = () => {
+    window.__refreshVirtualList?.();
+  };
+
   return (
     <img
       src='/images/image-broken.svg'
@@ -186,6 +190,7 @@ function BrokenImage(): JSX.Element {
       }}
       draggable='false'
       alt='Broken image'
+      onLoad={handleImageLoad}
     />
   );
 }

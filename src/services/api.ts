@@ -41,7 +41,11 @@ export function setWindowFocus() {
  *
  * @returns {Promise<AppBaseTheme | null>} The window theme: `light` or `dark`.
  */
-export function getWebviewWindowTheme() {
+export async function getWebviewWindowTheme() {
+  if (isWeb) {
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    return media.matches ? 'dark' : ('light' as AppBaseTheme);
+  }
   return getCurrent().theme() as Promise<AppBaseTheme | null>;
 }
 
