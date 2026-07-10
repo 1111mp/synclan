@@ -1,8 +1,9 @@
 import { cva, type VariantProps } from 'class-variance-authority';
+
 import { cn } from '@/lib/utils';
 
 const variants = cva(
-  'emoji-button mouse-mode:outline-none after:bg-gray-60 after:dark:bg-gray-25 after:block after:content-normal after:w-5 after:h-5 after:mask-no-repeat after:mask-center after:mask-size-[100%]',
+  'emoji-button mouse-mode:outline-none after:bg-muted-foreground after:block after:content-normal after:w-5 after:h-5 after:mask-no-repeat after:mask-center after:mask-size-[100%]',
   {
     variants: {
       category: {

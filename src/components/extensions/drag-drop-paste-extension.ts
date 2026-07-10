@@ -11,6 +11,7 @@ import { isMimeType, mediaFileReader } from '@lexical/utils';
 import { COMMAND_PRIORITY_LOW, defineExtension } from 'lexical';
 import { v4 as uuidv4 } from 'uuid';
 
+import { calculateImageDisplaySize } from '../nodes/utils';
 import { INSERT_IMAGE_COMMAND } from './image-extension';
 
 const ACCEPTABLE_IMAGE_TYPES = [
@@ -35,10 +36,16 @@ export const DragDropPasteExtension = /* @__PURE__ */ defineExtension({
 
           for (const { file, result } of filesResult) {
             if (isMimeType(file, ACCEPTABLE_IMAGE_TYPES)) {
+              const bitmap = await createImageBitmap(file);
+              const { width: displayWidth, height: displayHeight } =
+                calculateImageDisplaySize(bitmap.width, bitmap.height);
+
               editor.dispatchCommand(INSERT_IMAGE_COMMAND, {
                 altText: file.name,
                 src: result,
                 attachmentId: uuidv4(),
+                width: displayWidth,
+                height: displayHeight,
               });
             }
           }

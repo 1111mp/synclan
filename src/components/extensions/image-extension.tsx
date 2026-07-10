@@ -78,7 +78,7 @@ const ImgRule = /* @__PURE__ */ defineImportRule({
     ];
   },
   match: sel.tag('img'),
-  name: '@lexical/playground/img',
+  name: 'synclan-editor/img',
 });
 
 /**
@@ -118,7 +118,7 @@ const FigureRule = /* @__PURE__ */ defineImportRule({
     return imported;
   },
   match: sel.tag('figure'),
-  name: '@lexical/playground/figure',
+  name: 'synclan-editor/figure',
 });
 
 export type InsertImagePayload = Readonly<ImagePayload>;

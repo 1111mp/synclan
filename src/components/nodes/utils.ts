@@ -87,3 +87,20 @@ export function registerEventListener(
   // function doesn't allocate an extra closure over the arguments.
   return target.removeEventListener.bind(target, type, listener, options);
 }
+
+export function calculateImageDisplaySize(
+  width: number,
+  height: number,
+  maxWidth = 500,
+) {
+  if (width <= maxWidth) {
+    return { width, height };
+  }
+
+  const scale = maxWidth / width;
+
+  return {
+    width: maxWidth,
+    height: Math.round(height * scale),
+  };
+}

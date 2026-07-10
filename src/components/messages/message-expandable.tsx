@@ -20,7 +20,7 @@ interface ExpandableProps extends PropsWithChildren {
 
 function MessageExpandable({
   children,
-  maxHeight = 320,
+  maxHeight = 520,
   className,
   overlayClassName,
 }: ExpandableProps) {

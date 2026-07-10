@@ -170,6 +170,11 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
     if (className !== undefined) {
       span.className = className;
     }
+    if (typeof this.__width === 'number' && typeof this.__height === 'number') {
+      span.style.display = 'inline-block';
+      span.style.width = `${this.__width}px`;
+      span.style.height = `${this.__height}px`;
+    }
     return span;
   }
 

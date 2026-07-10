@@ -17,10 +17,8 @@ import {
 } from 'lexical';
 import { useImperativeHandle, useRef, useState, type Ref } from 'react';
 
-import { cn } from '@/lib/utils';
-
-import { type EmojiPickerProps } from './emoji';
-import { $createEmojiNode, ImageNode } from './nodes';
+import { type EmojiPickerProps } from '@/components/emoji';
+import { $createEmojiNode, ImageNode } from '@/components/nodes';
 import {
   AutoLinePlugin,
   CodeBehaviorPlugin,
@@ -31,6 +29,7 @@ import {
   FixEmptyQuoteAfterDeletePlugin,
   FixTextFormatPlugin,
   FloatingTextFormatToolbarPlugin,
+  ImagePlugin,
   IsEmptyPlugin,
   IsFocusedPlugin,
   LinkPlugin,
@@ -39,12 +38,13 @@ import {
   type AutoLinePluginProps,
   type IsEmptyPluginProps,
   type IsFocusedPluginProps,
-} from './plugins';
+} from '@/components/plugins';
 import {
   CODE_PLUS,
   ELEMENT_TRANSFORMERS,
   TEXT_MATCH_TRANSFORMERS,
-} from './transformers';
+} from '@/components/transformers';
+import { cn } from '@/lib/utils';
 
 const URL_MATCHER =
   /((https?:\/\/(www\.)?)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/;
@@ -179,6 +179,7 @@ function CompositionInput({
       <IsEmptyPlugin onChange={onEmptyChange} />
       <IsFocusedPlugin onFocusChange={onFocusChange} />
       {/*<OnChangePlugin onChange={onChange} />*/}
+      <ImagePlugin />
       <EnterBehaviorPlugin
         onSend={(editorState) => {
           if (editorState.isEmpty()) return;

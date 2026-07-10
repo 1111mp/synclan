@@ -73,15 +73,13 @@ function DevicesPage() {
     // 首次进入没有 last_id，传 undefined
     initialPageParam: { lastId: undefined as number | undefined, pageSize: 40 },
     refetchOnWindowFocus: false,
-    queryFn: ({ pageParam }) => {
-      console.log('queryFn', pageParam);
-      return getMessages({
+    queryFn: ({ pageParam }) =>
+      getMessages({
         selfId: current?.id || '',
         targetId: params.id || '',
         lastId: pageParam.lastId,
         pageSize: pageParam.pageSize,
-      });
-    },
+      }),
     getPreviousPageParam: (firstPage) => {
       if (!firstPage.nextCursor) return undefined;
       return {

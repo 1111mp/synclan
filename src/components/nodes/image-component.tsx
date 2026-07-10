@@ -333,9 +333,17 @@ export default function ImageComponent({
 
   const draggable = isInNodeSelection && !isResizing;
   const isFocused = (isSelected || isResizing) && isEditable;
+  const resolveWidth = width && width !== 'inherit' ? width : undefined;
+  const resolveHeight = height && height !== 'inherit' ? height : undefined;
 
   return (
-    <Suspense fallback={null}>
+    <Suspense
+      fallback={
+        resolveWidth && resolveHeight ? (
+          <div style={{ width: resolveWidth, height: resolveHeight }}></div>
+        ) : null
+      }
+    >
       <>
         <div draggable={draggable}>
           {isLoadError ? (

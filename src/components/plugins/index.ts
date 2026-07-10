@@ -8,6 +8,7 @@ export * from './enter-behavior-plugin';
 export * from './fix-empty-quote-after-delete-plugin';
 export * from './fix-text-format-plugin';
 export * from './floating-text-format-toolbar-plugin';
+export * from './image-plugin';
 export * from './is-empty-plugin';
 export * from './is-focused-plugin';
 export * from './link-plugin';

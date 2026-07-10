@@ -1,21 +1,8 @@
-import { ClipboardDOMImportExtension } from '@lexical/clipboard';
-import { CodeHighlightNode, CodeNode } from '@lexical/code';
-import { AutoFocusExtension, ClearEditorExtension } from '@lexical/extension';
-import { HistoryExtension } from '@lexical/history';
-import { AutoLinkNode, LinkNode } from '@lexical/link';
-import { ListItemNode, ListNode } from '@lexical/list';
 import { LexicalExtensionComposer } from '@lexical/react/LexicalExtensionComposer';
-import { HeadingNode, QuoteNode, RichTextExtension } from '@lexical/rich-text';
-import {
-  $nodesOfType,
-  CLEAR_EDITOR_COMMAND,
-  defineExtension,
-  LineBreakNode,
-  ParagraphNode,
-} from 'lexical';
+import { $nodesOfType, CLEAR_EDITOR_COMMAND, defineExtension } from 'lexical';
 import { CaseSensitive, Maximize2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 import {
   CompositionInput,
@@ -23,10 +10,9 @@ import {
   type CompositionInputProps,
   type CompositionInputRef,
 } from '@/components';
-import {
-  DragDropPasteExtension,
-  ImagesExtension,
-} from '@/components/extensions';
+import { SynclanEditorExtension } from '@/components/extensions';
+import { ImageNode } from '@/components/nodes';
+import { $isEmpty, FixedTextFormatToolbar } from '@/components/plugins';
 import {
   Button,
   Tooltip,
@@ -34,100 +20,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui';
 import { cn } from '@/lib/utils';
-
-import {
-  $createCodePlusNode,
-  $createSimpleListItemNode,
-  $createSimpleListNode,
-  $createSimpleQuoteNode,
-  CodePlusNode,
-  EmojiNode,
-  ImageNode,
-  SimpleListItemNode,
-  SimpleListNode,
-  SimpleQuoteNode,
-} from './nodes';
-import {
-  $isEmpty,
-  CodeHighlightExtension,
-  FixedTextFormatToolbar,
-} from './plugins';
-
-export const SynclanEditorExtension = defineExtension({
-  dependencies: [
-    AutoFocusExtension,
-    RichTextExtension,
-    HistoryExtension,
-    ClearEditorExtension,
-    CodeHighlightExtension,
-    ImagesExtension,
-    DragDropPasteExtension,
-    ClipboardDOMImportExtension,
-  ],
-  name: 'synclan-editor',
-  namespace: 'synclan-editor',
-  nodes: [
-    AutoLinkNode,
-    LinkNode,
-    SimpleListNode,
-    {
-      replace: ListNode,
-      with: (node: ListNode) =>
-        $createSimpleListNode(node.getListType(), node.getStart()),
-      withKlass: SimpleListNode,
-    },
-    SimpleListItemNode,
-    {
-      replace: ListItemNode,
-      with: (node: ListItemNode) =>
-        $createSimpleListItemNode(node.getChecked()),
-      withKlass: SimpleListItemNode,
-    },
-    ParagraphNode,
-    HeadingNode,
-    SimpleQuoteNode,
-    {
-      replace: QuoteNode,
-      with: () => $createSimpleQuoteNode(),
-      withKlass: SimpleQuoteNode,
-    },
-    CodePlusNode,
-    {
-      replace: CodeNode,
-      with: (node: CodeNode) =>
-        $createCodePlusNode(node.getLanguage(), node.getTheme()),
-      withKlass: CodePlusNode,
-    },
-    CodeHighlightNode,
-    EmojiNode,
-    LineBreakNode,
-    ImageNode,
-  ],
-  theme: {
-    code: 'block relative pt-7 pb-4 pl-[72px] pr-2 my-2 border rounded-md indent-0 before:box-border before:absolute before:top-0 before:left-0 before:content-[attr(data-gutter)] before:w-14 before:pt-[29px] before:px-2 before:pb-0 before:font-thin before:text-right',
-    paragraph: 'mt-0 mb-0',
-    link: 'font-light text-blue-500 no-underline cursor-pointer hover:underline',
-    list: {
-      ul: 'mt-0 mb-0 pl-0 list-outside marker:text-blue-500',
-      ulDepth: ['list-disc', 'list-[circle]', 'list-[square]'],
-      ol: 'mt-0 mb-0 pl-0 list-outside marker:text-blue-500 ',
-      olDepth: ['list-decimal', 'list-[lower-alpha]', 'list-[lower-roman]'],
-      listitem: 'mt-0 mb-0 ml-4 pl-2',
-      nested: {
-        listitem: 'ml-6 list-none',
-      },
-    },
-    quote: 'm-0 pl-2 text-gray-400 border-l-2 border-input overflow-hidden',
-    text: {
-      bold: 'font-bold',
-      strikethrough: 'line-through',
-      italic: 'italic',
-      underline: 'underline',
-      underlineStrikethrough: '[text-decoration-line:underline_line-through]',
-    },
-    image: 'editor-image',
-  },
-});
 
 function Transmitter({ onSend }: { onSend?: CompositionInputProps['onSend'] }) {
   const [isEmpty, setIsEmpty] = useState<boolean>(true);
@@ -138,23 +30,20 @@ function Transmitter({ onSend }: { onSend?: CompositionInputProps['onSend'] }) {
 
   const compositionInputRef = useRef<CompositionInputRef>(null);
 
-  // const initialConfig = useMemo<InitialConfigType>(
-  //   () => ({
-  //     ...EDITOR_INITIAL_CONFIG,
-  //     onError(error) {
-  //       console.log('error', error);
-  //     },
-  //   }),
-  //   [],
-  // );
+  const extension = useMemo(
+    () =>
+      defineExtension({
+        dependencies: [SynclanEditorExtension],
+        name: 'synclan-editor',
+        namespace: 'synclan-editor',
+      }),
+    [],
+  );
 
   const multiLine = lineOverflow || isFixedTools;
 
   return (
-    <LexicalExtensionComposer
-      extension={SynclanEditorExtension}
-      contentEditable={null}
-    >
+    <LexicalExtensionComposer extension={extension} contentEditable={null}>
       <div
         className={cn(
           'flex flex-wrap border rounded-lg bg-card/60 backdrop-blur-sm',
