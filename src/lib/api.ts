@@ -106,6 +106,13 @@ export const api = {
     });
   },
 
+  patch<T>(path: string, body?: unknown) {
+    return request<ApiResponse<T>>(path, {
+      method: 'PATCH',
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  },
+
   put<T>(path: string, body?: unknown) {
     return request<T>(path, {
       method: 'PUT',

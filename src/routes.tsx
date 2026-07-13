@@ -27,8 +27,8 @@ export const router = isWeb
             lazy: () => import('@/pages/devices'),
           },
           {
-            path: 'account',
-            lazy: () => import('@/pages/account'),
+            path: 'profile',
+            lazy: () => import('@/pages/profile'),
           },
           {
             path: 'settings',
@@ -52,8 +52,8 @@ export const router = isWeb
               lazy: () => import('@/pages/devices'),
             },
             {
-              path: 'account',
-              lazy: () => import('@/pages/account'),
+              path: 'profile',
+              lazy: () => import('@/pages/profile'),
             },
             {
               path: 'settings',

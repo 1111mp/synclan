@@ -29,6 +29,8 @@ import { HttpStatus } from '@/lib/types';
 import { getMessages } from '@/services/cmd';
 import { useDeviceStore, useIMStore, useMessageAnimationStore } from '@/stores';
 
+import { DeviceHeader } from './header';
+
 function loader() {}
 
 function DevicesPage() {
@@ -56,6 +58,7 @@ function DevicesPage() {
   const addMessage = useIMStore((s) => s.addMessage);
   const setActiveConversation = useIMStore((s) => s.setActiveConversation);
   const reconcileServerMessage = useIMStore((s) => s.reconcileServerMessage);
+  const syncDeviceInfo = useIMStore((s) => s.syncDeviceInfo);
 
   const {
     // status,
@@ -182,6 +185,12 @@ function DevicesPage() {
     virtualizer.scrollToEnd({ behavior: 'smooth' });
   }, [footerHeight, virtualizer]);
 
+  // Sync device info
+  useEffect(() => {
+    if (!params.id) return;
+    syncDeviceInfo(params.id);
+  }, [params.id, syncDeviceInfo]);
+
   const onSend: CompositionInputProps['onSend'] = async (
     content,
     attachments,
@@ -235,12 +244,7 @@ function DevicesPage() {
 
   return (
     <MessageScrollerProvider defaultScrollPosition='end'>
-      <div
-        className='relative flex flex-col overflow-hidden'
-        style={{
-          height: 'calc(100vh - 64px)',
-        }}
-      >
+      <div className='relative flex h-dvh flex-col overflow-hidden'>
         <MessageScroller>
           <MessageScrollerViewport
             ref={viewportRef}
@@ -271,6 +275,7 @@ function DevicesPage() {
               }
             }}
           >
+            <DeviceHeader />
             <MessageScrollerContent
               // aria-busy={isBusy}
               className='block min-h-full'

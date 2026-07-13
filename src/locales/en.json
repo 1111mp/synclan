@@ -1,1 +1,7 @@
-{}
+{
+  "auto_log_clean_0": "Never Clean",
+  "auto_log_clean_1": "Retain 1 Day",
+  "auto_log_clean_2": "Retain 7 Days",
+  "auto_log_clean_3": "Retain 30 Days",
+  "auto_log_clean_4": "Retain 90 Days"
+}

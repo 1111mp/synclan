@@ -1,10 +1,10 @@
 use super::{AppState, HttpResponse, JsonResponse};
 use crate::{
     json_response,
-    module::device::Device,
+    module::device::{Device, DevicePatch},
     server::{
         api_doc,
-        dtos::device_dto::{DiscoverDeviceDto, RegistorDeviceDto},
+        dtos::device_dto::{DiscoverDeviceDto, RegistorDeviceDto, UpdateDeviceDto},
         exception::HttpException,
         extractors::{Body, Query},
         guards::Claims,
@@ -19,7 +19,8 @@ pub fn protected_route() -> OpenApiRouter<Arc<AppState>> {
     let router = OpenApiRouter::new()
         .routes(routes!(get_by_id))
         .routes(routes!(get_all))
-        .routes(routes!(discover_all));
+        .routes(routes!(discover_all))
+        .routes(routes!(update_one));
     OpenApiRouter::new().nest("/devices", router)
 }
 
@@ -126,4 +127,47 @@ pub(crate) async fn discover_all(
     let exclude_ids = dto.ids.unwrap_or_default();
     let devices = Device::get_not_in(&exclude_ids).await?;
     json_response!(devices);
+}
+
+/// Update Device
+///
+/// Update device profile information.
+#[utoipa::path(
+  patch,
+  path = "/{id}",
+  request_body = UpdateDeviceDto,
+  responses(
+    (
+        status = 200,
+        description = "Device updated successfully",
+        body = JsonResponse<Device>
+    ),
+    (
+        status = 404,
+        description = "Device not found"
+    ),
+  ),
+  params(
+    ("id" = String, Path, description = "Device id"),
+  ),
+  security(
+    ("bearer_auth" = [])
+  ),
+  tag = api_doc::DEVICE_TAG
+)]
+#[debug_handler]
+pub(crate) async fn update_one(
+    Path(id): Path<String>,
+    Body(input): Body<UpdateDeviceDto>,
+) -> Result<HttpResponse<Option<Device>>, HttpException> {
+    let patch = DevicePatch {
+        id: id.clone(),
+        name: input.name,
+        avatar: input.avatar,
+        ..Default::default()
+    };
+    patch.patch().await?;
+
+    let device = Device::get_by_id(&id).await?;
+    json_response!(device);
 }

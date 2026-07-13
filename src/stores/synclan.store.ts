@@ -4,7 +4,6 @@ import type { PersistStorage } from 'zustand/middleware';
 import { persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 
-import { isWeb } from '@/lib/constant';
 import { applyPendingTheme } from '@/lib/utils';
 import { getSynclanConfig, patchSynclanConfig } from '@/services/cmd';
 
@@ -18,10 +17,10 @@ const storage: PersistStorage<Pick<SynclanState, 'config'>> = {
   getItem: async (_name) => {
     const config = await getSynclanConfig();
 
-    // apply theme
-    if (isWeb) {
-      await applyPendingTheme(config.theme);
-    }
+    // // apply theme
+    // if (isWeb) {
+    //   await applyPendingTheme(config.theme);
+    // }
 
     return {
       state: {
@@ -42,7 +41,7 @@ const storage: PersistStorage<Pick<SynclanState, 'config'>> = {
 export const useSynclanStore = create<SynclanState>()(
   persist(
     immer((set) => ({
-      config: void 0,
+      config: undefined,
 
       updateConfig: (config) =>
         set((state) => {

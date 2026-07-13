@@ -32,6 +32,7 @@ type IMState = {
   addConversations: (incomingDevices: IDevice[]) => void;
   updateConvsFromOffline: (receiver: string) => Promise<void>;
   setActiveConversation: (id: string, device?: IDevice) => void;
+  syncDeviceInfo: (id: string) => void;
 
   setHistory: (deviceId: string, msgs: IMessage[]) => void;
   addMessage: (deviceId: string, msg: IMessage, currentId: string) => void;
@@ -101,7 +102,7 @@ export const useIMStore = create<IMState>()(
           }
 
           const isCurrentActive = activeId === deviceId;
-          const existingConv = get().conversations.get(deviceId);
+          const existingConv = get().conversations.has(deviceId);
           if (existingConv) {
             set((state) => {
               const conv = state.conversations.get(deviceId)!;
@@ -158,6 +159,16 @@ export const useIMStore = create<IMState>()(
             );
           }
         }),
+      syncDeviceInfo: async (id) => {
+        const existingConv = get().conversations.has(id);
+        if (existingConv) {
+          const device = await getDeviceById(id);
+          set((state) => {
+            const conv = state.conversations.get(id)!;
+            conv.device = device;
+          });
+        }
+      },
       setHistory: (deviceId, msgs) =>
         set((state) => {
           const now = Date.now();
@@ -348,6 +359,14 @@ export const useConversationList = () => {
         const timeB = b.lastMessage?.updatedAt ?? b.lastAccessed ?? 0;
         return timeB - timeA;
       });
+    }),
+  );
+};
+
+export const useCurrentConversation = () => {
+  return useIMStore(
+    useShallow((state) => {
+      return state.conversations.get(state.activeDeviceId);
     }),
   );
 };

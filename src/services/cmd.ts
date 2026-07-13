@@ -1,10 +1,14 @@
 import { invoke } from '@tauri-apps/api/core';
+import { open as openDialog } from '@tauri-apps/plugin-dialog';
+import { readFile } from '@tauri-apps/plugin-fs';
 import { dataUriToBuffer } from 'data-uri-to-buffer';
 import { v4 as uuidv4 } from 'uuid';
 
 import { api } from '@/lib/api';
 import { isWeb } from '@/lib/constant';
 import { db } from '@/lib/db';
+
+const SYNCLAN_CONFIG_TORAGE_KEY = '__SYNCLAN_CONFIG__';
 
 /**
  * @description Get the local IP address of the device.
@@ -22,27 +26,34 @@ export async function getServerDomain() {
 }
 
 /**
- * @description Get synclan configuration.
- * @returns {Promise<ISynclanConfig>} configuration data.
+ * Get synclan configuration.
  */
 export async function getSynclanConfig() {
   if (isWeb) {
     // TODO fetch from server
-    return {
-      theme: 'system',
-    } as ISynclanConfig;
+    const configStr = localStorage.getItem(SYNCLAN_CONFIG_TORAGE_KEY);
+    if (!configStr) {
+      return {
+        theme: 'system',
+      } as ISynclanConfig;
+    }
+    try {
+      return JSON.parse(configStr) as ISynclanConfig;
+    } catch {
+      return {
+        theme: 'system',
+      } as ISynclanConfig;
+    }
   }
   return invoke<ISynclanConfig>('get_synclan_config');
 }
 
 /**
- * @description Patch synclan configuration
- * @param {ISynclanConfig} synclan configuration data
- * @returns {Promise<void>}
+ * Patch synclan configuration
  */
 export async function patchSynclanConfig(payload: ISynclanConfig) {
   if (isWeb) {
-    // TODO
+    localStorage.setItem(SYNCLAN_CONFIG_TORAGE_KEY, JSON.stringify(payload));
     return;
   }
   return invoke<void>('patch_synclan_config', { payload });
@@ -102,7 +113,6 @@ export async function registerDevice(
   device: Partial<IDevice>,
 ): Promise<IDevice> {
   if (isWeb) {
-    // TODO
     const data = await api.post<IDevice>('/devices', device);
     return data.payload;
   }
@@ -208,6 +218,16 @@ export async function updateMsgAck(payload: MessageAck) {
   return invoke<void>('update_ack', { payload });
 }
 
+export interface DevicePatch {
+  name?: string;
+  avatar?: string;
+}
+
+export async function updateDeviceProfile(id: string, patch: DevicePatch) {
+  const response = await api.patch<IDevice>(`/devices/${id}`, patch);
+  return response.payload;
+}
+
 export async function uploadAttachment(attachment: Attachment) {
   const parsed = dataUriToBuffer(attachment.src);
   const blob = new Blob([parsed.buffer], { type: parsed.type });
@@ -222,4 +242,86 @@ export async function uploadAttachment(attachment: Attachment) {
     throw new Error('Failed to upload attachment');
   }
   return payload;
+}
+
+export async function uploadFile(file: File, permanent: boolean = false) {
+  const formData = new FormData();
+  formData.append('name', `${uuidv4()}__${file.name}`);
+  formData.append('file', file);
+  if (permanent) {
+    formData.append('permanent', 'true');
+  }
+
+  const resp = await api.upload<string>('/upload', formData);
+  const payload = resp.payload ?? null;
+  if (payload === null) {
+    throw new Error('Failed to upload file');
+  }
+  return payload;
+}
+
+export async function onPickImage(): Promise<string | null> {
+  if (isWeb) {
+    return new Promise((resolve) => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/png,image/jpeg,image/webp';
+
+      input.onchange = async () => {
+        const file = input.files?.[0];
+
+        if (!file) {
+          resolve(null);
+          return;
+        }
+
+        try {
+          const url = await uploadFile(file, true);
+          resolve(url);
+        } catch {
+          resolve(null);
+        } finally {
+          input.remove();
+        }
+      };
+
+      input.oncancel = () => {
+        input.remove();
+        resolve(null);
+      };
+
+      input.click();
+    });
+  }
+
+  const path = await openDialog({
+    multiple: false,
+    directory: false,
+    pickerMode: 'image',
+    filters: [
+      {
+        name: 'Images',
+        extensions: ['png', 'jpg', 'jpeg', 'webp'],
+      },
+    ],
+  });
+
+  if (!path || typeof path !== 'string') {
+    return null;
+  }
+
+  try {
+    const bytes = await readFile(path);
+    const blob = new Blob([bytes]);
+
+    const fileName = path.split(/[/\\]/).pop() || 'avatar.png';
+    const fileExtension = fileName.split('.').pop() || 'png';
+
+    const file = new File([blob], fileName, { type: `image/${fileExtension}` });
+
+    const url = await uploadFile(file, true);
+    return url;
+  } catch {
+    return null;
+  }
 }

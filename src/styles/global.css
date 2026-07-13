@@ -134,7 +134,7 @@
   }
 
   ::view-transition-old(page-content) {
-    animation: fade-out 150ms ease both;
+    animation: none;
   }
 
   ::view-transition-new(page-content) {

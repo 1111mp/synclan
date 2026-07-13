@@ -25,3 +25,10 @@ pub(crate) struct DiscoverDeviceDto {
     #[param(inline, value_type = Option<Vec<String>>)]
     pub ids: Option<Vec<String>>,
 }
+
+#[derive(Debug, Deserialize, Validate, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct UpdateDeviceDto {
+    pub name: Option<String>,
+    pub avatar: Option<String>,
+}

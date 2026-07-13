@@ -27,6 +27,11 @@ struct FileUpload {
     #[schema(value_type = String)]
     pub name: String,
 
+    /// Whether to store permanently (won't be automatically cleaned up)
+    #[form_data(default = false)]
+    #[schema(value_type = bool)]
+    pub permanent: Option<bool>,
+
     /// Field size limits are disabled by default. The `limit` parameter can be used
     /// to set a specific size limit in bytes, like '5MiB' or '1GiB'. The value
     /// "unlimited" explicitly disables the limit (same as the default behavior).
@@ -60,8 +65,15 @@ async fn upload_handler(input: SelfTypedMultipart<FileUpload>) -> Result<HttpRes
     let file_upload_dir = file_upload_dir.ok_or_else(|| {
         HttpException::ServiceUnavailableException(Some("File upload directory is not configured.".to_owned()))
     })?;
-    let date_str = chrono::Local::now().format("%Y-%m-%d").to_string();
-    let mut path = Path::new(file_upload_dir).join(&date_str);
+
+    let sub_path = if input.permanent.unwrap_or(false) {
+        "assets".to_string()
+    } else {
+        let date_str = chrono::Local::now().format("%Y-%m-%d").to_string();
+        date_str
+    };
+
+    let mut path = Path::new(&file_upload_dir).join(&sub_path);
 
     fs::create_dir_all(&path).await?;
 
@@ -76,7 +88,7 @@ async fn upload_handler(input: SelfTypedMultipart<FileUpload>) -> Result<HttpRes
         .map_err(|err| HttpException::InternalServerErrorException(Some(err.to_string())))?;
 
     Ok(HttpResponse::Json {
-        payload: format!("{}/{}", date_str, file_name),
+        payload: format!("{}/{}", sub_path, file_name),
         message: None,
     })
 }

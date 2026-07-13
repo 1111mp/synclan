@@ -1,0 +1,198 @@
+import { ChevronRightIcon } from 'lucide-react';
+import { Controller, type UseFormReturn } from 'react-hook-form';
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemTitle,
+  Separator,
+  Switch,
+} from '@/components/ui';
+import { isWeb } from '@/lib/constant';
+
+import type { SettingsForm } from './settings-schema';
+
+const LOCALES = {
+  'zh-CN': '简体中文',
+  en: 'English',
+};
+
+function GeneralSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
+  return (
+    <FieldSet>
+      <FieldLegend className='text-muted-foreground pl-3'>General</FieldLegend>
+      <div className='overflow-hidden rounded-xl'>
+        <FieldGroup className='gap-0'>
+          <Controller
+            name='locale'
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Item
+                      variant='muted'
+                      className='hover:bg-muted rounded-none py-3 transition-colors'
+                    >
+                      <ItemContent>
+                        <ItemTitle>Language</ItemTitle>
+                        {fieldState.invalid && (
+                          <FieldError errors={[fieldState.error]} />
+                        )}
+                      </ItemContent>
+                      <ItemActions>
+                        <span
+                          className='text-muted-foreground'
+                          aria-invalid={fieldState.invalid}
+                        >
+                          {LOCALES[field.value]}
+                        </span>
+                        <ChevronRightIcon className='size-4' />
+                      </ItemActions>
+                    </Item>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className='w-fit' align='end'>
+                    <DropdownMenuGroup>
+                      <DropdownMenuRadioGroup
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <DropdownMenuRadioItem value='zh-CN'>
+                          简体中文
+                        </DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value='en'>
+                          English
+                        </DropdownMenuRadioItem>
+                      </DropdownMenuRadioGroup>
+                    </DropdownMenuGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </Field>
+            )}
+          />
+          {!isWeb && (
+            <>
+              <Separator />
+              <Controller
+                name='auto_check_update'
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel
+                      htmlFor='synclan-auto-check-update'
+                      className='has-data-checked:bg-transparent dark:has-data-checked:bg-transparent'
+                    >
+                      <Item
+                        variant='muted'
+                        className='hover:bg-muted rounded-none py-3 transition-colors'
+                      >
+                        <ItemContent>
+                          <ItemTitle>Auto Check Update</ItemTitle>
+                          {fieldState.invalid && (
+                            <FieldError errors={[fieldState.error]} />
+                          )}
+                        </ItemContent>
+                        <ItemActions>
+                          <Switch
+                            id='synclan-auto-check-update'
+                            name={field.name}
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            aria-invalid={fieldState.invalid}
+                          />
+                        </ItemActions>
+                      </Item>
+                    </FieldLabel>
+                  </Field>
+                )}
+              />
+              <Separator />
+              <Controller
+                name='enable_auto_launch'
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel
+                      htmlFor='synclan-launch-at-login'
+                      className='has-data-checked:bg-transparent dark:has-data-checked:bg-transparent'
+                    >
+                      <Item
+                        variant='muted'
+                        className='hover:bg-muted rounded-none py-3 transition-colors'
+                      >
+                        <ItemContent>
+                          <ItemTitle>Launch at Login</ItemTitle>
+                          {fieldState.invalid && (
+                            <FieldError errors={[fieldState.error]} />
+                          )}
+                        </ItemContent>
+                        <ItemActions>
+                          <Switch
+                            id='synclan-launch-at-login'
+                            name={field.name}
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            aria-invalid={fieldState.invalid}
+                          />
+                        </ItemActions>
+                      </Item>
+                    </FieldLabel>
+                  </Field>
+                )}
+              />
+              <Separator />
+              <Controller
+                name='enable_silent_start'
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel
+                      htmlFor='synclan-start-minimized'
+                      className='has-data-checked:bg-transparent dark:has-data-checked:bg-transparent'
+                    >
+                      <Item
+                        variant='muted'
+                        className='hover:bg-muted rounded-none py-3 transition-colors'
+                      >
+                        <ItemContent>
+                          <ItemTitle>Start Minimized</ItemTitle>
+                          {fieldState.invalid && (
+                            <FieldError errors={[fieldState.error]} />
+                          )}
+                        </ItemContent>
+                        <ItemActions>
+                          <Switch
+                            id='synclan-start-minimized'
+                            name={field.name}
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            aria-invalid={fieldState.invalid}
+                          />
+                        </ItemActions>
+                      </Item>
+                    </FieldLabel>
+                  </Field>
+                )}
+              />
+            </>
+          )}
+        </FieldGroup>
+      </div>
+    </FieldSet>
+  );
+}
+
+export { GeneralSettings };

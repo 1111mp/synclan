@@ -4,6 +4,8 @@ import { useEffect } from 'react';
 
 import { $isImageNode, ImageNode } from '@/components/nodes';
 
+import { calculateImageDisplaySize } from '../nodes/utils';
+
 function ImagePlugin() {
   const [editor] = useLexicalComposerContext();
 
@@ -33,9 +35,14 @@ function ImagePlugin() {
                     editor.update(() => {
                       const latestNode = $getNodeByKey(nodeKey);
                       if ($isImageNode(latestNode)) {
+                        const { width: displayWidth, height: displayHeight } =
+                          calculateImageDisplaySize(
+                            img.naturalWidth,
+                            img.naturalHeight,
+                          );
                         latestNode.setWidthAndHeight(
-                          img.naturalWidth,
-                          img.naturalHeight,
+                          displayWidth,
+                          displayHeight,
                         );
                       }
                     });

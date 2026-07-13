@@ -23,7 +23,9 @@ pub struct Device {
     pub role: DeviceRole,
     pub platform: Option<String>,
     pub browser: Option<String>,
+    #[serde(with = "super::unix_timestamp_ms")]
     pub created_at: Option<i64>,
+    #[serde(with = "super::unix_timestamp_ms")]
     pub updated_at: Option<i64>,
 }
 
@@ -198,6 +200,53 @@ impl Device {
         if !needs_comma {
             bail!("No fields need to update");
         }
+
+        query_builder.push(" WHERE id = ").push_bind(&self.id);
+
+        query_builder.build().execute(&db_pool).await?;
+
+        Ok(())
+    }
+}
+
+#[derive(Debug, Default, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct DevicePatch {
+    pub id: String,
+    pub name: Option<String>,
+    pub avatar: Option<String>,
+}
+
+impl DevicePatch {
+    pub async fn patch(&self) -> Result<()> {
+        let db_pool = db::get_db_pool()?;
+
+        let mut query_builder = QueryBuilder::<sqlx::Sqlite>::new("UPDATE devices SET ");
+
+        let mut needs_comma = false;
+
+        macro_rules! add_field {
+            ($val:expr, $col:literal) => {
+                if let Some(v) = &$val {
+                    if needs_comma {
+                        query_builder.push(", ");
+                    }
+
+                    query_builder.push($col).push(" = ").push_bind(v);
+
+                    needs_comma = true;
+                }
+            };
+        }
+
+        add_field!(self.name, "name");
+        add_field!(self.avatar, "avatar");
+
+        if !needs_comma {
+            bail!("No fields need to update");
+        }
+
+        query_builder.push(", updated_at = unixepoch()");
 
         query_builder.push(" WHERE id = ").push_bind(&self.id);
 

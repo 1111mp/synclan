@@ -1,12 +1,7 @@
 'use client';
 
-import {
-  BadgeCheck,
-  ChevronsUpDown,
-  LogOut,
-  Settings,
-  User,
-} from 'lucide-react';
+import { ChevronsUpDown, LogOut, Settings, User, UserPen } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router';
 
 import {
   Avatar,
@@ -24,20 +19,25 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui';
+import { resolveResourceUrl } from '@/lib/utils';
 import { useDeviceStore } from '@/stores';
 
-export function NavUser({
-  user,
-}: {
-  user: {
-    name: string;
-    email: string;
-    avatar: string;
-  };
-}) {
-  const { isMobile } = useSidebar();
+export function NavUser() {
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const { isMobile, toggleSidebar } = useSidebar();
+
   const current = useDeviceStore((s) => s.current);
-  console.log('current', current);
+
+  const handleNavigate = (path: string) => {
+    if (pathname !== path) {
+      void navigate(path);
+    }
+
+    if (isMobile) {
+      toggleSidebar();
+    }
+  };
 
   return (
     <SidebarMenu>
@@ -50,8 +50,8 @@ export function NavUser({
             >
               <Avatar className='size-8'>
                 <AvatarImage
-                  src={user.avatar}
-                  alt={user.name}
+                  src={resolveResourceUrl(current?.avatar)}
+                  alt={current?.name}
                   className='rounded-lg'
                 />
                 <AvatarFallback className='rounded-lg'>
@@ -76,8 +76,8 @@ export function NavUser({
                 <Avatar className='size-8'>
                   <AvatarImage
                     className='rounded-lg'
-                    src={user.avatar}
-                    alt={user.name}
+                    src={resolveResourceUrl(current?.avatar)}
+                    alt={current?.name}
                   />
                   <AvatarFallback className='rounded-lg'>
                     <User />
@@ -98,11 +98,11 @@ export function NavUser({
             </DropdownMenuGroup>*/}
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheck />
-                Account
+              <DropdownMenuItem onClick={() => handleNavigate('/profile')}>
+                <UserPen />
+                Profile
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleNavigate('/settings')}>
                 <Settings />
                 Settings
               </DropdownMenuItem>

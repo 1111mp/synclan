@@ -140,9 +140,9 @@ impl ISynclan {
             enable_authorized_access: Some(false),
             http_server_port: Some(53317),
             file_upload_dir,
-            auto_file_clean: Some(1), // default to 1 day
+            auto_file_clean: Some(3), // default to 30 day
             #[cfg(target_os = "windows")]
-            enable_encryption: Some(true),
+            enable_encryption: Some(false),
             #[cfg(not(target_os = "windows"))]
             enable_encryption: Some(false),
             ..Self::default()

@@ -174,6 +174,7 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
       span.style.display = 'inline-block';
       span.style.width = `${this.__width}px`;
       span.style.height = `${this.__height}px`;
+      span.style.padding = `0`;
     }
     return span;
   }

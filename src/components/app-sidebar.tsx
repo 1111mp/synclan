@@ -16,11 +16,6 @@ import { useConversationList, useIMStore } from '@/stores';
 
 // This is sample data.
 const data = {
-  user: {
-    name: 'shadcn',
-    email: 'm@example.com',
-    avatar: 'https://ui.shadcn.com/avatars/shadcn.jpg',
-  },
   devices: [
     {
       name: 'Acme Inc',
@@ -50,9 +45,7 @@ function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     if (params?.id === id) return;
 
     setActiveConversation(id);
-    void navigate(`/devices/${id}`, {
-      viewTransition: true,
-    });
+    void navigate(`/devices/${id}`);
   };
 
   return (
@@ -69,7 +62,7 @@ function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

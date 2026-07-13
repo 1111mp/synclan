@@ -81,6 +81,7 @@ function LazyImage({
   width,
   height,
   maxWidth,
+  resolvedSize = false,
   onError,
 }: {
   altText: string;
@@ -90,6 +91,7 @@ function LazyImage({
   maxWidth: number;
   src: string;
   width: 'inherit' | number;
+  resolvedSize?: boolean;
   onError: () => void;
 }): JSX.Element {
   const status = useSuspenseImage(src);
@@ -156,6 +158,7 @@ function LazyImage({
   };
 
   const handleImageLoad = () => {
+    if (resolvedSize) return;
     window.__refreshVirtualList?.();
   };
 
@@ -175,8 +178,13 @@ function LazyImage({
   );
 }
 
-function BrokenImage(): JSX.Element {
+function BrokenImage({
+  resolvedSize = false,
+}: {
+  resolvedSize?: boolean;
+}): JSX.Element {
   const handleImageLoad = () => {
+    if (resolvedSize) return;
     window.__refreshVirtualList?.();
   };
 
@@ -333,21 +341,14 @@ export default function ImageComponent({
 
   const draggable = isInNodeSelection && !isResizing;
   const isFocused = (isSelected || isResizing) && isEditable;
-  const resolveWidth = width && width !== 'inherit' ? width : undefined;
-  const resolveHeight = height && height !== 'inherit' ? height : undefined;
+  const resolvedSize = typeof width === 'number' && typeof height === 'number';
 
   return (
-    <Suspense
-      fallback={
-        resolveWidth && resolveHeight ? (
-          <div style={{ width: resolveWidth, height: resolveHeight }}></div>
-        ) : null
-      }
-    >
+    <Suspense fallback={null}>
       <>
         <div draggable={draggable}>
           {isLoadError ? (
-            <BrokenImage />
+            <BrokenImage resolvedSize={resolvedSize} />
           ) : (
             <LazyImage
               className={
@@ -361,6 +362,7 @@ export default function ImageComponent({
               width={width}
               height={height}
               maxWidth={maxWidth}
+              resolvedSize={resolvedSize}
               onError={() => setIsLoadError(true)}
             />
           )}
