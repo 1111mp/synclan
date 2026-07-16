@@ -1,5 +1,4 @@
 export * from './message-animated-wrapper';
-export * from './message-context-menu';
 export * from './message-image';
 export * from './message-text';
 export * from './message-video';

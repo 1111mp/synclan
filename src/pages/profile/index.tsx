@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
+import { useImagePreview } from '@/components';
 import {
   Avatar,
   AvatarFallback,
@@ -43,6 +44,8 @@ function ProfilePage() {
 
   const current = useDeviceStore((s) => s.current);
   const updateCurrent = useDeviceStore((s) => s.updateCurrent);
+
+  const { openPreview } = useImagePreview();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -110,34 +113,49 @@ function ProfilePage() {
                 name='avatar'
                 disabled={disabled}
                 control={form.control}
-                render={({ field }) => (
-                  <Avatar className='relative size-32 overflow-hidden'>
-                    <AvatarImage
-                      className='rounded-full'
-                      src={resolveResourceUrl(field.value)}
-                      alt='shadcn'
-                    />
-                    <AvatarFallback className='rounded-full'>
-                      <User />
-                    </AvatarFallback>
-                    {!disabled && (
-                      <span
-                        className='group bg-primary-foreground/50 absolute z-10 flex size-full items-center justify-center'
-                        onClick={async () => {
-                          const url = await onPickImage();
-                          if (url) {
-                            field.onChange(url);
-                          }
-                        }}
-                      >
-                        <Camera
-                          className='size-8 transition-colors duration-300 group-hover:text-blue-400'
-                          strokeWidth={1}
-                        />
-                      </span>
-                    )}
-                  </Avatar>
-                )}
+                render={({ field }) => {
+                  const avatarUrl = resolveResourceUrl(field.value);
+                  return (
+                    <Avatar
+                      className='relative size-32 overflow-hidden'
+                      onClick={() => {
+                        openPreview([avatarUrl], 0);
+                      }}
+                    >
+                      <AvatarImage
+                        className='rounded-full'
+                        src={avatarUrl}
+                        alt='shadcn'
+                      />
+                      <AvatarFallback className='rounded-full'>
+                        <User />
+                      </AvatarFallback>
+                      {!disabled && (
+                        <span
+                          className='group bg-primary-foreground/50 absolute z-10 flex size-full items-center justify-center'
+                          onClick={async (evt) => {
+                            evt.stopPropagation();
+                            try {
+                              const url = await onPickImage();
+                              if (url) {
+                                field.onChange(url);
+                              }
+                            } catch (error) {
+                              toast.error(
+                                error.message ?? 'Failed to upload avatar',
+                              );
+                            }
+                          }}
+                        >
+                          <Camera
+                            className='size-8 transition-colors duration-300 group-hover:text-blue-400'
+                            strokeWidth={1}
+                          />
+                        </span>
+                      )}
+                    </Avatar>
+                  );
+                }}
               />
             </FieldGroup>
 

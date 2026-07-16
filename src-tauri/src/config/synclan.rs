@@ -136,7 +136,7 @@ impl ISynclan {
             enable_silent_start: Some(false),
             auto_check_update: Some(true),
             enable_random_port: Some(false),
-            auto_log_clean: Some(3), // default to 30 day
+            auto_log_clean: Some(2), // default to 7 day
             enable_authorized_access: Some(false),
             http_server_port: Some(53317),
             file_upload_dir,

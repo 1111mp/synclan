@@ -17,3 +17,11 @@ pub async fn get_offline_messages(receiver: &str) -> Result<Vec<Message>> {
 pub async fn get_offline_msgs_summary(receiver: &str) -> Result<Option<OfflineMessagesInfoMap>> {
     Message::get_offline_msgs_summary(receiver).await
 }
+
+pub async fn delete_conversation_messages(self_id: String, target_id: String) -> Result<()> {
+    Message::delete_conversation_messages(&self_id, &target_id).await
+}
+
+pub async fn delete_message_by_uuid(device_id: &str, uuid: &str) -> Result<bool> {
+    Message::delete_by_uuid(device_id, uuid).await
+}

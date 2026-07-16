@@ -17,6 +17,7 @@ pub struct Message {
     #[sqlx(rename = "type")]
     pub r#type: MessageType,
     pub content: Option<String>,
+    pub plain_content: Option<String>,
     pub extra: Option<String>,
 
     #[serde(with = "chrono::naive::serde::ts_milliseconds_option")]
@@ -32,8 +33,8 @@ impl Message {
         let db_pool = db::get_db_pool()?;
         let message = sqlx::query_as::<_, Message>(
             r#"
-            INSERT INTO messages (uuid, sender, receiver, type, content, extra)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            INSERT INTO messages (uuid, sender, receiver, type, content, plain_content, extra)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
             RETURNING *
             "#,
         )
@@ -42,6 +43,7 @@ impl Message {
         .bind(&self.receiver)
         .bind(&self.r#type)
         .bind(&self.content)
+        .bind(&self.plain_content)
         .bind(&self.extra)
         .fetch_one(&db_pool)
         .await?;
@@ -61,7 +63,7 @@ impl Message {
 
         let mut messages = sqlx::query_as::<_, Message>(
             r#"
-                SELECT id, uuid, sender, receiver, type, content, extra, created_at, updated_at
+                SELECT id, uuid, sender, receiver, type, content, plain_content, extra, created_at, updated_at
                 FROM messages
                 WHERE
                   (
@@ -103,7 +105,7 @@ impl Message {
             .map_or(0, |a| a.last_ack.unwrap_or(0));
         let messages = sqlx::query_as::<_, Message>(
             r#"
-            SELECT id, uuid, sender, receiver, type, content, extra, created_at, updated_at
+            SELECT id, uuid, sender, receiver, type, content, plain_content, extra, created_at, updated_at
             FROM messages
             WHERE receiver = $1 AND id > $2
             ORDER BY id DESC
@@ -127,7 +129,7 @@ impl Message {
                 SELECT
                     m.sender,
                     summary.total,
-                    m.id, m.uuid, m.receiver, m.type, m.content, m.extra, m.created_at, m.updated_at
+                    m.id, m.uuid, m.receiver, m.type, m.content, m.plain_content, m.extra, m.created_at, m.updated_at
                 FROM messages m
                 INNER JOIN (
                     -- 子查询：计算每个发送者的未读总数，以及最新一条消息的 ID
@@ -160,6 +162,7 @@ impl Message {
                 receiver: row.receiver,
                 r#type: row.r#type,
                 content: row.content,
+                plain_content: row.plain_content,
                 extra: row.extra,
                 created_at: row.created_at,
                 updated_at: row.updated_at,
@@ -174,6 +177,47 @@ impl Message {
             );
         }
         Ok(Some(summary))
+    }
+
+    pub async fn delete_conversation_messages(self_id: &str, target_id: &str) -> Result<()> {
+        let db_pool = db::get_db_pool()?;
+        sqlx::query(
+            r#"
+                DELETE FROM messages
+                WHERE
+                  (
+                    (sender = $1 AND receiver = $2)
+                    OR
+                    (sender = $2 AND receiver = $1)
+                  )
+            "#,
+        )
+        .bind(self_id)
+        .bind(target_id)
+        .execute(&db_pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn delete_by_uuid(device_id: &str, uuid: &str) -> Result<bool> {
+        let db_pool = db::get_db_pool()?;
+        let result = sqlx::query(
+            r#"
+                    DELETE FROM messages
+                    WHERE uuid = $1
+                    AND (
+                        sender = $2
+                        OR receiver = $2
+                    )
+                    "#,
+        )
+        .bind(uuid)
+        .bind(device_id)
+        .execute(&db_pool)
+        .await?;
+
+        Ok(result.rows_affected() > 0)
     }
 }
 
@@ -196,6 +240,7 @@ struct OfflineSummaryRow {
     #[sqlx(rename = "type")]
     r#type: MessageType,
     content: Option<String>,
+    plain_content: Option<String>,
     extra: Option<String>,
     created_at: Option<NaiveDateTime>,
     updated_at: Option<NaiveDateTime>,

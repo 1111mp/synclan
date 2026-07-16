@@ -12,6 +12,7 @@ CREATE TABLE
 		-- message type
 		type TEXT NOT NULL,
 		content TEXT,
+		plain_content TEXT,
 		extra TEXT,
 		created_at DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now')),
 		updated_at DATETIME NOT NULL DEFAULT (strftime ('%Y-%m-%d %H:%M:%f', 'now'))

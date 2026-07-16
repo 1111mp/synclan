@@ -1,7 +1,14 @@
 'use client';
 
-import { ChevronsUpDown, Plus, QrCode } from 'lucide-react';
-import { useRef, useState } from 'react';
+import {
+  AudioWaveform,
+  ChevronsUpDown,
+  GalleryVerticalEnd,
+  Plus,
+  QrCode,
+} from 'lucide-react';
+import { useRef } from 'react';
+import { useNavigate } from 'react-router';
 
 import { QRCodeDialog, type QRCodeDialogRef } from '@/components/qrcode-dialog';
 import {
@@ -10,7 +17,6 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuShortcut,
   DropdownMenuTrigger,
   SidebarMenu,
   SidebarMenuButton,
@@ -18,23 +24,14 @@ import {
   useSidebar,
 } from '@/components/ui';
 
-function DeviceSwitcher({
-  devices,
-}: {
-  devices: {
-    name: string;
-    logo: React.ElementType;
-    plan: string;
-  }[];
-}) {
-  const { isMobile } = useSidebar();
-  const [activeDevice, setActiveDevice] = useState(() => devices[0]);
+import { useDeviceDiscover } from './device-discover';
+
+function DeviceSwitcher() {
+  const navigate = useNavigate();
+  const { isMobile, toggleSidebar } = useSidebar();
+  const { openDiscover } = useDeviceDiscover();
 
   const qrCodeRef = useRef<QRCodeDialogRef>(null);
-
-  if (!activeDevice) {
-    return null;
-  }
 
   return (
     <>
@@ -47,13 +44,10 @@ function DeviceSwitcher({
                 className='data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[collapsible=icon]:ml-2'
               >
                 <div className='bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg'>
-                  <activeDevice.logo className='size-4' />
+                  <GalleryVerticalEnd className='size-4' />
                 </div>
                 <div className='grid flex-1 text-left text-sm leading-tight'>
-                  <span className='truncate font-medium'>
-                    {activeDevice.name}
-                  </span>
-                  <span className='truncate text-xs'>{activeDevice.plan}</span>
+                  <span className='truncate font-medium'>Synclan</span>
                 </div>
                 <ChevronsUpDown className='ml-auto' />
               </SidebarMenuButton>
@@ -67,19 +61,20 @@ function DeviceSwitcher({
               <DropdownMenuLabel className='text-muted-foreground text-xs'>
                 Devices
               </DropdownMenuLabel>
-              {devices.map((device, index) => (
-                <DropdownMenuItem
-                  key={device.name}
-                  onClick={() => setActiveDevice(device)}
-                  className='gap-2 p-2'
-                >
-                  <div className='flex size-6 items-center justify-center rounded-md border'>
-                    <device.logo className='size-3.5 shrink-0' />
-                  </div>
-                  {device.name}
-                  <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
-                </DropdownMenuItem>
-              ))}
+              <DropdownMenuItem
+                onClick={() => {
+                  void navigate('/welcome');
+                  if (isMobile) {
+                    toggleSidebar();
+                  }
+                }}
+                className='gap-2 p-2'
+              >
+                <div className='flex size-6 items-center justify-center rounded-md border'>
+                  <AudioWaveform className='size-3.5 shrink-0' />
+                </div>
+                Welcome
+              </DropdownMenuItem>
               <DropdownMenuItem
                 className='gap-2 p-2'
                 onClick={() => {
@@ -92,12 +87,17 @@ function DeviceSwitcher({
                 Quick Access
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className='gap-2 p-2'>
+              <DropdownMenuItem
+                className='gap-2 p-2'
+                onClick={() => {
+                  openDiscover();
+                }}
+              >
                 <div className='flex size-6 items-center justify-center rounded-md border bg-transparent'>
                   <Plus className='size-4' />
                 </div>
                 <div className='text-muted-foreground font-medium'>
-                  Add device
+                  Devices Discover
                 </div>
               </DropdownMenuItem>
             </DropdownMenuContent>

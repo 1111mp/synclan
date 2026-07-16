@@ -32,6 +32,7 @@ type IMState = {
   addConversations: (incomingDevices: IDevice[]) => void;
   updateConvsFromOffline: (receiver: string) => Promise<void>;
   setActiveConversation: (id: string, device?: IDevice) => void;
+  deleteConversation: (id: string) => void;
   syncDeviceInfo: (id: string) => void;
 
   setHistory: (deviceId: string, msgs: IMessage[]) => void;
@@ -47,6 +48,7 @@ type IMState = {
     uuid: string,
     serverMsg: IMessage,
   ) => void;
+  deleteMessage: (deviceId: string, msgId: string) => void;
 };
 
 export const useIMStore = create<IMState>()(
@@ -159,6 +161,14 @@ export const useIMStore = create<IMState>()(
             );
           }
         }),
+      deleteConversation: (id) => {
+        set((state) => {
+          state.conversations.delete(id);
+          if (id === state.activeDeviceId) {
+            state.activeDeviceId = '';
+          }
+        });
+      },
       syncDeviceInfo: async (id) => {
         const existingConv = get().conversations.has(id);
         if (existingConv) {
@@ -331,14 +341,52 @@ export const useIMStore = create<IMState>()(
             conv.lastMessage = msg;
           }
         }),
+      deleteMessage: (deviceId, msgId) => {
+        set((state) => {
+          const cache = state.messageCaches.get(deviceId);
+          if (!cache) return;
+
+          const msg = cache.messages.get(msgId);
+          if (!msg) return;
+
+          cache.messages.delete(msgId);
+          const index = cache.order.indexOf(msgId);
+          if (index !== -1) {
+            cache.order.splice(index, 1);
+          }
+
+          const conv = state.conversations.get(deviceId);
+          if (!conv) return;
+
+          if (conv.lastMessage?.uuid === msgId) {
+            const lastUuid = cache.order[cache.order.length - 1];
+
+            conv.lastMessage = lastUuid
+              ? cache.messages.get(lastUuid)
+              : undefined;
+          }
+        });
+      },
     })),
   ),
 );
 
+// 记录上一次的 keys，用来比对哪些被删除了
+let prevKeys = new Set<string>();
+
 useIMStore.subscribe(
   (state) => state.conversations,
-  (conversations) => {
-    // 每次 Zustand 里的会话发生变化（新消息、未读变动），批量增量写入 IndexedDB
+  async (conversations) => {
+    const currentKeys = new Set(conversations.keys());
+
+    // 1. 找出被删除的 ID (存在于上一次，但不存在于这一次)
+    prevKeys.forEach((oldId) => {
+      if (!currentKeys.has(oldId)) {
+        void db.conversations.delete(oldId);
+      }
+    });
+
+    // 2. 更新/写入现有的 ID
     conversations.forEach((conv) => {
       void db.conversations.put({
         id: conv.id,
@@ -348,7 +396,11 @@ useIMStore.subscribe(
         lastMessage: conv.lastMessage,
       });
     });
+
+    // 3. 记住当前的 keys，供下一次对比
+    prevKeys = currentKeys;
   },
+  { fireImmediately: true },
 );
 
 export const useConversationList = () => {
@@ -384,7 +436,6 @@ export function getMessagesWithTimestamp(cache: IMDeviceState) {
   if (!cache?.order.length) return [];
 
   const messages = cache.order.map((id) => cache.messages.get(id)!);
-  console.log('messages', messages);
   const result: IUIMessage[] = [];
   let lastTimestampTime: number | undefined = undefined;
 

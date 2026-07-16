@@ -125,7 +125,7 @@ impl Logger {
         Ok(())
     }
 
-    /// update app and mihomo core log config
+    /// only update app log config
     pub async fn update_log_config(&self, log_max_size: u64, log_max_count: usize) -> Result<()> {
         self.log_max_size.store(log_max_size, Ordering::SeqCst);
         self.log_max_count.store(log_max_count, Ordering::SeqCst);

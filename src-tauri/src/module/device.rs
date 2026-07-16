@@ -23,9 +23,9 @@ pub struct Device {
     pub role: DeviceRole,
     pub platform: Option<String>,
     pub browser: Option<String>,
-    #[serde(with = "super::unix_timestamp_ms")]
+    #[serde(default, with = "super::unix_timestamp_ms")]
     pub created_at: Option<i64>,
-    #[serde(with = "super::unix_timestamp_ms")]
+    #[serde(default, with = "super::unix_timestamp_ms")]
     pub updated_at: Option<i64>,
 }
 

@@ -68,12 +68,16 @@ const ImgRule = /* @__PURE__ */ defineImportRule({
     if (!src || src.startsWith('file:///') || isGoogleDocCheckboxImg(el)) {
       return $next();
     }
+
+    const isFromSynclan =
+      el.getAttribute('data-from-synclan') === 'true' ? true : undefined;
     return [
       $createImageNode({
         altText: el.alt,
         height: el.height,
-        src,
+        src: isFromSynclan ? (el.getAttribute('data-synclan-src') ?? src) : src,
         width: el.width,
+        isFromSynclan,
       }),
     ];
   },

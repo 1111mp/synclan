@@ -4,6 +4,7 @@ members = ["src-tauri"]
 
 [workspace.dependencies]
 anyhow = "1.0.102"
+bitflags = { version = "2.13.0" }
 flexi_logger = "0.31.9"
 log = "0.4.32"
 parking_lot = { version = "0.12.5", features = ["hardware-lock-elision"] }
@@ -13,6 +14,8 @@ serde_yaml_ng = { version = "0.10.0" }
 tauri = { version = "2.11.2" }
 thiserror = { version = "2.0.18" }
 tokio = { version = "1.52.3", features = ["full"] }
+
+deelevate = "0.2.0"
 
 [workspace.lints.clippy]
 correctness = { level = "deny", priority = -1 }

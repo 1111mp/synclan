@@ -1,4 +1,6 @@
-import { User } from 'lucide-react';
+import { TrashIcon, User } from 'lucide-react';
+import { useRef } from 'react';
+import { useNavigate } from 'react-router';
 
 import {
   Avatar,
@@ -16,17 +18,62 @@ import {
   SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from '@/components/ui';
+import { resolveResourceUrl } from '@/lib/utils';
+import { deleteConversationMessages } from '@/services/cmd';
+import { useIMStore } from '@/stores';
+
+import { useConfirm } from './confirm-dialog';
+import {
+  FloatingContextMenu,
+  FloatingContextMenuItem,
+  type FloatingContextMenuRef,
+} from './floating-context-menu';
+
+type ContextMenuData = {
+  id: string;
+};
 
 export function NavDevices({
+  current,
   activeDeviceId,
   conversations = [],
   onSelectDevice,
 }: {
+  current?: IDevice | null;
   activeDeviceId?: string;
   conversations?: IConversations[];
   onSelectDevice?: (id: string) => void;
 }) {
+  const contextMenu = useRef<FloatingContextMenuRef<ContextMenuData>>(null);
+
+  const navigate = useNavigate();
+  const { isMobile, toggleSidebar } = useSidebar();
+
+  const deleteConversation = useIMStore((s) => s.deleteConversation);
+
+  const confirm = useConfirm();
+
+  const onDeleteDevice = async (id?: string) => {
+    if (!current?.id || !id) return;
+
+    deleteConversation(id);
+    try {
+      await deleteConversationMessages(current?.id, id);
+    } catch {
+      // TODO: 处理删除消息失败
+    }
+
+    if (id === activeDeviceId) {
+      void navigate('/welcome');
+
+      if (isMobile) {
+        toggleSidebar();
+      }
+    }
+  };
+
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Devices</SidebarGroupLabel>
@@ -45,12 +92,24 @@ export function NavDevices({
                 onClick={() => {
                   onSelectDevice?.(conv.id);
                 }}
+                onContextMenu={(evt) => {
+                  evt.preventDefault();
+                  evt.stopPropagation();
+
+                  contextMenu.current?.open({
+                    x: evt.clientX,
+                    y: evt.clientY,
+                    data: {
+                      id: conv.id,
+                    },
+                  });
+                }}
               >
                 <Item>
                   <ItemMedia>
                     <Avatar size='lg'>
                       <AvatarImage
-                        src={conv?.device?.avatar}
+                        src={resolveResourceUrl(conv?.device?.avatar)}
                         className='rounded-full'
                       />
                       <AvatarFallback>
@@ -63,7 +122,7 @@ export function NavDevices({
                       {name}
                     </ItemTitle>
                     <ItemDescription className='line-clamp-1 break-all'>
-                      This is a message from device 1
+                      {conv?.lastMessage?.plainContent}
                     </ItemDescription>
                   </ItemContent>
                 </Item>
@@ -79,6 +138,38 @@ export function NavDevices({
           );
         })}
       </SidebarMenu>
+      <FloatingContextMenu<ContextMenuData> ref={contextMenu}>
+        {(data) => (
+          <>
+            <FloatingContextMenuItem
+              variant='destructive'
+              onClick={async (evt) => {
+                evt.stopPropagation();
+
+                contextMenu.current?.hide();
+
+                const ok = await confirm({
+                  icon: <TrashIcon />,
+                  title: 'Delete Device?',
+                  description: `
+                    This will permanently delete this chat conversation. All
+                    associated chat history will be permanently deleted from the
+                    database—not just removed from the cache—and cannot be recovered.`,
+                  actionVariant: 'destructive',
+                  confirmText: 'Delete',
+                });
+
+                if (ok) {
+                  await onDeleteDevice(data?.id);
+                }
+              }}
+            >
+              <TrashIcon />
+              Delete
+            </FloatingContextMenuItem>
+          </>
+        )}
+      </FloatingContextMenu>
     </SidebarGroup>
   );
 }

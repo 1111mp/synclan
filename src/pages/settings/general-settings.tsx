@@ -45,7 +45,7 @@ function GeneralSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                   <DropdownMenuTrigger asChild>
                     <Item
                       variant='muted'
-                      className='hover:bg-muted rounded-none py-3 transition-colors'
+                      className='hover:bg-muted rounded-none py-3'
                     >
                       <ItemContent>
                         <ItemTitle>Language</ItemTitle>
@@ -97,7 +97,7 @@ function GeneralSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                     >
                       <Item
                         variant='muted'
-                        className='hover:bg-muted rounded-none py-3 transition-colors'
+                        className='hover:bg-muted rounded-none py-3'
                       >
                         <ItemContent>
                           <ItemTitle>Auto Check Update</ItemTitle>
@@ -131,7 +131,7 @@ function GeneralSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                     >
                       <Item
                         variant='muted'
-                        className='hover:bg-muted rounded-none py-3 transition-colors'
+                        className='hover:bg-muted rounded-none py-3'
                       >
                         <ItemContent>
                           <ItemTitle>Launch at Login</ItemTitle>
@@ -165,7 +165,7 @@ function GeneralSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                     >
                       <Item
                         variant='muted'
-                        className='hover:bg-muted rounded-none py-3 transition-colors'
+                        className='hover:bg-muted rounded-none py-3'
                       >
                         <ItemContent>
                           <ItemTitle>Start Minimized</ItemTitle>

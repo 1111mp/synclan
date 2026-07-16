@@ -26,6 +26,7 @@ import {
 
 import './image-component.css';
 
+import { useImagePreview } from '@/components';
 import { ImageResizer } from '@/components/ui';
 
 import { $isImageNode } from './image-node';
@@ -82,6 +83,8 @@ function LazyImage({
   height,
   maxWidth,
   resolvedSize = false,
+  isEditable = false,
+  showResizer = false,
   onError,
 }: {
   altText: string;
@@ -92,9 +95,13 @@ function LazyImage({
   src: string;
   width: 'inherit' | number;
   resolvedSize?: boolean;
+  isEditable?: boolean;
+  showResizer?: boolean;
   onError: () => void;
 }): JSX.Element {
   const status = useSuspenseImage(src);
+
+  const { openPreview } = useImagePreview();
 
   useEffect(() => {
     if (status.error) {
@@ -162,18 +169,42 @@ function LazyImage({
     window.__refreshVirtualList?.();
   };
 
+  const onImagePreview = () => {
+    if (!isEditable) {
+      const container = document.querySelector('#synclan-device-message-list');
+      if (!container) return;
+
+      const images = Array.from(
+        container.querySelectorAll('img[data-synclan-preview-image]'),
+      )
+        .map((img) => img.getAttribute('src'))
+        .filter((src) => src !== null);
+
+      const index = images.indexOf(src);
+
+      openPreview(images, index);
+      return;
+    }
+
+    if (showResizer) {
+      openPreview([src], 0);
+    }
+  };
+
   const imageStyle = calculateDimensions();
 
   return (
     <img
+      data-synclan-preview-image
       className={className || undefined}
       src={src}
       alt={altText}
       ref={imageRef}
       style={imageStyle}
+      draggable='false'
       onError={onError}
       onLoad={handleImageLoad}
-      draggable='false'
+      onClick={onImagePreview}
     />
   );
 }
@@ -341,6 +372,7 @@ export default function ImageComponent({
 
   const draggable = isInNodeSelection && !isResizing;
   const isFocused = (isSelected || isResizing) && isEditable;
+  const showResizer = resizable && isInNodeSelection && isFocused;
   const resolvedSize = typeof width === 'number' && typeof height === 'number';
 
   return (
@@ -363,12 +395,14 @@ export default function ImageComponent({
               height={height}
               maxWidth={maxWidth}
               resolvedSize={resolvedSize}
+              isEditable={isEditable}
+              showResizer={showResizer}
               onError={() => setIsLoadError(true)}
             />
           )}
         </div>
 
-        {resizable && isInNodeSelection && isFocused && (
+        {showResizer && (
           <ImageResizer
             editor={editor}
             imageRef={imageRef}

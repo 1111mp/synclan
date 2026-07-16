@@ -32,3 +32,15 @@ pub async fn get_offline_msgs_summary(receiver: String) -> CmdResult<Option<Offl
 pub async fn update_ack(payload: MessageAck) -> CmdResult {
     payload.received().await.stringify_err()
 }
+
+#[tauri::command]
+pub async fn delete_conversation_messages(self_id: String, target_id: String) -> CmdResult {
+    feat::delete_conversation_messages(self_id, target_id)
+        .await
+        .stringify_err()
+}
+
+#[tauri::command]
+pub async fn delete_message_by_uuid(device_id: String, uuid: String) -> CmdResult<bool> {
+    feat::delete_message_by_uuid(&device_id, &uuid).await.stringify_err()
+}

@@ -11,6 +11,10 @@ import { $isSimpleListItemNode } from './simple-list-item-node';
 
 // To avoid merge the next sibling list if same type.
 export class SimpleListNode extends ListNode {
+  static getType(): string {
+    return 'simple-list';
+  }
+
   $config(): any {
     return this.config('simple-list', {
       $transform: (node: SimpleListNode): void => {

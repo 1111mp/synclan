@@ -1,3 +1,4 @@
+export * from './alert-dialog';
 export * from './aspect-ratio';
 export * from './attachment';
 export * from './avatar';

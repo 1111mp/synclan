@@ -126,7 +126,6 @@ export class CodePlusNode extends CodeNode {
           parent as SimpleQuoteNode | SimpleListItemNode,
         );
         if (newNode) {
-          console.log(newNode);
           this.getTopLevelElementOrThrow().insertAfter(newNode);
           newNode.selectEnd();
         }

@@ -1,8 +1,11 @@
 export * from './app-sidebar';
 export * from './composition-input';
+export * from './confirm-dialog';
+export * from './device-discover';
+export * from './emoji';
+export * from './floating-context-menu';
+export * from './image-preview-provider';
 export * from './loading-screen';
+export * from './messages';
 export * from './qrcode-dialog';
 export * from './transmitter';
-
-export * from './emoji';
-export * from './messages';

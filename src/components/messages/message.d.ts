@@ -4,6 +4,7 @@ interface BasicMessage {
   sender: string;
   receiver: string;
   content?: string;
+  plainContent?: string;
   extra?: string;
   createdAt: number;
   updatedAt: number;

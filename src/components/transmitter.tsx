@@ -1,5 +1,10 @@
 import { LexicalExtensionComposer } from '@lexical/react/LexicalExtensionComposer';
-import { $nodesOfType, CLEAR_EDITOR_COMMAND, defineExtension } from 'lexical';
+import {
+  $getRoot,
+  $nodesOfType,
+  CLEAR_EDITOR_COMMAND,
+  defineExtension,
+} from 'lexical';
 import { CaseSensitive, Maximize2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useMemo, useRef, useState } from 'react';
@@ -68,9 +73,9 @@ function Transmitter({ onSend }: { onSend?: CompositionInputProps['onSend'] }) {
             onFocusChange={(focus) => {
               setFocueed(focus);
             }}
-            onSend={async (content, attachments) => {
+            onSend={async (data) => {
               if (isEmpty) return;
-              await onSend?.(content, attachments);
+              await onSend?.(data);
             }}
           />
         </div>
@@ -147,6 +152,7 @@ function Transmitter({ onSend }: { onSend?: CompositionInputProps['onSend'] }) {
                       if (!editor) return;
 
                       const attachments: Attachment[] = [];
+                      let plainContent: string | undefined;
                       const empty = editor.getEditorState().read(() => {
                         const nodes = $nodesOfType(ImageNode);
                         nodes.forEach((node) => {
@@ -158,6 +164,7 @@ function Transmitter({ onSend }: { onSend?: CompositionInputProps['onSend'] }) {
                             });
                           }
                         });
+                        plainContent = $getRoot().getTextContent();
                         return $isEmpty();
                       });
                       if (empty) return;
@@ -166,7 +173,7 @@ function Transmitter({ onSend }: { onSend?: CompositionInputProps['onSend'] }) {
                         editor.getEditorState().toJSON(),
                       );
                       editor.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined);
-                      await onSend?.(content, attachments);
+                      await onSend?.({ content, plainContent, attachments });
                     }}
                   >
                     <svg

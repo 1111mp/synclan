@@ -10,6 +10,7 @@ import { ListPlugin } from '@lexical/react/LexicalListPlugin';
 import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
 import { TabIndentationPlugin } from '@lexical/react/LexicalTabIndentationPlugin';
 import {
+  $getRoot,
   $getSelection,
   $isRangeSelection,
   $nodesOfType,
@@ -49,13 +50,19 @@ import { cn } from '@/lib/utils';
 const URL_MATCHER =
   /((https?:\/\/(www\.)?)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/;
 
+type SendData = {
+  content: string;
+  plainContent?: string;
+  attachments: Attachment[];
+};
+
 type CompositionInputProps = {
   ref?: Ref<CompositionInputRef>;
   isFixedTools?: boolean;
   onEmptyChange?: IsEmptyPluginProps['onChange'];
   onFocusChange?: IsFocusedPluginProps['onFocusChange'];
   onLineChange?: AutoLinePluginProps['onLineChange'];
-  onSend?: (content: string, attachments: Attachment[]) => Promise<void>;
+  onSend?: (data: SendData) => Promise<void>;
 };
 
 type CompositionInputRef = {
@@ -185,6 +192,7 @@ function CompositionInput({
           if (editorState.isEmpty()) return;
 
           const attachments: Attachment[] = [];
+          let plainContent: string | undefined;
           editorState.read(() => {
             const nodes = $nodesOfType(ImageNode);
             nodes.forEach((node) => {
@@ -196,9 +204,11 @@ function CompositionInput({
                 });
               }
             });
+
+            plainContent = $getRoot().getTextContent();
           });
           const content = JSON.stringify(editorState.toJSON());
-          void onSend?.(content, attachments);
+          void onSend?.({ content, plainContent, attachments });
         }}
       />
     </div>

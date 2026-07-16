@@ -10,6 +10,8 @@ mod utils;
 use crate::{core::handle, process::AsyncHandler, utils::resolve};
 use once_cell::sync::OnceCell;
 use tauri::{AppHandle, Manager};
+#[cfg(target_os = "macos")]
+use tauri_plugin_autostart::MacosLauncher;
 use utils::logging::Type;
 
 pub static APP_HANDLE: OnceCell<AppHandle> = OnceCell::new();
@@ -25,8 +27,25 @@ pub fn run() {
 
     #[allow(unused_mut)]
     let mut builder = tauri::Builder::default()
+        .plugin(tauri_plugin_updater::Builder::default().build())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
+        // Ensure single instance operation
+        .plugin(
+            tauri_plugin_single_instance::Builder::new()
+                // Set a custom D-Bus ID, used on Linux
+                // Defaults to the app's bundle identifier set in tauri.conf.json.
+                .dbus_id("io.github.mp1111.synclan")
+                .callback(|app_handle, _argc, _cwd| {
+                    if let Some(window) = app_handle.get_webview_window("main") {
+                        let _ = window.show();
+                        let _ = window.unminimize();
+                        let _ = window.set_focus();
+                    }
+                })
+                .build(),
+        )
         .setup(|app| {
             APP_HANDLE
                 .set(app.app_handle().clone())
@@ -35,6 +54,10 @@ pub fn run() {
             resolve::init_work_dir_and_logger()?;
 
             logging!(info, Type::Setup, "Starting application initialization...");
+
+            if let Err(e) = setup_autostart(app) {
+                logging!(error, Type::Setup, "Failed to setup autostart: {}", e);
+            }
 
             resolve::resolve_setup_async();
             resolve::resolve_server_setup_async();
@@ -65,6 +88,8 @@ pub fn run() {
             cmd::get_offline_messages,
             cmd::get_offline_msgs_summary,
             cmd::update_ack,
+            cmd::delete_conversation_messages,
+            cmd::delete_message_by_uuid,
             // preview window
             cmd::create_preview_window
         ]);
@@ -109,4 +134,21 @@ pub fn run() {
         },
         _ => {},
     });
+}
+
+/// Setup autostart plugin
+pub fn setup_autostart(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
+    #[cfg(target_os = "macos")]
+    let mut auto_start_plugin_builder = tauri_plugin_autostart::Builder::new();
+    #[cfg(not(target_os = "macos"))]
+    let auto_start_plugin_builder = tauri_plugin_autostart::Builder::new();
+
+    #[cfg(target_os = "macos")]
+    {
+        auto_start_plugin_builder = auto_start_plugin_builder
+            .macos_launcher(MacosLauncher::LaunchAgent)
+            .app_name(&app.config().identifier);
+    }
+    app.handle().plugin(auto_start_plugin_builder.build())?;
+    Ok(())
 }

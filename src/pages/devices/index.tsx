@@ -11,23 +11,23 @@ import { useShallow } from 'zustand/react/shallow';
 
 import { useAppContext } from '@/app-context';
 import { Transmitter, type CompositionInputProps } from '@/components';
-import {
-  MessageAnimatedWrapper,
-  MessageContextMenu,
-  type MessageContextMenuRef,
-} from '@/components/messages';
+import { MessageAnimatedWrapper } from '@/components/messages';
 import {
   MessageScroller,
   MessageScrollerButton,
   MessageScrollerContent,
   MessageScrollerProvider,
   MessageScrollerViewport,
-  Toaster,
 } from '@/components/ui';
 import { prepareMessageContent } from '@/lib/attachment';
 import { HttpStatus } from '@/lib/types';
 import { getMessages } from '@/services/cmd';
-import { useDeviceStore, useIMStore, useMessageAnimationStore } from '@/stores';
+import {
+  useCurrentConversation,
+  useDeviceStore,
+  useIMStore,
+  useMessageAnimationStore,
+} from '@/stores';
 
 import { DeviceHeader } from './header';
 
@@ -42,13 +42,13 @@ function DevicesPage() {
   const isFetching = useRef<boolean>(false);
   const [footerRef, { height: footerHeight }] = useMeasure<HTMLElement>();
   const autoScrollEnabledRef = useRef<boolean>(false);
-  const msgCtxMenu = useRef<MessageContextMenuRef>(null);
 
   const params = useParams();
 
   const { sendMessage } = useAppContext();
 
   const current = useDeviceStore((s) => s.current);
+  const conversation = useCurrentConversation();
   const isHydrated = useIMStore(
     useCallback(
       (s) => s.messageCaches.get(params.id || '')?.hydrated ?? false,
@@ -191,10 +191,11 @@ function DevicesPage() {
     syncDeviceInfo(params.id);
   }, [params.id, syncDeviceInfo]);
 
-  const onSend: CompositionInputProps['onSend'] = async (
+  const onSend: CompositionInputProps['onSend'] = async ({
     content,
+    plainContent,
     attachments,
-  ) => {
+  }) => {
     const deviceId = params.id;
     if (!deviceId || !current) return;
 
@@ -210,6 +211,7 @@ function DevicesPage() {
       sender: current.id,
       receiver: deviceId,
       content: trimmedContent,
+      plainContent: plainContent?.trim(),
       createdAt: now,
       updatedAt: now,
     };
@@ -244,14 +246,15 @@ function DevicesPage() {
 
   return (
     <MessageScrollerProvider defaultScrollPosition='end'>
-      <div className='relative flex h-dvh flex-col overflow-hidden'>
+      <div
+        id='synclan-device-message-list'
+        className='relative flex h-dvh flex-col overflow-hidden'
+      >
         <MessageScroller>
           <MessageScrollerViewport
             ref={viewportRef}
             className='min-h-0 w-full overflow-x-hidden overflow-y-auto'
             onScroll={(event) => {
-              msgCtxMenu.current?.hide();
-
               if (
                 !autoHistoryEnabled ||
                 !mounted.current ||
@@ -275,16 +278,17 @@ function DevicesPage() {
               }
             }}
           >
-            <DeviceHeader />
+            <DeviceHeader device={conversation?.device} />
             <MessageScrollerContent
               // aria-busy={isBusy}
-              className='block min-h-full'
+              className='block min-h-[calc(100%-56px)]'
             >
               <div ref={virtualizer.containerRef} className='relative w-full'>
                 {virtualItems.map((virtualItem) => {
                   const message = messages[virtualItem.index],
                     previousMessage = messages[virtualItem.index - 1] || void 0,
                     isUserMessage = message.sender === current?.id,
+                    user = isUserMessage ? current : conversation?.device,
                     isLatest = virtualItem.index === messages.length - 1;
 
                   return (
@@ -306,10 +310,8 @@ function DevicesPage() {
                           userVariant='muted'
                           assistantVariant='muted'
                           isUserMessage={isUserMessage}
+                          user={user}
                           previousMessage={previousMessage}
-                          onOpenContextMenu={(info) => {
-                            msgCtxMenu.current?.open(info);
-                          }}
                         />
                       </InView>
                     </div>
@@ -327,8 +329,6 @@ function DevicesPage() {
         >
           <Transmitter onSend={onSend} />
         </footer>
-        <MessageContextMenu ref={msgCtxMenu} />
-        <Toaster />
       </div>
     </MessageScrollerProvider>
   );

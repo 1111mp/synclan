@@ -48,7 +48,7 @@ function StorageSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                 <Item
                   variant='muted'
                   size='sm'
-                  className='hover:bg-muted rounded-none py-3 transition-colors'
+                  className='hover:bg-muted rounded-none py-3'
                   onClick={async (evt) => {
                     evt.preventDefault();
                     const path = await openDialog({
@@ -98,7 +98,7 @@ function StorageSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                     <Item
                       variant='muted'
                       size='sm'
-                      className='hover:bg-muted rounded-none py-3 transition-colors'
+                      className='hover:bg-muted rounded-none py-3'
                     >
                       <ItemContent>
                         <ItemTitle>Auto File Cleanup</ItemTitle>

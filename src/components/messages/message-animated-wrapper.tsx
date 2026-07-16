@@ -1,5 +1,6 @@
-import { User } from 'lucide-react';
+import { CopyIcon, TrashIcon, User } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
+import { useRef } from 'react';
 
 import {
   Avatar,
@@ -7,6 +8,12 @@ import {
   AvatarImage,
   Bubble,
   BubbleContent,
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuGroup,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
   Message,
   MessageAvatar,
   MessageContent,
@@ -16,13 +23,14 @@ import {
   MESSAGE_ANIMATIONS,
   type MessageAnimationPreset,
 } from '@/lib/message-animations';
-import { cn } from '@/lib/utils';
-import { useMessageAnimationStore } from '@/stores';
+import { cn, resolveResourceUrl } from '@/lib/utils';
+import { deleteMessage } from '@/services/cmd';
+import { useDeviceStore, useIMStore, useMessageAnimationStore } from '@/stores';
 
-import type { MessageContextMenuInfo } from './message-context-menu';
+import { useConfirm } from '../confirm-dialog';
 import { MessageExpandable } from './message-expandable';
 import { ImageMessage } from './message-image';
-import { TextMessage } from './message-text';
+import { TextMessage, type MessageContextMenuRef } from './message-text';
 import { VideoMessage } from './message-video';
 import {
   isSameDay as isSameDayHandler,
@@ -39,9 +47,9 @@ function MessageAnimatedWrapper({
   animationPreset = MESSAGE_ANIMATIONS['blur-fade'],
   assistantVariant = 'ghost',
   scrollAnchor,
+  user,
   userVariant = 'muted',
   isUserMessage = false,
-  onOpenContextMenu,
   ...props
 }: Omit<
   React.ComponentProps<typeof MotionMessageScrollerItem>,
@@ -51,9 +59,9 @@ function MessageAnimatedWrapper({
   assistantVariant?: React.ComponentProps<typeof Bubble>['variant'];
   message: IMessage;
   previousMessage?: IMessage;
+  user?: IDevice | null;
   userVariant?: React.ComponentProps<typeof Bubble>['variant'];
   isUserMessage?: boolean;
-  onOpenContextMenu?: (info: MessageContextMenuInfo) => void;
 }) {
   const isNewMessage = useMessageAnimationStore((s) => s.has(message.uuid));
   const shouldReduceMotion = useReducedMotion();
@@ -76,10 +84,10 @@ function MessageAnimatedWrapper({
       <MessageAnimatedRow
         message={message}
         previousMessage={previousMessage}
+        user={user}
         isUserMessage={isUserMessage}
         assistantVariant={assistantVariant}
         userVariant={userVariant}
-        onOpenContextMenu={onOpenContextMenu}
       />
     </MotionMessageScrollerItem>
   );
@@ -91,18 +99,22 @@ function MessageAnimatedRow({
   assistantVariant,
   userVariant,
   isUserMessage = false,
-  onOpenContextMenu,
+  user,
 }: {
   assistantVariant: React.ComponentProps<typeof Bubble>['variant'];
   message: IMessage;
   previousMessage?: IMessage;
+  user?: IDevice | null;
   userVariant: React.ComponentProps<typeof Bubble>['variant'];
   isUserMessage?: boolean;
-  onOpenContextMenu?: (info: MessageContextMenuInfo) => void;
 }) {
+  const textMessageRef = useRef<MessageContextMenuRef>(null);
+
+  const confirm = useConfirm();
+
   const renderMessage = () => {
     if (message.type === 'text') {
-      return <TextMessage message={message} />;
+      return <TextMessage ref={textMessageRef} message={message} />;
     }
 
     if (message.type === 'image') {
@@ -150,8 +162,8 @@ function MessageAnimatedRow({
             <Avatar size='lg'>
               <AvatarImage
                 className='rounded-full'
-                src='https://github.com/shadcn.png'
-                alt='@me'
+                src={resolveResourceUrl(user?.avatar)}
+                alt={user?.name ?? 'avatar'}
               />
               <AvatarFallback>
                 <User />
@@ -160,22 +172,68 @@ function MessageAnimatedRow({
           )}
         </MessageAvatar>
         <MessageContent>
-          <Bubble
-            className='max-w-[90%]'
-            variant={isUserMessage ? userVariant : assistantVariant}
-            onContextMenu={(evt) => {
-              evt.preventDefault();
+          <ContextMenu>
+            <ContextMenuTrigger asChild>
+              <Bubble
+                className='max-w-[90%]'
+                variant={isUserMessage ? userVariant : assistantVariant}
+              >
+                <BubbleContent className='editor-shell'>
+                  <MessageExpandable>{renderMessage()}</MessageExpandable>
+                </BubbleContent>
+              </Bubble>
+            </ContextMenuTrigger>
+            <ContextMenuContent>
+              <ContextMenuGroup>
+                <ContextMenuItem
+                  onSelect={async () => {
+                    if (message.type === 'text' && textMessageRef.current) {
+                      await textMessageRef.current.onCopy();
+                    }
+                  }}
+                >
+                  <CopyIcon />
+                  Copy
+                </ContextMenuItem>
+              </ContextMenuGroup>
+              <ContextMenuSeparator />
+              <ContextMenuGroup>
+                <ContextMenuItem
+                  variant='destructive'
+                  onSelect={async () => {
+                    const ok = await confirm({
+                      icon: <TrashIcon />,
+                      title: 'Delete message?',
+                      description:
+                        'This will permanently delete this message from the database. This action cannot be undone, and the message will also be removed from the other device.',
+                      confirmText: 'Delete',
+                      actionVariant: 'destructive',
+                    });
 
-              onOpenContextMenu?.({
-                x: evt.clientX,
-                y: evt.clientY,
-              });
-            }}
-          >
-            <BubbleContent className='editor-shell'>
-              <MessageExpandable>{renderMessage()}</MessageExpandable>
-            </BubbleContent>
-          </Bubble>
+                    if (ok) {
+                      const current = useDeviceStore.getState().current;
+                      if (!current?.id) return;
+
+                      useIMStore
+                        .getState()
+                        .deleteMessage(
+                          useIMStore.getState().activeDeviceId,
+                          message.uuid,
+                        );
+                      try {
+                        await deleteMessage(current.id, message.uuid);
+                      } catch {
+                        // TODO 删除消息失败
+                      }
+                    }
+                  }}
+                >
+                  <TrashIcon />
+                  Delete
+                </ContextMenuItem>
+              </ContextMenuGroup>
+            </ContextMenuContent>
+          </ContextMenu>
         </MessageContent>
         <p
           className={cn(

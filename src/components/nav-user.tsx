@@ -20,14 +20,11 @@ import {
   useSidebar,
 } from '@/components/ui';
 import { resolveResourceUrl } from '@/lib/utils';
-import { useDeviceStore } from '@/stores';
 
-export function NavUser() {
+export function NavUser({ current }: { current?: IDevice | null }) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { isMobile, toggleSidebar } = useSidebar();
-
-  const current = useDeviceStore((s) => s.current);
 
   const handleNavigate = (path: string) => {
     if (pathname !== path) {
@@ -52,9 +49,9 @@ export function NavUser() {
                 <AvatarImage
                   src={resolveResourceUrl(current?.avatar)}
                   alt={current?.name}
-                  className='rounded-lg'
+                  className='rounded-full'
                 />
-                <AvatarFallback className='rounded-lg'>
+                <AvatarFallback className='rounded-full'>
                   <User />
                 </AvatarFallback>
               </Avatar>
@@ -75,11 +72,11 @@ export function NavUser() {
               <div className='flex items-center gap-2 px-1 py-1.5 text-left text-sm'>
                 <Avatar className='size-8'>
                   <AvatarImage
-                    className='rounded-lg'
+                    className='rounded-full'
                     src={resolveResourceUrl(current?.avatar)}
                     alt={current?.name}
                   />
-                  <AvatarFallback className='rounded-lg'>
+                  <AvatarFallback className='rounded-full'>
                     <User />
                   </AvatarFallback>
                 </Avatar>
@@ -89,13 +86,6 @@ export function NavUser() {
                 </div>
               </div>
             </DropdownMenuLabel>
-            {/*<DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <Sparkles />
-                Upgrade to Pro
-              </DropdownMenuItem>
-            </DropdownMenuGroup>*/}
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem onClick={() => handleNavigate('/profile')}>

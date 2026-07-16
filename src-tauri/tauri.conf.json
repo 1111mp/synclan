@@ -12,10 +12,12 @@
   },
   "app": {
     "macOSPrivateApi": true,
-    "windows": [],
     "security": {
       "csp": {
         "default-src": "blob: data: filesystem: ws: wss: http: https: tauri: asset: 'unsafe-eval' 'unsafe-inline' 'self'",
+        "style-src": "'self' 'unsafe-inline'",
+        "style-src-elem": "'self' 'unsafe-inline'",
+        "style-src-attr": "'self' 'unsafe-inline'",
         "connect-src": "ipc: http://ipc.localhost"
       },
       "assetProtocol": {
@@ -26,7 +28,6 @@
   },
   "bundle": {
     "active": true,
-    "longDescription": "SyncLan",
     "targets": "all",
     "icon": [
       "icons/32x32.png",
@@ -35,6 +36,22 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "resources": ["resources", "resources/web/*", "resources/migrations/*"]
+    "resources": ["resources", "resources/web/*", "resources/migrations/*"],
+    "publisher": "Synclan",
+    "copyright": "MIT License",
+    "licenseFile": "../LICENSE",
+    "license": "MIT",
+    "category": "SocialNetworking",
+    "shortDescription": "Local network chat and file transfer",
+    "longDescription": "SyncLan is a cross-platform utility for chatting and transferring files between devices on the same local network.",
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEEzMEZCNDA0NTlFMTBGOUIKUldTYkQrRlpCTFFQbzBSWjFRVnZCWEQvSmswWFBkcUJueERnVGo0T0o1b3lmR3h3cWl6VWxIZDQK",
+      "endpoints": [
+        "https://github.com/1111mp/synclan/releases/download/updater/update.json"
+      ]
+    }
   }
 }

@@ -2,10 +2,15 @@ import { ClipboardDOMImportExtension } from '@lexical/clipboard';
 import { CodeHighlightNode, CodeNode } from '@lexical/code-core';
 import { AutoFocusExtension, ClearEditorExtension } from '@lexical/extension';
 import { HistoryExtension } from '@lexical/history';
-import { AutoLinkNode, LinkNode } from '@lexical/link';
-import { ListItemNode, ListNode } from '@lexical/list';
+import { AutoLinkNode, LinkExtension, LinkNode } from '@lexical/link';
+import { ListExtension, ListItemNode, ListNode } from '@lexical/list';
 import { HeadingNode, QuoteNode, RichTextExtension } from '@lexical/rich-text';
-import { defineExtension, LineBreakNode, ParagraphNode } from 'lexical';
+import {
+  configExtension,
+  defineExtension,
+  LineBreakNode,
+  ParagraphNode,
+} from 'lexical';
 
 import {
   DragDropPasteExtension,
@@ -23,7 +28,10 @@ import {
   SimpleListNode,
   SimpleQuoteNode,
 } from '@/components/nodes';
-import { CodeHighlightExtension } from '@/components/plugins';
+import {
+  CodeHighlightExtension,
+  validateUrlHandle,
+} from '@/components/plugins';
 
 export const SynclanEditorExtension = defineExtension({
   dependencies: [
@@ -32,6 +40,10 @@ export const SynclanEditorExtension = defineExtension({
     HistoryExtension,
     ClearEditorExtension,
     CodeHighlightExtension,
+    /* @__PURE__ */ configExtension(ListExtension, {
+      shouldPreserveNumbering: false,
+    }),
+    configExtension(LinkExtension, { validateUrl: validateUrlHandle }),
     ImagesExtension,
     DragDropPasteExtension,
     ClipboardDOMImportExtension,

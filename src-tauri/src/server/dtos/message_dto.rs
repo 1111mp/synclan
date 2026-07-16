@@ -24,3 +24,11 @@ pub struct UpdateAckDto {
     pub receiver: String,
     pub last_ack: i32,
 }
+
+#[derive(Debug, Deserialize, IntoParams, Validate)]
+pub struct DeleteMessagesDto {
+    #[validate(length(min = 1, message = "Invalid device id"))]
+    pub self_id: String,
+    #[validate(length(min = 1, message = "Invalid device id"))]
+    pub target_id: String,
+}

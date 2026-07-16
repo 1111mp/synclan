@@ -2,7 +2,7 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Capability for the main window",
-  "windows": ["main", "preview"],
+  "windows": ["main"],
   "permissions": [
     "core:default",
     "opener:default",
@@ -18,6 +18,7 @@
     "core:event:allow-listen",
     "core:event:allow-unlisten",
     "dialog:default",
+    "fs:allow-read-file",
     "core:window:allow-set-theme"
   ]
 }

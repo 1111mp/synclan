@@ -28,7 +28,6 @@ export const useAttachmentStore = create<AttachmentState>()(
     },
     remove: (id) => {
       const attachment = get().attachments.get(id);
-      console.log('attachment', attachment);
       if (attachment && !attachment.lock) {
         set((state) => {
           state.attachments.delete(id);

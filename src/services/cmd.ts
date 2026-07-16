@@ -35,6 +35,7 @@ export async function getSynclanConfig() {
     if (!configStr) {
       return {
         theme: 'system',
+        locale: getDefaultLocale(),
       } as ISynclanConfig;
     }
     try {
@@ -42,16 +43,27 @@ export async function getSynclanConfig() {
     } catch {
       return {
         theme: 'system',
+        locale: getDefaultLocale(),
       } as ISynclanConfig;
     }
   }
   return invoke<ISynclanConfig>('get_synclan_config');
 }
 
+function getDefaultLocale(): AppLocale {
+  const locale = navigator.language.toLowerCase();
+
+  if (locale.startsWith('zh')) {
+    return 'zh-CN';
+  }
+
+  return 'en';
+}
+
 /**
  * Patch synclan configuration
  */
-export async function patchSynclanConfig(payload: ISynclanConfig) {
+export async function patchSynclanConfig(payload: Partial<ISynclanConfig>) {
   if (isWeb) {
     localStorage.setItem(SYNCLAN_CONFIG_TORAGE_KEY, JSON.stringify(payload));
     return;
@@ -68,7 +80,11 @@ export async function getDeviceById(id: string): Promise<IDevice | null> {
       return null;
     }
   }
-  return invoke<IDevice | null>('get_device_by_id', { id });
+  try {
+    return invoke<IDevice | null>('get_device_by_id', { id });
+  } catch {
+    return null;
+  }
 }
 
 export async function getDevices(selfId?: string): Promise<IDevice[]> {
@@ -228,6 +244,29 @@ export async function updateDeviceProfile(id: string, patch: DevicePatch) {
   return response.payload;
 }
 
+export async function deleteConversationMessages(
+  selfId: string,
+  targetId: string,
+) {
+  if (isWeb) {
+    const response = await api.delete<null>(
+      `/messages/conversation/${targetId}`,
+    );
+    return response?.payload;
+  }
+
+  return invoke<void>('delete_conversation_messages', { selfId, targetId });
+}
+
+export async function deleteMessage(deviceId: string, uuid: string) {
+  if (isWeb) {
+    const response = await api.delete<boolean>(`/messages/${uuid}`);
+    return response?.payload;
+  }
+
+  return invoke<void>('delete_message_by_uuid', { deviceId, uuid });
+}
+
 export async function uploadAttachment(attachment: Attachment) {
   const parsed = dataUriToBuffer(attachment.src);
   const blob = new Blob([parsed.buffer], { type: parsed.type });
@@ -262,10 +301,10 @@ export async function uploadFile(file: File, permanent: boolean = false) {
 
 export async function onPickImage(): Promise<string | null> {
   if (isWeb) {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const input = document.createElement('input');
       input.type = 'file';
-      input.accept = 'image/png,image/jpeg,image/webp';
+      input.accept = 'image/*';
 
       input.onchange = async () => {
         const file = input.files?.[0];
@@ -278,8 +317,8 @@ export async function onPickImage(): Promise<string | null> {
         try {
           const url = await uploadFile(file, true);
           resolve(url);
-        } catch {
-          resolve(null);
+        } catch (error) {
+          reject(error);
         } finally {
           input.remove();
         }
@@ -310,18 +349,14 @@ export async function onPickImage(): Promise<string | null> {
     return null;
   }
 
-  try {
-    const bytes = await readFile(path);
-    const blob = new Blob([bytes]);
+  const bytes = await readFile(path);
+  const blob = new Blob([bytes]);
 
-    const fileName = path.split(/[/\\]/).pop() || 'avatar.png';
-    const fileExtension = fileName.split('.').pop() || 'png';
+  const fileName = path.split(/[/\\]/).pop() || 'avatar.png';
+  const fileExtension = fileName.split('.').pop() || 'png';
 
-    const file = new File([blob], fileName, { type: `image/${fileExtension}` });
+  const file = new File([blob], fileName, { type: `image/${fileExtension}` });
 
-    const url = await uploadFile(file, true);
-    return url;
-  } catch {
-    return null;
-  }
+  const url = await uploadFile(file, true);
+  return url;
 }

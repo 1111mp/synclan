@@ -4,23 +4,27 @@ import type { PersistStorage } from 'zustand/middleware';
 import { persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 
+import { i18n } from '@/lib/i18n';
 import { applyPendingTheme } from '@/lib/utils';
 import { getSynclanConfig, patchSynclanConfig } from '@/services/cmd';
 
 type SynclanState = {
   config?: ISynclanConfig;
-  updateConfig: (config: ISynclanConfig) => void;
+  updateConfig: (patch: Partial<ISynclanConfig>) => void;
   updateTheme: (theme: AppTheme) => Promise<void>;
 };
+
+let previousConfig: ISynclanConfig | null = null;
 
 const storage: PersistStorage<Pick<SynclanState, 'config'>> = {
   getItem: async (_name) => {
     const config = await getSynclanConfig();
 
-    // // apply theme
-    // if (isWeb) {
-    //   await applyPendingTheme(config.theme);
-    // }
+    previousConfig = structuredClone(config);
+
+    if (config.locale) {
+      void i18n.changeLanguage(config.locale);
+    }
 
     return {
       state: {
@@ -33,7 +37,20 @@ const storage: PersistStorage<Pick<SynclanState, 'config'>> = {
     const config = value.state.config;
     if (!config) return;
 
-    await patchSynclanConfig(config);
+    if (!previousConfig) {
+      previousConfig = structuredClone(config);
+      return;
+    }
+
+    const patch = createConfigPatch(previousConfig, config);
+
+    if (Object.keys(patch).length === 0) {
+      return;
+    }
+
+    await patchSynclanConfig(patch);
+
+    previousConfig = structuredClone(config);
   },
   removeItem: noop,
 };
@@ -43,9 +60,13 @@ export const useSynclanStore = create<SynclanState>()(
     immer((set) => ({
       config: undefined,
 
-      updateConfig: (config) =>
+      updateConfig: (patch) =>
         set((state) => {
-          state.config = config;
+          if (!state.config) {
+            return;
+          }
+
+          Object.assign(state.config, patch);
         }),
       updateTheme: async (theme) => {
         set((state) => {
@@ -63,3 +84,23 @@ export const useSynclanStore = create<SynclanState>()(
     },
   ),
 );
+
+/**
+ * Create config patch
+ *
+ * Only return changed fields.
+ */
+function createConfigPatch(
+  oldConfig: ISynclanConfig,
+  newConfig: ISynclanConfig,
+): Partial<ISynclanConfig> {
+  const patch: Partial<ISynclanConfig> = {};
+
+  for (const key of Object.keys(newConfig) as Array<keyof ISynclanConfig>) {
+    if (oldConfig[key] !== newConfig[key]) {
+      patch[key] = newConfig[key] as never;
+    }
+  }
+
+  return patch;
+}

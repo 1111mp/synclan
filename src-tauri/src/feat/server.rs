@@ -82,13 +82,14 @@ pub async fn uploaded_files_auto_cleanup() -> Result<()> {
 
     let auto_file_clean = { synclan.auto_file_clean.unwrap_or(0) };
     let day = match auto_file_clean {
-        1 => 7,
-        2 => 30,
-        3 => 90,
+        1 => 1,
+        2 => 7,
+        3 => 30,
+        4 => 90,
         _ => return Ok(()),
     };
 
-    logging!(debug, Type::Server, "try to delete uploaded files, day: {day}",);
+    logging!(info, Type::Server, "try to delete uploaded files, day: {day}",);
 
     let today = Local::now().date_naive();
     let mut dir = fs::read_dir(file_upload_dir).await?;

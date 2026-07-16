@@ -3,7 +3,7 @@ import { RouterProvider } from 'react-router';
 import { useShallow } from 'zustand/react/shallow';
 
 import { AppProvider } from '@/app-context';
-import { LoadingScreen } from '@/components';
+import { ConfirmProvider, LoadingScreen } from '@/components';
 import { TooltipProvider } from '@/components/ui';
 import { useTheme } from '@/hooks/use-theme';
 import { getDevice } from '@/lib/device';
@@ -61,7 +61,9 @@ function App() {
   return (
     <TooltipProvider>
       <AppProvider>
-        <RouterProvider router={router} />
+        <ConfirmProvider>
+          <RouterProvider router={router} />
+        </ConfirmProvider>
       </AppProvider>
     </TooltipProvider>
   );

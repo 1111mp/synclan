@@ -16,6 +16,7 @@ use apalis::prelude::{BackoffConfig, IntervalStrategy, StrategyBuilder};
 use apalis_sqlite::SqliteStorage;
 use api_doc::ApiDoc;
 use axum::{
+    extract::DefaultBodyLimit,
     handler::HandlerWithoutStateExt,
     http::{Method, StatusCode, header},
 };
@@ -168,10 +169,24 @@ impl HttpServer {
 
         let mut app = router
             // swagger ui
-            .merge(SwaggerUi::new("/api/docs").url("/api/docs/openapi.json", api))
+            .merge(SwaggerUi::new("/api/docs").url("/api/docs/openapi.json", api));
+
+        if let Some(file_upload_dir) = &synclan.file_upload_dir {
+            // uploads files static server
+            app = app.nest_service(
+                "/attachments",
+                ServeDir::new(file_upload_dir)
+                    .not_found_service((async || (StatusCode::NOT_FOUND, "Not found")).into_service()),
+            );
+        }
+
+        app = app
             // web static server
-            .fallback_service(static_server)
+            .fallback_service(static_server);
+
+        let app = app
             .layer(layer)
+            .layer(DefaultBodyLimit::max(200 * 1024 * 1024))
             .layer(
                 CorsLayer::new()
                     .allow_credentials(true)
@@ -197,15 +212,6 @@ impl HttpServer {
                     .max_age(Duration::from_secs(3600)),
             )
             .with_state(app_state);
-
-        if let Some(file_upload_dir) = &synclan.file_upload_dir {
-            // uploads files static server
-            app = app.nest_service(
-                "/attachments",
-                ServeDir::new(file_upload_dir)
-                    .not_found_service((async || (StatusCode::NOT_FOUND, "Not found")).into_service()),
-            );
-        }
 
         logging!(info, Type::Server, "Starting HTTP server...");
 

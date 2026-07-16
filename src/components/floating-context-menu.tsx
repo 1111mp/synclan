@@ -9,26 +9,32 @@ import {
   useInteractions,
   useTransitionStyles,
 } from '@floating-ui/react';
-import { useImperativeHandle, useState, type Ref } from 'react';
+import { useImperativeHandle, useState, type ReactNode, type Ref } from 'react';
 
 import { cn } from '@/lib/utils';
 
-type MessageContextMenuInfo = {
+type FloatingContextMenuInfo<T> = {
   x: number;
   y: number;
+  data: T;
 };
 
-type MessageContextMenuRef = {
-  open: (info: MessageContextMenuInfo) => void;
+type FloatingContextMenuRef<T> = {
+  open: (info: FloatingContextMenuInfo<T>) => void;
   hide: () => void;
 };
 
-type Props = {
-  ref?: Ref<MessageContextMenuRef>;
+type FloatingContextMenuProps<T> = {
+  ref?: Ref<FloatingContextMenuRef<T>>;
+  children: (data: T | null) => ReactNode;
 };
 
-function MessageContextMenu({ ref }: Props) {
+function FloatingContextMenu<T>({
+  ref,
+  children,
+}: FloatingContextMenuProps<T>) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [data, setData] = useState<T | null>(null);
 
   const { context, refs, floatingStyles } = useFloating({
     open: isOpen,
@@ -70,8 +76,9 @@ function MessageContextMenu({ ref }: Props) {
     hide: onHideHandler,
   }));
 
-  const onOpenHandler = ({ x, y }: MessageContextMenuInfo) => {
-    setIsOpen(true);
+  const onOpenHandler = ({ x, y, data }: FloatingContextMenuInfo<T>) => {
+    setData(data);
+
     refs.setPositionReference({
       getBoundingClientRect() {
         return {
@@ -102,6 +109,7 @@ function MessageContextMenu({ ref }: Props) {
           ref={refs.setFloating}
           style={floatingStyles}
           {...getFloatingProps()}
+          className='z-50'
         >
           <div
             className={cn(
@@ -109,8 +117,7 @@ function MessageContextMenu({ ref }: Props) {
             )}
             style={styles}
           >
-            <ContextMenuItem>Back</ContextMenuItem>
-            <ContextMenuItem>Forward</ContextMenuItem>
+            {children(data)}
           </div>
         </div>
       )}
@@ -118,7 +125,7 @@ function MessageContextMenu({ ref }: Props) {
   );
 }
 
-function ContextMenuItem({
+function FloatingContextMenuItem({
   className,
   inset,
   variant = 'default',
@@ -143,8 +150,7 @@ function ContextMenuItem({
 }
 
 export {
-  MessageContextMenu,
-  type MessageContextMenuInfo,
-  type Props as MessageContextMenuProps,
-  type MessageContextMenuRef,
+  FloatingContextMenu,
+  FloatingContextMenuItem,
+  type FloatingContextMenuRef,
 };

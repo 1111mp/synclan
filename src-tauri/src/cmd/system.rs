@@ -1,5 +1,5 @@
 use super::CmdResult;
-use crate::{cmd::StringifyErr, feat};
+use crate::{cmd::StringifyErr, core::autostart, feat};
 use local_ip_address::local_ip;
 use std::net::IpAddr;
 
@@ -29,18 +29,6 @@ pub fn is_admin() -> CmdResult<bool> {
 #[tauri::command]
 #[cfg(not(target_os = "windows"))]
 pub async fn is_admin() -> CmdResult<bool> {
-    #[cfg(target_os = "macos")]
-    {
-        Ok(unsafe { libc::geteuid() } == 0)
-    }
-
-    #[cfg(target_os = "linux")]
-    {
-        Ok(unsafe { libc::geteuid() } == 0)
-    }
-
-    #[cfg(not(any(target_os = "macos", target_os = "linux")))]
-    {
-        Ok(false)
-    }
+    let is_admin = autostart::is_binary_admin();
+    Ok(is_admin)
 }

@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useEffectEvent } from 'react';
 import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 
 import { FieldGroup } from '@/components/ui';
 import { isWeb } from '@/lib/constant';
@@ -19,6 +20,8 @@ function loader() {}
 function SettingsPage() {
   const config = useSynclanStore((s) => s.config);
   const updateConfig = useSynclanStore((s) => s.updateConfig);
+
+  const { i18n } = useTranslation();
 
   const form = useForm<SettingsForm>({
     resolver: zodResolver(formSchema),
@@ -84,6 +87,10 @@ function SettingsPage() {
         app_log_max_size: values.app_log_max_size,
         app_log_max_count: values.app_log_max_count,
       });
+    }
+
+    if (settings.locale && settings.locale !== config?.locale) {
+      await i18n.changeLanguage(settings.locale);
     }
 
     if (settings.theme && settings.theme !== config?.theme) {

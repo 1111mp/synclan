@@ -37,7 +37,7 @@ function ServerSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                   <Item
                     variant='muted'
                     size='sm'
-                    className='hover:bg-muted rounded-none transition-colors'
+                    className='hover:bg-muted rounded-none'
                   >
                     <ItemContent>
                       <ItemTitle>HTTP Server Port</ItemTitle>
@@ -76,7 +76,7 @@ function ServerSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                 >
                   <Item
                     variant='muted'
-                    className='hover:bg-muted rounded-none py-3 transition-colors'
+                    className='hover:bg-muted rounded-none py-3'
                   >
                     <ItemContent>
                       <ItemTitle>Enable HTTPS</ItemTitle>

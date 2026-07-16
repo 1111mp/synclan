@@ -7,6 +7,7 @@ import {
   DecoratorNode,
   type DOMExportOutput,
   type EditorConfig,
+  type LexicalEditor,
   type LexicalNode,
   type LexicalUpdateJSON,
   type NodeKey,
@@ -114,6 +115,10 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
     imgElement.setAttribute('alt', this.__altText);
     imgElement.setAttribute('width', this.__width.toString());
     imgElement.setAttribute('height', this.__height.toString());
+    if (this.__isFromSynclan) {
+      imgElement.setAttribute('data-from-synclan', `${this.__isFromSynclan}`);
+      imgElement.setAttribute('data-synclan-src', this.__src);
+    }
 
     return { element: imgElement };
   }
@@ -163,14 +168,18 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
 
   // View
 
-  createDOM(config: EditorConfig): HTMLElement {
+  createDOM(config: EditorConfig, editor: LexicalEditor): HTMLElement {
     const span = document.createElement('span');
     const theme = config.theme;
     const className = theme.image;
     if (className !== undefined) {
       span.className = className;
     }
-    if (typeof this.__width === 'number' && typeof this.__height === 'number') {
+    if (
+      !editor.isEditable() &&
+      typeof this.__width === 'number' &&
+      typeof this.__height === 'number'
+    ) {
       span.style.display = 'inline-block';
       span.style.width = `${this.__width}px`;
       span.style.height = `${this.__height}px`;
@@ -207,6 +216,10 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
         resizable={true}
       />
     );
+  }
+
+  getTextContent(): string {
+    return '[Image]';
   }
 }
 

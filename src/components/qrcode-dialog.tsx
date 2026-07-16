@@ -34,12 +34,12 @@ function QRCodeDialog({ ref }: QRCodeDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className='top-80 w-2xl max-w-2xl!'>
+      <DialogContent className='w-2xl max-w-2xl! max-[700px]:max-w-[90%]!'>
         <DialogHeader>
           <DialogTitle></DialogTitle>
           <DialogDescription></DialogDescription>
         </DialogHeader>
-        <div className='flex items-center space-x-10 px-4 pb-6'>
+        <div className='flex items-center gap-8 px-4 pb-6 max-[576px]:flex-col'>
           <div className='rounded-sm border p-2'>
             <QRCodeCanvas
               size={224}

@@ -8,13 +8,22 @@ export interface RequestOptions extends RequestInit {
   >;
 }
 
+interface ApiErrorPayload {
+  message?: string;
+  statusCode?: number;
+  [key: string]: any;
+}
+
 export class HttpError extends Error {
+  public statusCode: number;
+
   constructor(
     public status: number,
     public data: unknown,
-    message?: string,
   ) {
-    super(message ?? `HTTP Error: ${status}`);
+    const apiMessage = (data as ApiErrorPayload)?.message;
+    super(apiMessage ?? `HTTP Error: ${status}`);
+    this.statusCode = (data as ApiErrorPayload)?.statusCode ?? status;
   }
 }
 
@@ -114,14 +123,14 @@ export const api = {
   },
 
   put<T>(path: string, body?: unknown) {
-    return request<T>(path, {
+    return request<ApiResponse<T>>(path, {
       method: 'PUT',
       body: body ? JSON.stringify(body) : undefined,
     });
   },
 
   delete<T>(path: string) {
-    return request<T>(path, {
+    return request<ApiResponse<T>>(path, {
       method: 'DELETE',
     });
   },

@@ -58,7 +58,7 @@ function LoggerSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                     <Item
                       variant='muted'
                       size='sm'
-                      className='hover:bg-muted rounded-none py-3 transition-colors'
+                      className='hover:bg-muted rounded-none py-3'
                     >
                       <ItemContent>
                         <ItemTitle>Log Level</ItemTitle>
@@ -106,7 +106,7 @@ function LoggerSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                     <Item
                       variant='muted'
                       size='sm'
-                      className='hover:bg-muted rounded-none py-3 transition-colors'
+                      className='hover:bg-muted rounded-none py-3'
                     >
                       <ItemContent>
                         <ItemTitle>Log Cleanup</ItemTitle>
@@ -153,7 +153,7 @@ function LoggerSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                   <Item
                     variant='muted'
                     size='sm'
-                    className='hover:bg-muted rounded-none transition-colors'
+                    className='hover:bg-muted rounded-none'
                   >
                     <ItemContent>
                       <ItemTitle>Max Log Size</ItemTitle>
@@ -193,7 +193,7 @@ function LoggerSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                   <Item
                     variant='muted'
                     size='sm'
-                    className='hover:bg-muted rounded-none transition-colors'
+                    className='hover:bg-muted rounded-none'
                   >
                     <ItemContent>
                       <ItemTitle>Max Log Count</ItemTitle>
