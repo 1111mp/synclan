@@ -4,7 +4,6 @@ enableMapSet();
 
 export * from './app-server.store';
 export * from './app.store';
-export * from './conversations.store';
 export * from './device.store';
 export * from './im.store';
 export * from './message-animation.store';

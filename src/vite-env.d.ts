@@ -36,6 +36,7 @@ declare global {
 
   interface Window {
     __refreshVirtualList?: () => void;
+    __SYNCLAN_SERVER_DOMAIN__: string;
   }
 }
 

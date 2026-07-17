@@ -12,20 +12,7 @@ import {
   Toaster,
 } from '@/components/ui';
 
-// type BreadcrumbMatch = Omit<UIMatch, 'handle'> & {
-//   handle: {
-//     breadcrumb?:
-//       | string
-//       | ((data: any, params: Params<string>) => React.ReactNode);
-//   };
-// };
-
 function HomePage() {
-  // const matches = useMatches() as BreadcrumbMatch[];
-  // const validMatches = matches.filter(
-  //   (match) => match.handle && match.handle.breadcrumb,
-  // );
-
   return (
     <ImagePreviewProvider>
       <DeviceDiscoverProvider>

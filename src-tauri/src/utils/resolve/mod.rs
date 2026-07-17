@@ -1,6 +1,6 @@
 use crate::{
     config::Config,
-    core::logger::Logger,
+    core::{logger::Logger, tray::Tray},
     logging, logging_error,
     process::AsyncHandler,
     server,
@@ -34,11 +34,23 @@ pub fn resolve_setup_async() {
         #[cfg(target_os = "macos")]
         resolve_dock_show().await;
         init_window().await;
+
+        let _ = futures::join!(init_tray());
+
+        refresh_tray_menu().await;
     });
 }
 
 pub async fn init_work_config() {
     logging_error!(Type::Setup, init::init_config().await);
+}
+
+pub(super) async fn init_tray() {
+    logging_error!(Type::Setup, Tray::global().init().await);
+}
+
+pub(super) async fn refresh_tray_menu() {
+    logging_error!(Type::Setup, Tray::global().update_part().await);
 }
 
 pub(super) async fn init_window() {

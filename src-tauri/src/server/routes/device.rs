@@ -123,7 +123,6 @@ pub(crate) async fn get_all(claims: Claims) -> Result<HttpResponse<Vec<Device>>,
 pub(crate) async fn discover_all(
     Query(dto): Query<DiscoverDeviceDto>,
 ) -> Result<HttpResponse<Vec<Device>>, HttpException> {
-    eprintln!("dto: {:?}", &dto);
     let exclude_ids = dto.ids.unwrap_or_default();
     let devices = Device::get_not_in(&exclude_ids).await?;
     json_response!(devices);

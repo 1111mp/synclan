@@ -1,11 +1,14 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Power } from 'lucide-react';
 import { useEffect, useEffectEvent } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 
+import { useConfirm } from '@/components';
 import { FieldGroup } from '@/components/ui';
 import { isWeb } from '@/lib/constant';
 import { applyPendingTheme } from '@/lib/utils';
+import { restartApp } from '@/services/cmd';
 import { useSynclanStore } from '@/stores';
 
 import { AppearanceSettings } from './appearance-settings';
@@ -21,6 +24,7 @@ function SettingsPage() {
   const config = useSynclanStore((s) => s.config);
   const updateConfig = useSynclanStore((s) => s.updateConfig);
 
+  const confirm = useConfirm();
   const { i18n } = useTranslation();
 
   const form = useForm<SettingsForm>({
@@ -97,7 +101,34 @@ function SettingsPage() {
       await applyPendingTheme(settings.theme);
     }
 
-    updateConfig(settings);
+    let restart: boolean = false;
+    if (
+      (settings.http_server_port !== undefined &&
+        settings.http_server_port !== config?.http_server_port) ||
+      (settings.enable_encryption !== undefined &&
+        settings.enable_encryption !== config?.enable_encryption) ||
+      (settings.file_upload_dir !== undefined &&
+        settings.file_upload_dir !== config?.file_upload_dir)
+    ) {
+      restart = true;
+    }
+
+    await updateConfig(settings);
+
+    if (!isWeb && restart) {
+      const ok = await confirm({
+        icon: <Power />,
+        title: 'Restart Synclan?',
+        description:
+          'Some changes require a restart to take effect. Synclan will restart now.',
+        confirmText: 'Restart',
+        actionVariant: 'destructive',
+      });
+
+      if (ok) {
+        await restartApp();
+      }
+    }
   });
 
   return (

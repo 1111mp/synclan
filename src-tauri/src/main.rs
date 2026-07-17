@@ -5,5 +5,7 @@ fn main() {
     #[cfg(feature = "tokio-trace")]
     console_subscriber::init();
 
+    let _ = rustls::crypto::ring::default_provider().install_default();
+
     synclan_lib::run()
 }

@@ -10,6 +10,14 @@ import { db } from '@/lib/db';
 
 const SYNCLAN_CONFIG_TORAGE_KEY = '__SYNCLAN_CONFIG__';
 
+export async function restartApp() {
+  return invoke<void>('restart_app');
+}
+
+export async function exportServerCert() {
+  return invoke<void>('export_server_cert');
+}
+
 /**
  * @description Get the local IP address of the device.
  * @returns {Promise<string>} IP address.

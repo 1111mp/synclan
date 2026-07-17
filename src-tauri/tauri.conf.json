@@ -34,9 +34,10 @@
       "icons/128x128.png",
       "icons/128x128@2x.png",
       "icons/icon.icns",
-      "icons/icon.ico"
+      "icons/icon.ico",
+      "icons/IconAssets.car"
     ],
-    "resources": ["resources", "resources/web/*", "resources/migrations/*"],
+    "resources": ["resources", "resources/web/*", "resources/migrations/*", "icons/icon.png"],
     "publisher": "Synclan",
     "copyright": "MIT License",
     "licenseFile": "../LICENSE",
@@ -51,7 +52,10 @@
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEEzMEZCNDA0NTlFMTBGOUIKUldTYkQrRlpCTFFQbzBSWjFRVnZCWEQvSmswWFBkcUJueERnVGo0T0o1b3lmR3h3cWl6VWxIZDQK",
       "endpoints": [
         "https://github.com/1111mp/synclan/releases/download/updater/update.json"
-      ]
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
     }
   }
 }

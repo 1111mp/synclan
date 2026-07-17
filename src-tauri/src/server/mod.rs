@@ -216,7 +216,8 @@ impl HttpServer {
         logging!(info, Type::Server, "Starting HTTP server...");
 
         let ip: IpAddr = "0.0.0.0".parse()?;
-        let addr = SocketAddr::from((ip, 53317));
+        let port = synclan.http_server_port.unwrap_or(53317);
+        let addr = SocketAddr::from((ip, port));
 
         match synclan.enable_encryption {
             Some(true) | None => {
@@ -240,7 +241,13 @@ impl HttpServer {
     }
 
     /// gracefully shutdown http server & worker
-    pub async fn shutdown(&self) {
+    pub async fn shutdown(&self) -> bool {
+        let has_server = self.handle.lock().is_some() || self.runtime_handle.lock().is_some();
+        if !has_server {
+            logging!(info, Type::Server, "HTTP server is not running");
+            return false;
+        }
+
         logging!(info, Type::Server, "Shutting down HTTP server");
 
         WorkerMonitor::global().shutdown();
@@ -256,12 +263,14 @@ impl HttpServer {
                 logging!(
                     warn,
                     Type::Server,
-                    "Graceful shutdown timed out! Forcing backend tasks to abort for safety."
+                    "Graceful shutdown timed out! Aborting backend tasks."
                 );
             }
         }
 
         logging!(info, Type::Server, "HTTP server shutdown successfully");
+
+        return true;
     }
 }
 
@@ -284,5 +293,14 @@ pub async fn restart_http_server() -> Result<()> {
         .with_context(|| anyhow!("Failed to restart: SQLite connection pool has not been initialized"))?;
     HttpServer::global().start(db_pool).await?;
     logging!(info, Type::Server, "HTTP server restarted successfully");
+    Ok(())
+}
+
+/// Stop the local http server
+pub async fn stop_http_server() -> Result<()> {
+    logging!(info, Type::Server, "Stopping local HTTP server...");
+
+    HttpServer::global().shutdown().await;
+
     Ok(())
 }

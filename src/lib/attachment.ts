@@ -2,7 +2,7 @@ import { produce } from 'immer';
 
 import { uploadAttachment } from '@/services/cmd';
 
-import { ATTACHMENTS_BASE_URL } from './constant';
+import { getAttachmentBaseUrl } from './constant';
 
 interface EditorNode {
   type: string;
@@ -73,7 +73,7 @@ export async function prepareMessageContent(
 
   await Promise.all(
     uploadedUrls.map((url) =>
-      preloadImageInMemory(`${ATTACHMENTS_BASE_URL}/${url}`),
+      preloadImageInMemory(`${getAttachmentBaseUrl()}/${url}`),
     ),
   );
 

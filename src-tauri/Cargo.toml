@@ -55,6 +55,7 @@ once_cell = "1.21.4"
 open = "5.3.5"
 parking_lot = { workspace = true }
 rcgen = "0.14.8"
+rustls = { version = "0.23.42", features = ["ring"] }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 serde_qs = "1.1.2"
@@ -75,8 +76,11 @@ sqlx = { version = "0.9.0", features = [
 sys-locale = "0.3.2"
 tauri = { workspace = true, features = [
   "devtools",
+  "image-ico",
+  "image-png",
   "macos-private-api",
-  "protocol-asset"
+  "protocol-asset",
+  "tray-icon",
 ] }
 tauri-plugin-autostart = "2.5.1"
 tauri-plugin-devtools = "2.1.0"

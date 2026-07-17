@@ -1,7 +1,7 @@
 import { createContext, useContext, type ReactNode } from 'react';
 
 import { useSocketIO, type ReadyState, type SendMessage } from '@/hooks';
-import { WS_URL } from '@/lib/constant';
+import { getWSUrl } from '@/lib/constant';
 import { useDeviceStore, useIMStore, useMessageAnimationStore } from '@/stores';
 
 type AppContext = {
@@ -15,7 +15,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const current = useDeviceStore((s) => s.current);
   const addMessage = useIMStore((s) => s.addMessage);
 
-  const { state: socketState, sendMessage } = useSocketIO(WS_URL, {
+  const { state: socketState, sendMessage } = useSocketIO(getWSUrl(), {
     transports: ['websocket'],
     auth: {
       deviceId: current?.id,

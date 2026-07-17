@@ -1,31 +1,62 @@
-use crate::utils::dirs;
-use std::{fs, path::PathBuf};
+pub const DEFAULT_LANGUAGE: &str = "en";
 
-const DEFAULT_LANGUAGE: &str = "en";
-
-fn get_locales_dir() -> Option<PathBuf> {
-    dirs::app_resources_dir()
-        .map(|resource_path| resource_path.join("locales"))
-        .ok()
+pub fn get_supported_languages() -> Vec<&'static str> {
+    vec!["en", "zh-CN"]
 }
 
-pub fn get_supported_languages() -> Vec<String> {
-    let mut languages = Vec::new();
+#[derive(Debug)]
+pub enum Locale {
+    En,
+    ZhCn,
+}
 
-    if let Some(locales_dir) = get_locales_dir()
-        && let Ok(entries) = fs::read_dir(locales_dir)
-    {
-        for entry in entries.flatten() {
-            if let Some(file_name) = entry.file_name().to_str()
-                && let Some(lang) = file_name.strip_suffix(".json")
-            {
-                languages.push(lang.to_string());
-            }
+impl Locale {
+    pub fn from_str(locale: Option<&str>) -> Self {
+        match locale {
+            Some("zh-CN") => Locale::ZhCn,
+            _ => Locale::En,
         }
     }
 
-    if languages.is_empty() {
-        languages.push(DEFAULT_LANGUAGE.to_string());
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Locale::En => "en",
+            Locale::ZhCn => "zh-CN",
+        }
     }
-    languages
+}
+
+fn tr_en(key: &str) -> &str {
+    match key {
+        "menu.dashboard" => "Open Synclan",
+        "menu.open_config_dir" => "Config Directory",
+        "menu.open_upload_dir" => "Resources Directory",
+        "menu.open_logs_dir" => "Logs Directory",
+        "menu.open_dir" => "Open Directory",
+        "menu.open_dev_tools" => "Open Dev Tools",
+        "menu.about" => "About Synclan",
+        "menu.quit" => "Quit Synclan",
+        _ => key,
+    }
+}
+
+fn tr_zh_cn(key: &str) -> &str {
+    match key {
+        "menu.dashboard" => "打开 Synclan",
+        "menu.open_config_dir" => "配置目录",
+        "menu.open_upload_dir" => "资源目录",
+        "menu.open_logs_dir" => "日志目录",
+        "menu.open_dir" => "打开目录",
+        "menu.open_dev_tools" => "打开开发者工具",
+        "menu.about" => "关于 Synclan",
+        "menu.quit" => "退出 Synclan",
+        _ => key,
+    }
+}
+
+pub fn tr<'a>(locale: &Locale, key: &'a str) -> &'a str {
+    match locale {
+        Locale::En => tr_en(key),
+        Locale::ZhCn => tr_zh_cn(key),
+    }
 }

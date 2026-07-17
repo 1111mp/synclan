@@ -1,0 +1,23 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "identifier": "io.github.1111mp.synclan",
+  "bundle": {
+    "targets": ["deb", "rpm"],
+    "linux": {
+      "deb": {
+        "depends": ["openssl", "libayatana-appindicator3-1"],
+        "desktopTemplate": "./templates/synclan.desktop",
+        "provides": ["synclan"],
+        "conflicts": ["synclan"],
+        "replaces": ["synclan"]
+      },
+      "rpm": {
+        "depends": ["openssl", "libayatana-appindicator-gtk3"],
+        "desktopTemplate": "./templates/synclan.desktop",
+        "provides": ["synclan"],
+        "conflicts": ["synclan"],
+        "obsoletes": ["synclan"]
+      }
+    }
+  }
+}

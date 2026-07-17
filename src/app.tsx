@@ -8,7 +8,9 @@ import { TooltipProvider } from '@/components/ui';
 import { useTheme } from '@/hooks/use-theme';
 import { getDevice } from '@/lib/device';
 import { router } from '@/routes';
-import { useDeviceStore, useIMStore } from '@/stores';
+import { useAppServerStore, useDeviceStore, useIMStore } from '@/stores';
+
+import { getServerDomain } from './services/cmd';
 
 function App() {
   const mounted = useRef<boolean>(false);
@@ -19,6 +21,7 @@ function App() {
       updateCurrent: s.updateCurrent,
     })),
   );
+  const updateDomain = useAppServerStore((s) => s.updateDomain);
   const hydrateConversations = useIMStore((s) => s.hydrateConversations);
   const updateConvsFromOffline = useIMStore((s) => s.updateConvsFromOffline);
 
@@ -30,10 +33,12 @@ function App() {
 
     const initialization = async () => {
       try {
-        const [device] = await Promise.all([
+        const [device, domain] = await Promise.all([
           getDevice(),
+          getServerDomain(),
           hydrateConversations(),
         ]);
+        updateDomain(domain);
         if (device) {
           await updateConvsFromOffline(device.id);
           updateCurrent(device);
@@ -50,6 +55,7 @@ function App() {
   }, [
     updateLoading,
     updateCurrent,
+    updateDomain,
     hydrateConversations,
     updateConvsFromOffline,
   ]);

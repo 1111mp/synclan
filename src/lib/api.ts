@@ -1,4 +1,4 @@
-import { BASE_URL } from '@/lib/constant';
+import { getBaseUrl } from '@/lib/constant';
 import { DEVICE_ID_STORAGE_KEY } from '@/lib/device';
 
 export interface RequestOptions extends RequestInit {
@@ -65,7 +65,7 @@ async function request<T>(
     headers.set('Authorization', `Bearer ${token}`);
   }
 
-  const response = await fetch(BASE_URL + buildUrl(path, options.params), {
+  const response = await fetch(getBaseUrl() + buildUrl(path, options.params), {
     ...options,
     headers,
   });

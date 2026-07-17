@@ -16,7 +16,7 @@ import {
 } from 'lexical';
 import { lazy, type JSX } from 'react';
 
-import { ATTACHMENTS_BASE_URL } from '@/lib/constant';
+import { getAttachmentBaseUrl } from '@/lib/constant';
 
 const ImageComponent = lazy(() => import('./image-component'));
 
@@ -205,7 +205,7 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
       <ImageComponent
         src={
           this.__isFromSynclan
-            ? `${ATTACHMENTS_BASE_URL}/${this.__src}`
+            ? `${getAttachmentBaseUrl()}/${this.__src}`
             : this.__src
         }
         altText={this.__altText}

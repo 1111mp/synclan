@@ -11,7 +11,7 @@ pub mod synclan;
 pub mod system;
 pub mod webview_window;
 
-// pub use app::*;
+pub use app::*;
 pub use device::*;
 pub use message::*;
 pub use server::*;

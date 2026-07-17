@@ -11,7 +11,7 @@ parking_lot = { version = "0.12.5", features = ["hardware-lock-elision"] }
 serde = { version = "1.0.228" }
 serde_json = { version = "1.0.150" }
 serde_yaml_ng = { version = "0.10.0" }
-tauri = { version = "2.11.2" }
+tauri = { version = "2.11.5" }
 thiserror = { version = "2.0.18" }
 tokio = { version = "1.52.3", features = ["full"] }
 

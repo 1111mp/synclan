@@ -7,7 +7,11 @@ mod process;
 mod server;
 mod utils;
 
-use crate::{core::handle, process::AsyncHandler, utils::resolve};
+use crate::{
+    core::handle,
+    process::AsyncHandler,
+    utils::{resolve, window_manager::WindowManager},
+};
 use once_cell::sync::OnceCell;
 use tauri::{AppHandle, Manager};
 #[cfg(target_os = "macos")]
@@ -66,6 +70,8 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            // app
+            cmd::restart_app,
             // synclan
             cmd::get_synclan_config,
             cmd::patch_synclan_config,
@@ -94,6 +100,12 @@ pub fn run() {
             cmd::create_preview_window
         ]);
 
+    // macOS 内存压力下 WKWebView 渲染进程可能被系统终止（表现为白屏），
+    // 注册恢复钩子：窗口可见时立即 reload
+    // 恢复页面，不可见时延迟到用户下次打开窗口再 reload。
+    #[cfg(target_os = "macos")]
+    let builder = builder.on_web_content_process_terminate(resolve::window::on_web_content_process_terminated);
+
     // Devtools plugin only in debug mode with feature tauri-dev
     // to avoid duplicated registering of logger since the devtools plugin also registers a logger
     #[cfg(all(debug_assertions, not(feature = "tokio-trace"), feature = "tauri-dev"))]
@@ -107,11 +119,25 @@ pub fn run() {
 
     #[allow(unused)]
     app.run(|app_handle, evt| match evt {
+        #[cfg(target_os = "macos")]
+        tauri::RunEvent::Reopen {
+            has_visible_windows, ..
+        } => {
+            if core::handle::Handle::global().is_exiting() {
+                return;
+            }
+            AsyncHandler::spawn(move || async move {
+                if !has_visible_windows {
+                    handle::Handle::global().set_activation_policy_regular();
+                    let _ = WindowManager::show_main_window().await;
+                }
+            });
+        },
         tauri::RunEvent::Exit => AsyncHandler::block_on(async {
             // Windows session ending currently reaches Tao as WM_ENDSESSION and
             // destroys the loop without a preventable ExitRequested event.
             if !handle::Handle::global().is_exiting() {
-                // feat::quit().await;
+                feat::quit().await;
             }
             logging!(info, Type::System, "Application exited");
         }),
@@ -121,13 +147,32 @@ pub fn run() {
                 api.prevent_exit();
                 if !handle::Handle::global().is_exiting() {
                     AsyncHandler::block_on(async {
-                        // feat::quit().await;
+                        feat::quit().await;
                     });
                 }
             }
         },
         tauri::RunEvent::WindowEvent { label, event, .. } if label == "main" => match event {
-            tauri::WindowEvent::CloseRequested { api, .. } => {},
+            tauri::WindowEvent::CloseRequested { api, .. } => {
+                #[cfg(target_os = "macos")]
+                handle::Handle::global().set_activation_policy_accessory();
+
+                if core::handle::Handle::global().is_exiting() {
+                    return;
+                }
+
+                api.prevent_close();
+                if let Some(window) = WindowManager::get_main_window() {
+                    let _ = window.hide();
+                }
+            },
+            tauri::WindowEvent::Focused(focused) => {
+                #[cfg(target_os = "macos")]
+                if focused {
+                    crate::utils::resolve::window::reload_main_window_if_needed();
+                }
+                //
+            },
             #[cfg(target_os = "macos")]
             tauri::WindowEvent::Destroyed => {},
             _ => {},

@@ -10,11 +10,14 @@ import { getSynclanConfig, patchSynclanConfig } from '@/services/cmd';
 
 type SynclanState = {
   config?: ISynclanConfig;
-  updateConfig: (patch: Partial<ISynclanConfig>) => void;
+  updateConfig: (patch: Partial<ISynclanConfig>) => Promise<void>;
   updateTheme: (theme: AppTheme) => Promise<void>;
 };
 
 let previousConfig: ISynclanConfig | null = null;
+let updateConfigPromiseResolver:
+  | ((value: void | PromiseLike<void>) => void)
+  | null = null;
 
 const storage: PersistStorage<Pick<SynclanState, 'config'>> = {
   getItem: async (_name) => {
@@ -51,6 +54,10 @@ const storage: PersistStorage<Pick<SynclanState, 'config'>> = {
     await patchSynclanConfig(patch);
 
     previousConfig = structuredClone(config);
+
+    updateConfigPromiseResolver?.();
+
+    updateConfigPromiseResolver = null;
   },
   removeItem: noop,
 };
@@ -60,14 +67,19 @@ export const useSynclanStore = create<SynclanState>()(
     immer((set) => ({
       config: undefined,
 
-      updateConfig: (patch) =>
+      updateConfig: async (patch) => {
         set((state) => {
           if (!state.config) {
             return;
           }
 
           Object.assign(state.config, patch);
-        }),
+        });
+
+        await new Promise<void>((resolve) => {
+          updateConfigPromiseResolver = resolve;
+        });
+      },
       updateTheme: async (theme) => {
         set((state) => {
           if (state.config) {

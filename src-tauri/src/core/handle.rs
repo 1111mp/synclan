@@ -1,6 +1,6 @@
-use crate::{APP_HANDLE, singleton};
+use crate::{APP_HANDLE, logging, singleton, utils::logging::Type};
 use std::sync::atomic::{AtomicBool, Ordering};
-use tauri::AppHandle;
+use tauri::{AppHandle, Manager as _, WebviewWindow};
 
 #[derive(Debug)]
 pub struct Handle {

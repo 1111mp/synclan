@@ -90,17 +90,28 @@ pub struct ISynclan {
 
 impl ISynclan {
     fn get_system_locale() -> String {
-        let sys_lang = sys_locale::get_locale()
-            .unwrap_or_else(|| String::from("en"))
-            .to_lowercase();
+        let sys_lang = sys_locale::get_locale().unwrap_or_else(|| i18n::DEFAULT_LANGUAGE.to_string());
 
-        let lang_code = sys_lang.split(['_', '-']).next().unwrap_or("en");
         let supported_languages = i18n::get_supported_languages();
 
-        if supported_languages.contains(&lang_code.to_string()) {
-            lang_code.to_string()
-        } else {
-            String::from("en")
+        if supported_languages.contains(&sys_lang.as_str()) {
+            return sys_lang;
+        }
+
+        let lang = sys_lang.replace('_', "-");
+        if let Some(found) = supported_languages
+            .iter()
+            .find(|&&supported| lang.starts_with(supported))
+        {
+            return found.to_string();
+        }
+
+        let lang_code = lang.split('-').next().unwrap_or(i18n::DEFAULT_LANGUAGE);
+
+        match lang_code {
+            "zh" => "zh-CN".to_string(),
+            "en" => "en".to_string(),
+            _ => i18n::DEFAULT_LANGUAGE.to_string(),
         }
     }
 
