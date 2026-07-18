@@ -8,3 +8,4 @@ export * from './device.store';
 export * from './im.store';
 export * from './message-animation.store';
 export * from './synclan.store';
+export * from './updater.store';

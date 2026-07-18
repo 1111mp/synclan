@@ -3,14 +3,14 @@ import { RouterProvider } from 'react-router';
 import { useShallow } from 'zustand/react/shallow';
 
 import { AppProvider } from '@/app-context';
-import { ConfirmProvider, LoadingScreen } from '@/components';
-import { TooltipProvider } from '@/components/ui';
+import { ConfirmProvider, LoadingScreen, UpdateDialog } from '@/components';
+import { Toaster, TooltipProvider } from '@/components/ui';
 import { useTheme } from '@/hooks/use-theme';
+import { isWeb } from '@/lib/constant';
 import { getDevice } from '@/lib/device';
 import { router } from '@/routes';
+import { getServerDomain } from '@/services/cmd';
 import { useAppServerStore, useDeviceStore, useIMStore } from '@/stores';
-
-import { getServerDomain } from './services/cmd';
 
 function App() {
   const mounted = useRef<boolean>(false);
@@ -65,13 +65,17 @@ function App() {
   }
 
   return (
-    <TooltipProvider>
-      <AppProvider>
-        <ConfirmProvider>
-          <RouterProvider router={router} />
-        </ConfirmProvider>
-      </AppProvider>
-    </TooltipProvider>
+    <>
+      <TooltipProvider>
+        <AppProvider>
+          <ConfirmProvider>
+            <RouterProvider router={router} />
+          </ConfirmProvider>
+        </AppProvider>
+      </TooltipProvider>
+      <Toaster id='global' position='top-center' richColors={true} />
+      {!isWeb && <UpdateDialog />}
+    </>
   );
 }
 

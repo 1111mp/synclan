@@ -19,6 +19,9 @@
     "core:event:allow-unlisten",
     "dialog:default",
     "fs:allow-read-file",
-    "core:window:allow-set-theme"
+    "core:window:allow-set-theme",
+    "updater:default",
+    "process:allow-restart",
+    "process:allow-exit"
   ]
 }

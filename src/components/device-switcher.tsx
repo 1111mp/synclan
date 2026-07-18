@@ -1,12 +1,16 @@
 'use client';
 
+import { check } from '@tauri-apps/plugin-updater';
 import { AudioWaveform, ChevronsUpDown, Plus, QrCode } from 'lucide-react';
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
 
 import SynclanLogo from '@/assets/synclan.svg';
+import { useDeviceDiscover } from '@/components/device-discover';
 import { QRCodeDialog, type QRCodeDialogRef } from '@/components/qrcode-dialog';
 import {
+  Badge,
+  Button,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -18,20 +22,35 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui';
-
-import { useDeviceDiscover } from './device-discover';
+import { isWeb } from '@/lib/constant';
+import { cn } from '@/lib/utils';
+import { useSynclanStore, useUpdaterStore } from '@/stores';
 
 function DeviceSwitcher() {
-  const navigate = useNavigate();
-  const { isMobile, toggleSidebar } = useSidebar();
-  const { openDiscover } = useDeviceDiscover();
-
   const qrCodeRef = useRef<QRCodeDialogRef>(null);
+
+  const navigate = useNavigate();
+  const { open, isMobile, toggleSidebar } = useSidebar();
+  const { openDiscover } = useDeviceDiscover();
+  const config = useSynclanStore((s) => s.config);
+  const update = useUpdaterStore((s) => s.update);
+
+  useEffect(() => {
+    if (isWeb || !config?.auto_check_update) return;
+
+    void check().then((update) => {
+      if (update !== null) {
+        useUpdaterStore.getState().setUpdate(update);
+      }
+    });
+  }, [config?.auto_check_update]);
+
+  const hasUpdate = update !== null;
 
   return (
     <>
       <SidebarMenu>
-        <SidebarMenuItem>
+        <SidebarMenuItem className='relative'>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <SidebarMenuButton
@@ -48,6 +67,28 @@ function DeviceSwitcher() {
                 <ChevronsUpDown className='ml-auto' />
               </SidebarMenuButton>
             </DropdownMenuTrigger>
+            {!isWeb && hasUpdate && (
+              <Button
+                variant='ghost'
+                className={cn(
+                  'absolute top-1 right-8 p-0 h-fit',
+                  !open && !isMobile && '-top-2.5 -right-1',
+                )}
+                onClick={(evt) => {
+                  evt.stopPropagation();
+                  evt.preventDefault();
+
+                  useUpdaterStore.getState().setOpen(true);
+                }}
+              >
+                <Badge
+                  variant='destructive'
+                  className={'h-5 cursor-default px-1 text-[10px]'}
+                >
+                  NEW
+                </Badge>
+              </Button>
+            )}
             <DropdownMenuContent
               className='w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg'
               align='start'

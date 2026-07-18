@@ -8,6 +8,8 @@ import { defineConfig } from 'vite';
 import { createHtmlPlugin } from 'vite-plugin-html';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 
+import packageJson from './package.json';
+
 const host = process.env.TAURI_DEV_HOST;
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -47,6 +49,7 @@ export default defineConfig(async ({ mode }) => ({
   define: {
     OS_ARCH: `"${process.arch}"`,
     OS_PLATFORM: `"${process.platform}"`,
+    __APP_VERSION__: JSON.stringify(packageJson.version),
     EMOJI_ROOT_PATH:
       mode === 'production'
         ? `""`

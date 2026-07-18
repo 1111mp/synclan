@@ -44,19 +44,14 @@ function EmojiButton({ ...props }: Props) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Popover
-          open={open}
-          onOpenChange={(o) => {
-            setOpen(o);
-          }}
-        >
+        <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <Button
               className='text-muted-foreground hover:text-muted-foreground'
               size='sm'
               variant='ghost'
             >
-              <Smile className='size-5' strokeWidth={2} />
+              <Smile className='size-6' />
             </Button>
           </PopoverTrigger>
           <PopoverContent

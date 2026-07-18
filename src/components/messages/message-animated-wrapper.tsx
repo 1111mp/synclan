@@ -178,7 +178,7 @@ function MessageAnimatedRow({
                 className='max-w-[90%]'
                 variant={isUserMessage ? userVariant : assistantVariant}
               >
-                <BubbleContent className='editor-shell'>
+                <BubbleContent className='editor-shell overflow-x-auto'>
                   <MessageExpandable>{renderMessage()}</MessageExpandable>
                 </BubbleContent>
               </Bubble>

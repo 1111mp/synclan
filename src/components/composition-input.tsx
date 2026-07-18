@@ -45,6 +45,7 @@ import {
   ELEMENT_TRANSFORMERS,
   TEXT_MATCH_TRANSFORMERS,
 } from '@/components/transformers';
+import { useIsMobile } from '@/hooks';
 import { cn } from '@/lib/utils';
 
 const URL_MATCHER =
@@ -82,6 +83,8 @@ function CompositionInput({
 
   const editorRef = useRef<LexicalEditor>(null);
   const historyState = useRef<HistoryState>(createEmptyHistoryState());
+
+  const isMobile = useIsMobile();
 
   useImperativeHandle(ref, () => ({
     getEditor: onGetEditor,
@@ -173,7 +176,7 @@ function CompositionInput({
       <FixTextFormatPlugin />
       <OrderedListRecomputePlugin />
       <EmptyBlockToParagraphPlugin />
-      {!isFixedTools ? (
+      {!isMobile && !isFixedTools ? (
         <FloatingTextFormatToolbarPlugin
           onSetIsLinkEditMode={setIsLinkEditMode}
         />

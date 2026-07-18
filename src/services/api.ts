@@ -1,6 +1,14 @@
+import { getVersion } from '@tauri-apps/api/app';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 
 import { isWeb } from '@/lib/constant';
+
+export async function getAppVersion() {
+  if (isWeb) {
+    return __APP_VERSION__ ?? 'unknown';
+  }
+  return await getVersion();
+}
 
 /**
  * @description Get an instance of `Webview` for the current webview window.

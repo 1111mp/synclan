@@ -10,7 +10,7 @@ import {
   X,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -51,6 +51,8 @@ import { useConversationList, useIMStore, useSynclanStore } from '@/stores';
 function WelcomePage() {
   const [showCard, setShowCard] = useState<boolean>(true);
 
+  const needAnimation = useRef<boolean>(false);
+
   const navigate = useNavigate();
   const { config, updateTheme } = useSynclanStore(
     useShallow((s) => ({ config: s.config, updateTheme: s.updateTheme })),
@@ -61,7 +63,7 @@ function WelcomePage() {
   const hasDevices = conversations.length > 0;
 
   return (
-    <div className='flex flex-1 flex-col'>
+    <div className='flex flex-1 flex-col overflow-hidden'>
       <header
         data-tauri-drag-region
         className='bg-background flex h-14 w-full items-center justify-end px-4'
@@ -70,7 +72,10 @@ function WelcomePage() {
           variant='outline'
           size='icon-lg'
           className='relative overflow-hidden'
-          onClick={() => setShowCard((pre) => !pre)}
+          onClick={() => {
+            needAnimation.current = true;
+            setShowCard((pre) => !pre);
+          }}
         >
           <AnimatePresence initial={false} mode='popLayout'>
             <motion.div
@@ -95,10 +100,14 @@ function WelcomePage() {
             <motion.div
               key='card'
               className='flex flex-1 items-center justify-center'
-              initial={{
-                opacity: 0,
-                scale: 0.6,
-              }}
+              initial={
+                needAnimation.current
+                  ? {
+                      opacity: 0,
+                      scale: 0.6,
+                    }
+                  : false
+              }
               animate={{
                 opacity: 1,
                 scale: 1,
@@ -116,6 +125,9 @@ function WelcomePage() {
                   duration: 0.15,
                   ease: 'easeOut',
                 },
+              }}
+              onAnimationComplete={() => {
+                needAnimation.current = false;
               }}
             >
               <Card className='w-full max-w-sm max-[400px]:max-w-[94%]'>

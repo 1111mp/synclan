@@ -102,7 +102,7 @@ function TextFormatToolbar({
   onSetIsLinkEditMode,
 }: Omit<TextFormatFloatingToolbarProps, 'isText'>) {
   return (
-    <div className='flex items-center space-x-1 p-2'>
+    <div className='flex items-center p-2'>
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
@@ -118,7 +118,7 @@ function TextFormatToolbar({
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold');
             }}
           >
-            <Bold />
+            <Bold className='size-4' />
           </Button>
         </TooltipTrigger>
         <TooltipContent className='flex flex-col'>
@@ -141,7 +141,7 @@ function TextFormatToolbar({
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'strikethrough');
             }}
           >
-            <Strikethrough />
+            <Strikethrough className='size-4' />
           </Button>
         </TooltipTrigger>
         <TooltipContent className='flex flex-col'>
@@ -164,7 +164,7 @@ function TextFormatToolbar({
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic');
             }}
           >
-            <Italic />
+            <Italic className='size-4' />
           </Button>
         </TooltipTrigger>
         <TooltipContent className='flex flex-col'>
@@ -187,7 +187,7 @@ function TextFormatToolbar({
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'underline');
             }}
           >
-            <Underline />
+            <Underline className='size-4' />
           </Button>
         </TooltipTrigger>
         <TooltipContent className='flex flex-col'>
@@ -216,7 +216,7 @@ function TextFormatToolbar({
               });
             }}
           >
-            <ListOrdered />
+            <ListOrdered className='size-4' />
           </Button>
         </TooltipTrigger>
         <TooltipContent className='flex flex-col'>
@@ -245,7 +245,7 @@ function TextFormatToolbar({
               });
             }}
           >
-            <List />
+            <List className='size-4' />
           </Button>
         </TooltipTrigger>
         <TooltipContent className='flex flex-col'>
@@ -274,7 +274,7 @@ function TextFormatToolbar({
               });
             }}
           >
-            <Quote />
+            <Quote className='size-4' />
           </Button>
         </TooltipTrigger>
         <TooltipContent className='flex flex-col'>
@@ -320,7 +320,7 @@ function TextFormatToolbar({
               });
             }}
           >
-            <Link />
+            <Link className='size-4' />
           </Button>
         </TooltipTrigger>
         <TooltipContent className='flex flex-col'>
@@ -355,7 +355,7 @@ function TextFormatToolbar({
               });
             }}
           >
-            <Braces />
+            <Braces className='size-4' />
           </Button>
         </TooltipTrigger>
         <TooltipContent className='flex flex-col'>

@@ -32,6 +32,7 @@ type IMState = {
   addConversations: (incomingDevices: IDevice[]) => void;
   updateConvsFromOffline: (receiver: string) => Promise<void>;
   setActiveConversation: (id: string, device?: IDevice) => void;
+  exitConversation: () => void;
   deleteConversation: (id: string) => void;
   syncDeviceInfo: (id: string) => void;
 
@@ -161,6 +162,11 @@ export const useIMStore = create<IMState>()(
             );
           }
         }),
+      exitConversation: () => {
+        set((state) => {
+          state.activeDeviceId = '';
+        });
+      },
       deleteConversation: (id) => {
         set((state) => {
           state.conversations.delete(id);

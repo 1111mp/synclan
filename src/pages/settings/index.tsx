@@ -11,6 +11,7 @@ import { applyPendingTheme } from '@/lib/utils';
 import { restartApp } from '@/services/cmd';
 import { useSynclanStore } from '@/stores';
 
+import { AboutSettings } from './about-settings';
 import { AppearanceSettings } from './appearance-settings';
 import { GeneralSettings } from './general-settings';
 import { LoggerSettings } from './logger-settings';
@@ -147,6 +148,7 @@ function SettingsPage() {
             <ServerSettings form={form} />
             <StorageSettings form={form} />
             <LoggerSettings form={form} />
+            <AboutSettings />
           </FieldGroup>
         </form>
       </div>

@@ -9,3 +9,4 @@ export * from './loading-screen';
 export * from './messages';
 export * from './qrcode-dialog';
 export * from './transmitter';
+export * from './update-dialog';

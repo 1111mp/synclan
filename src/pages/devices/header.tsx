@@ -9,7 +9,10 @@ function DeviceHeader({ device }: { device?: IDevice | null }) {
       data-tauri-drag-region
       className='bg-background/80 sticky top-0 z-20 flex h-14 w-full shrink-0 items-center justify-center gap-2 border-b px-4 backdrop-blur-xl transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12'
     >
-      <div className='flex flex-1 items-center gap-3 pl-6'>
+      <div
+        data-tauri-drag-region
+        className='flex flex-1 items-center gap-3 pl-6'
+      >
         <Avatar className='rounded-full'>
           <AvatarImage
             className='rounded-full'
@@ -21,7 +24,7 @@ function DeviceHeader({ device }: { device?: IDevice | null }) {
         </Avatar>
         {device?.name}
       </div>
-      <div></div>
+      <div />
     </header>
   );
 }

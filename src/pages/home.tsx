@@ -22,7 +22,7 @@ function HomePage() {
             <div className='relative flex flex-1 flex-col [view-transition-name:page-content]'>
               <SidebarTrigger className='region-no-drag absolute top-3.5 left-1 z-50' />
               <Outlet />
-              <Toaster position='top-center' />
+              <Toaster position='top-center' richColors={true} />
             </div>
           </SidebarInset>
         </SidebarProvider>
