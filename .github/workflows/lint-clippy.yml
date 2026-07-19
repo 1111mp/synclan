@@ -57,7 +57,9 @@ jobs:
 
       - name: Ensure resources web directory exists
         working-directory: ./src-tauri
-        run: mkdir -p resources/web
+        run: |
+          mkdir -p resources/web
+          touch resources/web/.gitkeep
 
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
