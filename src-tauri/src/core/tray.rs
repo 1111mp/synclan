@@ -75,6 +75,7 @@ impl Tray {
 
         let icon = tauri::image::Image::from_bytes(&icon_bytes)?;
 
+        #[allow(unused_mut)]
         let mut builder = TrayIconBuilder::with_id(TRAY_ID).icon(icon).icon_as_template(false);
         #[cfg(target_os = "macos")]
         {

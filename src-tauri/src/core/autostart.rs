@@ -2,6 +2,7 @@
 use crate::logging_error;
 #[cfg(target_os = "windows")]
 use crate::utils::schtasks;
+#[allow(unused_imports)]
 use crate::{config::Config, core::handle::Handle, logging, utils::logging::Type};
 use anyhow::Result;
 #[cfg(windows)]

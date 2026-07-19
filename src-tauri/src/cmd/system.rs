@@ -1,4 +1,5 @@
 use super::CmdResult;
+#[allow(unused_imports)]
 use crate::{cmd::StringifyErr, core::autostart, feat};
 use local_ip_address::local_ip;
 use std::net::IpAddr;
