@@ -20,7 +20,7 @@ crate-type = ["cdylib", "rlib", "staticlib"]
 name = "synclan_lib"
 
 [dependencies]
-aes-gcm = { version = "0.10.3", features = ["std"] }
+aes-gcm = { version = "0.11.0" }
 anyhow = { workspace = true }
 apalis = { version = "1.0.0-rc.9", features = [
   "limit",

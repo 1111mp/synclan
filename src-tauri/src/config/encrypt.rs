@@ -1,9 +1,9 @@
 use crate::utils::dirs::get_encryption_key;
 use aes_gcm::{
-    Aes256Gcm, Key,
-    aead::{Aead, KeyInit},
+    Aes256Gcm,
+    aead::{Aead as _, KeyInit as _},
 };
-use base64::{Engine, engine::general_purpose::STANDARD};
+use base64::{Engine as _, engine::general_purpose::STANDARD};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::{cell::Cell, future::Future};
 
@@ -17,20 +17,19 @@ tokio::task_local! {
 /// Encrypt data
 pub fn encrypt_data(data: &str) -> Result<String, Box<dyn std::error::Error>> {
     let encryption_key = get_encryption_key()?;
-    let key = Key::<Aes256Gcm>::from_slice(&encryption_key);
-    let cipher = Aes256Gcm::new(key);
+    let cipher = Aes256Gcm::new_from_slice(&encryption_key)?;
 
     // Generate random nonce
-    let mut nonce = vec![0u8; NONCE_LENGTH];
+    let mut nonce = [0u8; NONCE_LENGTH];
     getrandom::fill(&mut nonce)?;
 
     // Encrypt data
     let ciphertext = cipher
-        .encrypt(nonce.as_slice().into(), data.as_bytes())
+        .encrypt((&nonce).into(), data.as_bytes())
         .map_err(|e| format!("Encryption failed: {e}"))?;
 
     // Concatenate nonce and ciphertext and encode them in base64
-    let mut combined = nonce;
+    let mut combined = nonce.to_vec();
     combined.extend(ciphertext);
     Ok(STANDARD.encode(combined))
 }
@@ -38,8 +37,7 @@ pub fn encrypt_data(data: &str) -> Result<String, Box<dyn std::error::Error>> {
 /// Decrypt data
 pub fn decrypt_data(encrypted: &str) -> Result<String, Box<dyn std::error::Error>> {
     let encryption_key = get_encryption_key()?;
-    let key = Key::<Aes256Gcm>::from_slice(&encryption_key);
-    let cipher = Aes256Gcm::new(key);
+    let cipher = Aes256Gcm::new_from_slice(&encryption_key)?;
     // Decode from base64
     let data = STANDARD.decode(encrypted)?;
     if data.len() < NONCE_LENGTH {
@@ -48,6 +46,7 @@ pub fn decrypt_data(encrypted: &str) -> Result<String, Box<dyn std::error::Error
 
     // Separate nonce and ciphertext
     let (nonce, ciphertext) = data.split_at(NONCE_LENGTH);
+    let nonce: &[u8; NONCE_LENGTH] = nonce.try_into()?;
 
     // Decrypt data
     let plaintext = cipher
