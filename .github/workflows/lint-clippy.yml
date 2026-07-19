@@ -55,6 +55,10 @@ jobs:
       - name: Add Rust Target
         run: rustup target add ${{ matrix.target }}
 
+      - name: Ensure resources web directory exists
+        working-directory: ./src-tauri
+        run: mkdir -p resources/web
+
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
         with:
