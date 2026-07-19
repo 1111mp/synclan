@@ -1,5 +1,7 @@
+#[allow(unused_imports)]
 use crate::{APP_HANDLE, logging, singleton, utils::logging::Type};
 use std::sync::atomic::{AtomicBool, Ordering};
+#[allow(unused_imports)]
 use tauri::{AppHandle, Manager as _, WebviewWindow};
 
 #[derive(Debug)]

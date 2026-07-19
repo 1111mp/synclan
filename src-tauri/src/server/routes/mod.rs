@@ -15,6 +15,7 @@ mod message;
 mod synclan;
 mod upload;
 
+#[allow(clippy::tabs_in_doc_comments)]
 /**
  *  https://docs.rs/axum/latest/axum/middleware/index.html#ordering
  *  The public router and protected router depend on the execution order of middleware

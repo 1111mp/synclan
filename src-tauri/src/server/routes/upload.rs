@@ -69,8 +69,7 @@ async fn upload_handler(input: SelfTypedMultipart<FileUpload>) -> Result<HttpRes
     let sub_path = if input.permanent.unwrap_or(false) {
         "assets".to_string()
     } else {
-        let date_str = chrono::Local::now().format("%Y-%m-%d").to_string();
-        date_str
+        chrono::Local::now().format("%Y-%m-%d").to_string()
     };
 
     let mut path = Path::new(&file_upload_dir).join(&sub_path);

@@ -14,11 +14,14 @@
     "macOSPrivateApi": true,
     "security": {
       "csp": {
-        "default-src": "blob: data: filesystem: ws: wss: http: https: tauri: asset: 'unsafe-eval' 'unsafe-inline' 'self'",
+        "default-src": "'self' blob: data: filesystem: asset: tauri: http: https: ws: wss:",
+        "script-src": "'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval'",
         "style-src": "'self' 'unsafe-inline'",
         "style-src-elem": "'self' 'unsafe-inline'",
         "style-src-attr": "'self' 'unsafe-inline'",
-        "connect-src": "ipc: http://ipc.localhost"
+        "img-src": "'self' blob: data: asset: tauri: http: https:",
+        "font-src": "'self' data: asset: tauri:",
+        "connect-src": "'self' ipc: tauri: asset: http://ipc.localhost http: https: ws: wss:"
       },
       "assetProtocol": {
         "enable": true,

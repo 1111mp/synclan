@@ -270,7 +270,7 @@ impl HttpServer {
 
         logging!(info, Type::Server, "HTTP server shutdown successfully");
 
-        return true;
+        true
     }
 }
 

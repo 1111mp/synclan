@@ -159,6 +159,7 @@ pub(crate) async fn update_one(
     Path(id): Path<String>,
     Body(input): Body<UpdateDeviceDto>,
 ) -> Result<HttpResponse<Option<Device>>, HttpException> {
+    #[allow(clippy::needless_update)]
     let patch = DevicePatch {
         id: id.clone(),
         name: input.name,

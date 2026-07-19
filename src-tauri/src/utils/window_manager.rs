@@ -7,6 +7,7 @@ use crate::{
 };
 use std::pin::Pin;
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum WindowOperationResult {
     /// 窗口已显示并获得焦点

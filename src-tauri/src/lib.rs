@@ -101,9 +101,10 @@ pub fn run() {
             cmd::create_preview_window
         ]);
 
-    // macOS 内存压力下 WKWebView 渲染进程可能被系统终止（表现为白屏），
-    // 注册恢复钩子：窗口可见时立即 reload
-    // 恢复页面，不可见时延迟到用户下次打开窗口再 reload。
+    // Under memory pressure on macOS, the WKWebView rendering process may be
+    // terminated by the system (resulting in a blank window).
+    // Register a recovery hook: reload immediately if the window is visible;
+    // otherwise, defer the reload until the next time the user opens the window.
     #[cfg(target_os = "macos")]
     let builder = builder.on_web_content_process_terminate(resolve::window::on_web_content_process_terminated);
 

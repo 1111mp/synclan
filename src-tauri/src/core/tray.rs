@@ -1,3 +1,4 @@
+#[allow(unused_imports)]
 use crate::{
     config::Config,
     core::handle,
@@ -7,6 +8,7 @@ use crate::{
     utils::{i18n, logging::Type, resolve, window_manager::WindowManager},
 };
 use anyhow::Result;
+#[allow(unused_imports)]
 use tauri::{
     AppHandle, Manager as _, Wry,
     image::Image,
@@ -23,6 +25,7 @@ pub struct Tray;
 singleton!(Tray, TRAY);
 
 impl Tray {
+    #[allow(clippy::default_constructed_unit_structs)]
     pub fn new() -> Self {
         Self::default()
     }
@@ -216,6 +219,7 @@ async fn create_tray_menu(app_handle: &AppHandle, locale: &i18n::Locale) -> Resu
     Ok(menu)
 }
 
+#[allow(unused_variables)]
 fn on_tray_icon_event(_tray_icon: &TrayIcon, event: TrayIconEvent) {
     #[cfg(not(target_os = "macos"))]
     if let TrayIconEvent::Click {

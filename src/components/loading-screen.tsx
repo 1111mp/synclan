@@ -1,5 +1,11 @@
-import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+import { DotLottieReact, setWasmUrl } from '@lottiefiles/dotlottie-react';
 import { AnimatePresence, motion } from 'motion/react';
+
+const absoluteWasmUrl = new URL(
+  '/@lottiefiles/dotlottie-web/dotlottie-player.wasm',
+  window.location.origin,
+).href;
+setWasmUrl(absoluteWasmUrl);
 
 export function LoadingScreen({ loading = true }: { loading?: boolean }) {
   return (

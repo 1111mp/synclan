@@ -37,6 +37,16 @@ export default defineConfig(async ({ mode }) => ({
             stripBase: true,
           },
         },
+        {
+          src: resolve(
+            __dirname,
+            'node_modules/@lottiefiles/dotlottie-web/dist/dotlottie-player.wasm',
+          ),
+          dest: '@lottiefiles/dotlottie-web/',
+          rename: {
+            stripBase: true,
+          },
+        },
       ],
     }),
   ],

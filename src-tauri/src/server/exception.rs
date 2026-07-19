@@ -6,6 +6,7 @@ use axum::{
 use serde::Serialize;
 use thiserror::Error;
 
+#[allow(clippy::enum_variant_names)]
 #[allow(unused)]
 #[derive(Debug, Error)]
 pub enum HttpException {
