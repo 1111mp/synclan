@@ -501,6 +501,33 @@ jobs:
           gh release upload "${{ github.ref_name }}" $files --clobber
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+  release-alpha-update:
+    if: ${{ contains(github.ref_name, '-rc') }}
+    name: Release Alpha Update
+    runs-on: ubuntu-latest
+    needs: [update_tag]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Install Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24.18.0'
+
+      - uses: pnpm/action-setup@v6
+        name: Install pnpm
+        with:
+          run_install: false
+
+      - name: Pnpm install
+        run: pnpm i
+
+      - name: Release updater file
+        run: pnpm updater
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   release-update:
     if: ${{ !contains(github.ref_name, '-rc') }}
     name: Release Update
