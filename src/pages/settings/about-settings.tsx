@@ -15,7 +15,6 @@ import {
   Spinner,
 } from '@/components/ui';
 import { isWeb } from '@/lib/constant';
-import { getUpdateTarget } from '@/lib/updater';
 import { getAppVersion } from '@/services/api';
 import { useUpdaterStore } from '@/stores';
 
@@ -68,10 +67,7 @@ function CheckForUpdatesItem() {
 
     setLoading(true);
     try {
-      const version = await getAppVersion();
-      const update = await check({
-        target: getUpdateTarget(version),
-      });
+      const update = await check();
       if (update) {
         const store = useUpdaterStore.getState();
         store.setUpdate(update);

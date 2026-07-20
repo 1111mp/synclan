@@ -235,6 +235,12 @@ jobs:
         run: |
           pnpm i
 
+      - name: Configure updater channel
+        run: |
+          pnpm set-updater-channel
+        env:
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+
       - name: Tauri Build
         uses: tauri-apps/tauri-action@v1.0.0
         env:
@@ -321,6 +327,12 @@ jobs:
       - name: Pnpm install and check
         run: |
           pnpm i
+
+      - name: Configure updater channel
+        run: |
+          pnpm set-updater-channel
+        env:
+          GITHUB_REF_NAME: ${{ github.ref_name }}
 
       - name: 'Setup for linux'
         run: |-

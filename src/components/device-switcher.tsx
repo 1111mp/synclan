@@ -23,9 +23,7 @@ import {
   useSidebar,
 } from '@/components/ui';
 import { isWeb } from '@/lib/constant';
-import { getUpdateTarget } from '@/lib/updater';
 import { cn } from '@/lib/utils';
-import { getAppVersion } from '@/services/api';
 import { useSynclanStore, useUpdaterStore } from '@/stores';
 
 function DeviceSwitcher() {
@@ -40,17 +38,11 @@ function DeviceSwitcher() {
   useEffect(() => {
     if (isWeb || !config?.auto_check_update) return;
 
-    const updateHandler = async () => {
-      const version = await getAppVersion();
-      const update = await check({
-        target: getUpdateTarget(version),
-      });
-      if (update) {
+    void check().then((update) => {
+      if (update !== null) {
         useUpdaterStore.getState().setUpdate(update);
       }
-    };
-
-    void updateHandler();
+    });
   }, [config?.auto_check_update]);
 
   const hasUpdate = update !== null;
