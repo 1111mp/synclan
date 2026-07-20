@@ -12,6 +12,8 @@ import {
   SidebarRail,
   useSidebar,
 } from '@/components/ui';
+import { isWeb } from '@/lib/constant';
+import { cn } from '@/lib/utils';
 import { useConversationList, useDeviceStore, useIMStore } from '@/stores';
 
 function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -38,7 +40,10 @@ function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar modal={false} collapsible='icon' variant='floating' {...props}>
-      <SidebarHeader data-tauri-drag-region className='pt-7'>
+      <SidebarHeader
+        data-tauri-drag-region
+        className={cn(OS_PLATFORM !== 'win32' && !isWeb && 'pt-7')}
+      >
         <DeviceSwitcher />
         <SearchForm />
       </SidebarHeader>

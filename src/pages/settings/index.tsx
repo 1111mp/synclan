@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useConfirm } from '@/components';
 import { FieldGroup } from '@/components/ui';
 import { isWeb } from '@/lib/constant';
-import { applyPendingTheme } from '@/lib/utils';
+import { applyPendingTheme, cn } from '@/lib/utils';
 import { restartApp } from '@/services/cmd';
 import { useSynclanStore } from '@/stores';
 
@@ -135,12 +135,17 @@ function SettingsPage() {
   return (
     <div className='h-dvh w-full overflow-y-auto'>
       <header
-        data-tauri-drag-region
+        data-tauri-drag-region={OS_PLATFORM !== 'win32'}
         className='bg-background/80 sticky top-0 z-20 flex h-14 w-full shrink-0 items-center justify-center gap-2 px-4 backdrop-blur-xl transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12'
       >
         Settings
       </header>
-      <div className='mx-auto min-h-full max-w-2xl px-4'>
+      <div
+        className={cn(
+          'mx-auto max-w-2xl px-4',
+          OS_PLATFORM === 'darwin' && 'min-h-full',
+        )}
+      >
         <form id='form-synclan-settings'>
           <FieldGroup className='py-6'>
             <GeneralSettings form={form} />

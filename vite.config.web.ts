@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import babel from '@rolldown/plugin-babel';
 import tailwindcss from '@tailwindcss/vite';
 import react, { reactCompilerPreset } from '@vitejs/plugin-react';
-import { defineConfig } from 'vite';
+import { defineConfig, normalizePath } from 'vite';
 import { createHtmlPlugin } from 'vite-plugin-html';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 
@@ -28,9 +28,11 @@ export default defineConfig(async ({ mode }) => ({
     viteStaticCopy({
       targets: [
         {
-          src: resolve(
-            __dirname,
-            'node_modules/emoji-datasource-apple/img/apple/64/**/*',
+          src: normalizePath(
+            resolve(
+              __dirname,
+              'node_modules/emoji-datasource-apple/img/apple/64/**/*',
+            ),
           ),
           dest: 'emoji-datasource-apple/img/apple/64/',
           rename: {
@@ -38,9 +40,11 @@ export default defineConfig(async ({ mode }) => ({
           },
         },
         {
-          src: resolve(
-            __dirname,
-            'node_modules/@lottiefiles/dotlottie-web/dist/dotlottie-player.wasm',
+          src: normalizePath(
+            resolve(
+              __dirname,
+              'node_modules/@lottiefiles/dotlottie-web/dist/dotlottie-player.wasm',
+            ),
           ),
           dest: '@lottiefiles/dotlottie-web/',
           rename: {
@@ -63,7 +67,7 @@ export default defineConfig(async ({ mode }) => ({
     EMOJI_ROOT_PATH:
       mode === 'production'
         ? `""`
-        : `"/@fs/${resolve(__dirname, 'node_modules')}"`,
+        : `"/@fs/${normalizePath(resolve(__dirname, 'node_modules'))}"`,
   },
 
   resolve: {

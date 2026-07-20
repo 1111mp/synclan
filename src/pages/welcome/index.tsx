@@ -45,6 +45,7 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from '@/components/ui';
+import { isWeb } from '@/lib/constant';
 import { resolveResourceUrl } from '@/lib/utils';
 import { useConversationList, useIMStore, useSynclanStore } from '@/stores';
 
@@ -64,36 +65,38 @@ function WelcomePage() {
 
   return (
     <div className='flex flex-1 flex-col overflow-hidden'>
-      <header
-        data-tauri-drag-region
-        className='bg-background flex h-14 w-full items-center justify-end px-4'
-      >
-        <Button
-          variant='outline'
-          size='icon-lg'
-          className='relative overflow-hidden'
-          onClick={() => {
-            needAnimation.current = true;
-            setShowCard((pre) => !pre);
-          }}
+      {(isWeb || OS_PLATFORM !== 'win32') && (
+        <header
+          data-tauri-drag-region
+          className='bg-background flex h-14 w-full items-center justify-end px-4'
         >
-          <AnimatePresence initial={false} mode='popLayout'>
-            <motion.div
-              key={showCard ? 'close' : 'info'}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              {showCard ? (
-                <X className='size-5' />
-              ) : (
-                <Info className='size-5' />
-              )}
-            </motion.div>
-          </AnimatePresence>
-        </Button>
-      </header>
+          <Button
+            variant='outline'
+            size='icon-lg'
+            className='relative overflow-hidden'
+            onClick={() => {
+              needAnimation.current = true;
+              setShowCard((pre) => !pre);
+            }}
+          >
+            <AnimatePresence initial={false} mode='popLayout'>
+              <motion.div
+                key={showCard ? 'close' : 'info'}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                {showCard ? (
+                  <X className='size-5' />
+                ) : (
+                  <Info className='size-5' />
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </Button>
+        </header>
+      )}
       <div className='flex flex-1 items-center justify-center'>
         <AnimatePresence mode='popLayout'>
           {showCard ? (

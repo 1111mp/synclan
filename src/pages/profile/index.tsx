@@ -23,7 +23,7 @@ import {
   ItemContent,
   ItemTitle,
 } from '@/components/ui';
-import { resolveResourceUrl } from '@/lib/utils';
+import { cn, resolveResourceUrl } from '@/lib/utils';
 import { z } from '@/lib/zod';
 import {
   onPickImage,
@@ -98,14 +98,19 @@ function ProfilePage() {
   return (
     <div className='h-dvh w-full overflow-y-auto'>
       <header
-        data-tauri-drag-region
+        data-tauri-drag-region={OS_PLATFORM !== 'win32'}
         className='bg-background/80 sticky top-0 z-20 flex h-14 w-full shrink-0 items-center justify-end gap-2 px-4 backdrop-blur-xl transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12'
       >
         <Button variant='outline' onClick={onEdit}>
           {isEdit ? 'Done' : 'Edit'}
         </Button>
       </header>
-      <div className='mx-auto min-h-full max-w-2xl px-4'>
+      <div
+        className={cn(
+          'mx-auto max-w-2xl px-4',
+          OS_PLATFORM === 'darwin' && 'min-h-full',
+        )}
+      >
         <form id='form-synclan-profile' aria-disabled={disabled}>
           <FieldGroup className='pb-6'>
             <FieldGroup className='items-center'>
