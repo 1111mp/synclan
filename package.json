@@ -1,6 +1,6 @@
 {
   "name": "synclan",
-  "version": "0.1.0-rc",
+  "version": "0.1.0-rc.1",
   "private": true,
   "license": "MIT",
   "type": "module",
