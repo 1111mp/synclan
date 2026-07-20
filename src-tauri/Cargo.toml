@@ -1,6 +1,6 @@
 [package]
 name = "synclan"
-version = "0.1.0"
+version = "0.1.0-rc"
 description = "synclan"
 authors = ["The1111mp@outlook.com"]
 license = "MIT"
