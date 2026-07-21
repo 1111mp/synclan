@@ -57,14 +57,13 @@ pub async fn build_new_window() -> Result<WebviewWindow, String> {
     let mut builder = tauri::WebviewWindowBuilder::new(app_handle, "main", tauri::WebviewUrl::App("index.html".into()))
         .title("SyncLan")
         .decorations(DEFAULT_DECORATIONS)
-        // Because we use a self-signed certificate
-        .additional_browser_args("--ignore-certificate-errors")
         .inner_size(1080.0, 800.0)
         .min_inner_size(750.0, 500.0)
-        .background_color(background_color)
-        .initialization_script(&initial_script)
         .resizable(true)
         .visible(true)
+        // Because we use a self-signed certificate
+        .additional_browser_args("--ignore-certificate-errors")
+        .initialization_script(&initial_script)
         .center();
 
     #[cfg(target_os = "macos")]

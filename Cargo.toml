@@ -22,3 +22,10 @@ correctness = { level = "deny", priority = -1 }
 
 single_match = "allow"
 tabs_in_doc_comments = "allow"
+
+[profile.release]
+opt-level = "s"
+strip = true
+lto = "thin"
+panic = "abort"
+codegen-units = 1
