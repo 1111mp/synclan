@@ -1,4 +1,5 @@
 import { cva, type VariantProps } from 'class-variance-authority';
+import { useEffect, useState } from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -24,6 +25,20 @@ type Props = {
   skinTone?: SkinToneKey | number;
 } & VariantProps<typeof variants>;
 
+function fetchImageSrc(
+  shortName?: string,
+  emoji?: string,
+  skinTone?: SkinToneKey | number,
+): Promise<string> {
+  if (shortName) {
+    return getImagePath(shortName, skinTone);
+  }
+  if (emoji) {
+    return Promise.resolve(emojiToImage(emoji) || '');
+  }
+  return Promise.resolve('');
+}
+
 function Emoji({
   emoji,
   className,
@@ -31,18 +46,25 @@ function Emoji({
   skinTone = 0,
   size = 28,
 }: Props) {
-  let image = '';
-  if (shortName) {
-    image = getImagePath(shortName, skinTone);
-  } else if (emoji) {
-    image = emojiToImage(emoji) || '';
-  }
+  const [imageSrc, setImageSrc] = useState<string | null>(null);
 
-  if (!image) return null;
+  useEffect(() => {
+    let isMounted = true;
+
+    void fetchImageSrc(shortName, emoji, skinTone).then((src) => {
+      if (isMounted) setImageSrc(src);
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [shortName, emoji, skinTone]);
+
+  if (!imageSrc) return null;
 
   return (
     <img
-      src={image}
+      src={imageSrc}
       aria-label={emoji}
       title={emoji}
       data-tone={skinTone}

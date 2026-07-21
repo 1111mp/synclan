@@ -1,7 +1,6 @@
-import { getOwn } from '@/lib/utils';
+import is from '@sindresorhus/is';
 import untypedData from 'emoji-datasource-apple';
 import Fuse from 'fuse.js';
-import is from '@sindresorhus/is';
 import {
   compact,
   flatMap,
@@ -13,6 +12,9 @@ import {
   sortBy,
   take,
 } from 'lodash-es';
+
+import { makeEmojiResourcePath } from '@/lib/resource';
+import { getOwn } from '@/lib/utils';
 
 export const skinTones = ['1F3FB', '1F3FC', '1F3FD', '1F3FE', '1F3FF'];
 
@@ -81,9 +83,7 @@ const dataByShortName = keyBy(data, 'short_name');
 
 const imageByEmoji: { [key: string]: string } = {};
 
-const makeImagePath = (src: string) => {
-  return `${EMOJI_ROOT_PATH}/emoji-datasource-apple/img/apple/64/${src}`;
-};
+const makeImagePath = (src: string) => makeEmojiResourcePath(src);
 
 const dataByEmoji: { [key: string]: EmojiData } = {};
 
@@ -113,7 +113,7 @@ export function getEmojiData(
 export function getImagePath(
   shortName: keyof typeof dataByShortName,
   skinTone?: SkinToneKey | number,
-): string {
+): Promise<string> {
   const emojiData = getEmojiData(shortName, skinTone);
 
   return makeImagePath(emojiData.image);
@@ -244,26 +244,29 @@ export const dataByCategory = mapValues(
   (arr) => sortBy(arr, 'sort_order'),
 );
 
-data.forEach((emoji) => {
-  const { short_name, short_names, skin_variations, image } = emoji;
+void (async () => {
+  for (const emoji of data) {
+    const { short_name, short_names, skin_variations, image } = emoji;
 
-  if (short_names) {
-    short_names.forEach((name) => {
-      dataByShortName[name] = emoji;
-    });
+    if (short_names) {
+      short_names.forEach((name) => {
+        dataByShortName[name] = emoji;
+      });
+    }
+
+    imageByEmoji[convertShortName(short_name)] = await makeImagePath(image);
+    dataByEmoji[convertShortName(short_name)] = emoji;
+
+    if (skin_variations) {
+      for (const [tone, variation] of Object.entries(skin_variations)) {
+        const toneKey = convertShortName(short_name, tone as SkinToneKey);
+
+        imageByEmoji[toneKey] = await makeImagePath(variation.image);
+        dataByEmoji[toneKey] = emoji;
+      }
+    }
   }
-
-  imageByEmoji[convertShortName(short_name)] = makeImagePath(image);
-  dataByEmoji[convertShortName(short_name)] = emoji;
-
-  if (skin_variations) {
-    Object.entries(skin_variations).forEach(([tone, variation]) => {
-      imageByEmoji[convertShortName(short_name, tone as SkinToneKey)] =
-        makeImagePath(variation.image);
-      dataByEmoji[convertShortName(short_name, tone as SkinToneKey)] = emoji;
-    });
-  }
-});
+})();
 
 export const skinTonesData = [
   'Default',

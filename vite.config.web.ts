@@ -64,7 +64,7 @@ export default defineConfig(async ({ mode }) => ({
     OS_ARCH: `"${process.arch}"`,
     OS_PLATFORM: `"${process.platform}"`,
     __APP_VERSION__: JSON.stringify(packageJson.version),
-    EMOJI_ROOT_PATH:
+    MODULES_ROOT_PATH:
       mode === 'production'
         ? `""`
         : `"/@fs/${normalizePath(resolve(__dirname, 'node_modules'))}"`,

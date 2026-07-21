@@ -32,7 +32,7 @@ declare global {
    */
   const OS_ARCH: Architecture;
   const OS_PLATFORM: Platform;
-  const EMOJI_ROOT_PATH: string;
+  const MODULES_ROOT_PATH: string;
   const __APP_VERSION__: string;
 
   interface Window {

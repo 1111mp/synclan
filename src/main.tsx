@@ -5,13 +5,16 @@ import ReactDOM from 'react-dom/client';
 
 import './styles/global.css';
 
+import App from '@/app';
+import { initResources } from '@/lib/resource';
 import { applyTheme } from '@/lib/utils';
 import { getAppInitialData } from '@/services/init';
 
-import App from './app';
-
 void (async () => {
-  const [config, sysTheme] = await getAppInitialData();
+  const [[config, sysTheme]] = await Promise.all([
+    getAppInitialData(),
+    initResources(),
+  ]);
   // Set the theme in advance to prevent flickering.
   applyTheme(config.theme !== 'system' ? config.theme : sysTheme, false);
 

@@ -6,7 +6,6 @@ import tailwindcss from '@tailwindcss/vite';
 import react, { reactCompilerPreset } from '@vitejs/plugin-react';
 import { defineConfig, normalizePath } from 'vite';
 import { createHtmlPlugin } from 'vite-plugin-html';
-import { viteStaticCopy } from 'vite-plugin-static-copy';
 
 import packageJson from './package.json';
 
@@ -25,34 +24,6 @@ export default defineConfig(async ({ mode }) => ({
     }),
     createHtmlPlugin(),
     tailwindcss(),
-    viteStaticCopy({
-      targets: [
-        {
-          src: normalizePath(
-            resolve(
-              __dirname,
-              'node_modules/emoji-datasource-apple/img/apple/64/**/*',
-            ),
-          ),
-          dest: 'emoji-datasource-apple/img/apple/64/',
-          rename: {
-            stripBase: true,
-          },
-        },
-        {
-          src: normalizePath(
-            resolve(
-              __dirname,
-              'node_modules/@lottiefiles/dotlottie-web/dist/dotlottie-player.wasm',
-            ),
-          ),
-          dest: '@lottiefiles/dotlottie-web/',
-          rename: {
-            stripBase: true,
-          },
-        },
-      ],
-    }),
   ],
 
   build: {
@@ -64,7 +35,7 @@ export default defineConfig(async ({ mode }) => ({
     OS_ARCH: `"${process.arch}"`,
     OS_PLATFORM: `"${process.platform}"`,
     __APP_VERSION__: JSON.stringify(packageJson.version),
-    EMOJI_ROOT_PATH:
+    MODULES_ROOT_PATH:
       mode === 'production'
         ? `""`
         : `"/@fs/${normalizePath(resolve(__dirname, 'node_modules'))}"`,
