@@ -29,6 +29,7 @@ import { useDeviceStore, useIMStore, useMessageAnimationStore } from '@/stores';
 
 import { useConfirm } from '../confirm-dialog';
 import { MessageExpandable } from './message-expandable';
+import { FileMessage } from './message-file';
 import { ImageMessage } from './message-image';
 import { TextMessage, type MessageContextMenuRef } from './message-text';
 import { VideoMessage } from './message-video';
@@ -125,6 +126,10 @@ function MessageAnimatedRow({
       return <VideoMessage message={message} />;
     }
 
+    if (message.type === 'file') {
+      return <FileMessage message={message} />;
+    }
+
     return null;
   };
 
@@ -178,7 +183,12 @@ function MessageAnimatedRow({
                 className='max-w-[90%]'
                 variant={isUserMessage ? userVariant : assistantVariant}
               >
-                <BubbleContent className='editor-shell overflow-x-auto'>
+                <BubbleContent
+                  className={cn(
+                    'editor-shell overflow-x-auto',
+                    message.type === 'file' && 'p-0 border-none',
+                  )}
+                >
                   <MessageExpandable>{renderMessage()}</MessageExpandable>
                 </BubbleContent>
               </Bubble>

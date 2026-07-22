@@ -4,6 +4,7 @@ import type { PersistStorage } from 'zustand/middleware';
 import { persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 
+import { isWeb } from '@/lib/constant';
 import { i18n } from '@/lib/i18n';
 import { applyPendingTheme } from '@/lib/utils';
 import { getSynclanConfig, patchSynclanConfig } from '@/services/cmd';
@@ -51,7 +52,11 @@ const storage: PersistStorage<Pick<SynclanState, 'config'>> = {
       return;
     }
 
-    await patchSynclanConfig(patch);
+    if (isWeb) {
+      await patchSynclanConfig(config);
+    } else {
+      await patchSynclanConfig(patch);
+    }
 
     previousConfig = structuredClone(config);
 

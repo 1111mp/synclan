@@ -1,3 +1,4 @@
+import omit from 'lodash-es/omit';
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
@@ -38,6 +39,7 @@ type IMState = {
 
   setHistory: (deviceId: string, msgs: IMessage[]) => void;
   addMessage: (deviceId: string, msg: IMessage, currentId: string) => void;
+  addMessages: (deviceId: string, msgs: IMessage[], currentId: string) => void;
   updateMessage: (
     deviceId: string,
     msgId: string,
@@ -110,7 +112,7 @@ export const useIMStore = create<IMState>()(
             set((state) => {
               const conv = state.conversations.get(deviceId)!;
               conv.lastAccessed = now;
-              conv.lastMessage = lastMsg;
+              conv.lastMessage = toLastMessage(lastMsg);
               // 如果不是当前处于激活状态的聊天框，累加未读数
               if (!isCurrentActive) {
                 conv.unreadCount += total;
@@ -125,7 +127,7 @@ export const useIMStore = create<IMState>()(
                 device,
                 unreadCount: initialUnreadCount,
                 lastAccessed: now,
-                lastMessage: lastMsg,
+                lastMessage: toLastMessage(lastMsg),
               });
             });
           }
@@ -231,7 +233,7 @@ export const useIMStore = create<IMState>()(
             const lastMsgId = cache.order[cache.order.length - 1];
             const lastMsg = cache.messages.get(lastMsgId);
             if (lastMsg) {
-              conv.lastMessage = lastMsg;
+              conv.lastMessage = toLastMessage(lastMsg);
             }
           }
 
@@ -253,7 +255,7 @@ export const useIMStore = create<IMState>()(
               device,
               unreadCount: initialUnreadCount,
               lastAccessed: now,
-              lastMessage: msg,
+              lastMessage: toLastMessage(msg),
             });
 
             // 2. 更新消息详情缓存（如果该会话目前在 10 个缓存名额中）
@@ -288,7 +290,7 @@ export const useIMStore = create<IMState>()(
           if (!conv) return;
 
           conv.lastAccessed = now;
-          conv.lastMessage = msg;
+          conv.lastMessage = toLastMessage(msg);
 
           // 2. 更新消息详情缓存（如果该会话目前在 10 个缓存名额中）
           const cache = state.messageCaches.get(deviceId);
@@ -319,6 +321,121 @@ export const useIMStore = create<IMState>()(
           }
         });
       },
+      addMessages: async (deviceId, msgs, currentId) => {
+        const isCurrentActive = get().activeDeviceId === deviceId;
+        // const isFromOthers = msg.sender !== currentId;
+
+        let conv = get().conversations.get(deviceId);
+        if (!conv) {
+          const device = await getDeviceById(deviceId);
+          set((state) => {
+            const now = Date.now();
+
+            // const initialUnreadCount = !isCurrentActive && isFromOthers ? 1 : 0;
+
+            const unreadCount = msgs.reduce((count, msg) => {
+              return !isCurrentActive && msg.sender !== currentId
+                ? count + 1
+                : count;
+            }, 0);
+
+            state.conversations.set(deviceId, {
+              id: deviceId,
+              device,
+              unreadCount: unreadCount,
+              lastAccessed: now,
+              lastMessage: toLastMessage(msgs[msgs.length - 1]),
+            });
+
+            // 2. 更新消息详情缓存（如果该会话目前在 10 个缓存名额中）
+            const cache = state.messageCaches.get(deviceId);
+
+            if (cache) {
+              for (const msg of msgs) {
+                if (cache.messages.get(msg.uuid)) continue;
+                // 情况 1：缓存存在，直接追加
+                cache.messages.set(msg.uuid, msg);
+                cache.order.push(msg.uuid);
+              }
+            } else {
+              // 情况 2：缓存不存在（不管是当前激活的，还是后台新来的）
+              const messages = new Map<string, (typeof msgs)[number]>();
+              const order: string[] = [];
+              for (const msg of msgs) {
+                if (messages.has(msg.uuid)) continue;
+
+                messages.set(msg.uuid, msg);
+                order.push(msg.uuid);
+              }
+              // 建立新缓存
+              state.messageCaches.set(deviceId, {
+                messages,
+                order,
+                hydrated: false,
+                loadingHistory: false,
+              });
+
+              evictOldestMessageCaches(
+                state.messageCaches,
+                state.activeDeviceId,
+                state.conversations,
+              );
+            }
+          });
+          return;
+        }
+
+        set((state) => {
+          const now = Date.now();
+          let conv = state.conversations.get(deviceId);
+          if (!conv) return;
+
+          conv.lastAccessed = now;
+          conv.lastMessage = toLastMessage(msgs[msgs.length - 1]);
+
+          // 2. 更新消息详情缓存（如果该会话目前在 10 个缓存名额中）
+          const cache = state.messageCaches.get(deviceId);
+
+          if (cache) {
+            for (const msg of msgs) {
+              if (cache.messages.has(msg.uuid)) continue;
+              // 情况 1：缓存存在，直接追加
+              cache.messages.set(msg.uuid, msg);
+              cache.order.push(msg.uuid);
+            }
+          } else {
+            // 情况 2：缓存不存在（不管是当前激活的，还是后台新来的）
+            const messages = new Map<string, (typeof msgs)[number]>();
+            const order: string[] = [];
+            for (const msg of msgs) {
+              if (messages.has(msg.uuid)) continue;
+
+              messages.set(msg.uuid, msg);
+              order.push(msg.uuid);
+            }
+            // 建立新缓存
+            state.messageCaches.set(deviceId, {
+              messages,
+              order,
+              hydrated: isCurrentActive,
+              loadingHistory: false,
+            });
+
+            evictOldestMessageCaches(
+              state.messageCaches,
+              state.activeDeviceId,
+              state.conversations,
+            );
+          }
+
+          // 🔥 未读数计数逻辑：如果不是当前激活的会话，且是别人发的消息，未读数 +1
+          if (!isCurrentActive) {
+            conv.unreadCount += msgs.filter(
+              (msg) => msg.sender !== currentId,
+            ).length;
+          }
+        });
+      },
       updateMessage: (deviceId, msgId, patch) =>
         set((state) => {
           const cache = state.messageCaches.get(deviceId);
@@ -330,7 +447,7 @@ export const useIMStore = create<IMState>()(
           // 如果修改的是最后一条消息的内容，同步更新会话列表元数据
           const conv = state.conversations.get(deviceId);
           if (conv?.lastMessage?.uuid === msgId) {
-            conv.lastMessage = msg;
+            conv.lastMessage = toLastMessage(msg);
           }
         }),
       reconcileServerMessage: (deviceId, uuid, serverMsg) =>
@@ -344,7 +461,7 @@ export const useIMStore = create<IMState>()(
           // 同步更新会话元数据
           const conv = state.conversations.get(deviceId);
           if (conv?.lastMessage?.uuid === uuid) {
-            conv.lastMessage = msg;
+            conv.lastMessage = toLastMessage(msg);
           }
         }),
       deleteMessage: (deviceId, msgId) => {
@@ -368,7 +485,7 @@ export const useIMStore = create<IMState>()(
             const lastUuid = cache.order[cache.order.length - 1];
 
             conv.lastMessage = lastUuid
-              ? cache.messages.get(lastUuid)
+              ? toLastMessage(cache.messages.get(lastUuid))
               : undefined;
           }
         });
@@ -501,4 +618,9 @@ function evictOldestMessageCaches(
   if (oldestId) {
     caches.delete(oldestId);
   }
+}
+
+export function toLastMessage(msg?: IMessage): LastMessage | undefined {
+  if (!msg) return undefined;
+  return omit(msg, ['content']);
 }

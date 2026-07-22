@@ -1,6 +1,9 @@
 import { Smile } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+import { useIsMobile } from '@/hooks';
+import { isWeb } from '@/lib/constant';
+
 import {
   Button,
   Popover,
@@ -19,6 +22,8 @@ type Props = Pick<
 
 function EmojiButton({ ...props }: Props) {
   const [open, setOpen] = useState<boolean>(false);
+
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const handleKeydown = (event: KeyboardEvent) => {
@@ -42,36 +47,36 @@ function EmojiButton({ ...props }: Props) {
   }, []);
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
+    <Popover open={open} onOpenChange={setOpen}>
+      <Tooltip delayDuration={300} open={isMobile && isWeb ? false : undefined}>
+        <PopoverTrigger asChild>
+          <TooltipTrigger asChild>
             <Button
-              className='text-muted-foreground hover:text-muted-foreground'
+              className='text-muted-foreground hover:text-muted-foreground px-1.5'
               size='sm'
               variant='ghost'
             >
               <Smile className='size-6' />
             </Button>
-          </PopoverTrigger>
-          <PopoverContent
-            align='center'
-            side='top'
-            sideOffset={12}
-            className='w-auto p-0'
-            onEscapeKeyDown={(event) => event.preventDefault()}
-          >
-            <EmojiPicker
-              onClose={() => {
-                setOpen(false);
-              }}
-              {...props}
-            />
-          </PopoverContent>
-        </Popover>
-      </TooltipTrigger>
-      <TooltipContent>表情</TooltipContent>
-    </Tooltip>
+          </TooltipTrigger>
+        </PopoverTrigger>
+        <TooltipContent>Emoji</TooltipContent>
+      </Tooltip>
+      <PopoverContent
+        align='center'
+        side='top'
+        sideOffset={12}
+        className='w-auto p-0'
+        onCloseAutoFocus={(evt) => evt.preventDefault()}
+      >
+        <EmojiPicker
+          onClose={() => {
+            setOpen(false);
+          }}
+          {...props}
+        />
+      </PopoverContent>
+    </Popover>
   );
 }
 

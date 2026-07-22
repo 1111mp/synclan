@@ -1,6 +1,6 @@
 import { ClipboardDOMImportExtension } from '@lexical/clipboard';
 import { CodeHighlightNode, CodeNode } from '@lexical/code-core';
-import { AutoFocusExtension, ClearEditorExtension } from '@lexical/extension';
+import { ClearEditorExtension } from '@lexical/extension';
 import { HistoryExtension } from '@lexical/history';
 import { AutoLinkNode, LinkExtension, LinkNode } from '@lexical/link';
 import { ListExtension, ListItemNode, ListNode } from '@lexical/list';
@@ -35,7 +35,6 @@ import {
 
 export const SynclanEditorExtension = defineExtension({
   dependencies: [
-    AutoFocusExtension,
     RichTextExtension,
     HistoryExtension,
     ClearEditorExtension,

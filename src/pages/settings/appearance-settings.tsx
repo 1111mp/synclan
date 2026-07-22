@@ -1,5 +1,6 @@
 import { ChevronRightIcon, MoonStar, Sun, SunMoon } from 'lucide-react';
 import { Controller, type UseFormReturn } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 
 import {
   DropdownMenu,
@@ -21,17 +22,13 @@ import {
 
 import type { SettingsForm } from './settings-schema';
 
-const THEMES = {
-  system: 'System',
-  dark: 'Dark',
-  light: 'Light',
-};
-
 function AppearanceSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
+  const { t } = useTranslation();
+
   return (
     <FieldSet>
       <FieldLegend className='text-muted-foreground pl-3'>
-        Appearance
+        {t('settings.appearance.title')}
       </FieldLegend>
       <FieldGroup>
         <Controller
@@ -47,7 +44,7 @@ function AppearanceSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                     className='hover:bg-muted py-3'
                   >
                     <ItemContent>
-                      <ItemTitle>Theme</ItemTitle>
+                      <ItemTitle>{t('settings.appearance.theme')}</ItemTitle>
                       {fieldState.invalid && (
                         <FieldError errors={[fieldState.error]} />
                       )}
@@ -57,7 +54,7 @@ function AppearanceSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                         className='text-muted-foreground'
                         aria-invalid={fieldState.invalid}
                       >
-                        {THEMES[field.value]}
+                        {t(`settings.appearance.${field.value}`)}
                       </span>
                       <ChevronRightIcon className='size-4' />
                     </ItemActions>
@@ -71,15 +68,15 @@ function AppearanceSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                     >
                       <DropdownMenuRadioItem value='system'>
                         <SunMoon className='size-5' />
-                        System
+                        {t('settings.appearance.system')}
                       </DropdownMenuRadioItem>
                       <DropdownMenuRadioItem value='dark'>
                         <MoonStar className='size-5' />
-                        Dark
+                        {t('settings.appearance.dark')}
                       </DropdownMenuRadioItem>
                       <DropdownMenuRadioItem value='light'>
                         <Sun className='size-5' />
-                        Light
+                        {t('settings.appearance.light')}
                       </DropdownMenuRadioItem>
                     </DropdownMenuRadioGroup>
                   </DropdownMenuGroup>

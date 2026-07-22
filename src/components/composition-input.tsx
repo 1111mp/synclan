@@ -125,6 +125,7 @@ function CompositionInput({
           'w-full max-w-none text-sm leading-5.5 text-foreground outline-none focus:outline-none',
         )}
         aria-placeholder='Enter Message'
+        enterKeyHint='send'
         placeholder={
           <p className='text-muted-foreground pointer-events-none absolute top-0 inline-block text-sm select-none'>
             Send Message

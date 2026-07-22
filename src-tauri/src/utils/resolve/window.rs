@@ -58,7 +58,7 @@ pub async fn build_new_window() -> Result<WebviewWindow, String> {
         .title("SyncLan")
         .decorations(DEFAULT_DECORATIONS)
         .inner_size(1080.0, 800.0)
-        .min_inner_size(750.0, 500.0)
+        .min_inner_size(390.0, 550.0)
         .resizable(true)
         .visible(true)
         // Because we use a self-signed certificate

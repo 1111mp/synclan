@@ -1,7 +1,7 @@
-import { useEffect, useRef } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { mergeRegister } from '@lexical/utils';
 import { BLUR_COMMAND, COMMAND_PRIORITY_LOW, FOCUS_COMMAND } from 'lexical';
+import { useEffect, useRef } from 'react';
 
 type IsFocusedPluginProps = {
   onFocusChange?: (focus: boolean) => void;

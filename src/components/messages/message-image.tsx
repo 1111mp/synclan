@@ -1,5 +1,6 @@
-import { AspectRatio } from '../ui';
-import { MEDIA_MAX_WIDTH, parseMessageExtra } from './util';
+import { calculateMediaSize, getMediaUrl } from '@/lib/media';
+
+import { parseMessageExtra } from './util';
 
 type Props = {
   message: ImageMessage;
@@ -7,16 +8,16 @@ type Props = {
 
 function ImageMessage({ message }: Props) {
   const extra = parseMessageExtra<MediaMessageExtra>(message.extra);
-  const width = Math.min(MEDIA_MAX_WIDTH, extra?.width || MEDIA_MAX_WIDTH);
-  let ratio = 16 / 9;
-  if (extra?.width && extra?.height) {
-    ratio = extra.width / extra.height;
-  }
+
+  const { width, height } = calculateMediaSize(extra?.width, extra?.height);
+
   return (
-    <div style={{ width }}>
-      <AspectRatio ratio={ratio}>
-        <img src={message.content} className='w-full h-full object-cover' />
-      </AspectRatio>
+    <div style={{ width, height }}>
+      <img
+        loading='lazy'
+        src={getMediaUrl(message.content)}
+        className='h-full w-full rounded-md object-contain'
+      />
     </div>
   );
 }

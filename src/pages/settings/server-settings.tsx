@@ -1,5 +1,6 @@
 import { ChevronRightIcon, CircleHelp } from 'lucide-react';
 import { Controller, type UseFormReturn } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
 import {
@@ -27,6 +28,8 @@ import { exportServerCert } from '@/services/cmd';
 import type { SettingsForm } from './settings-schema';
 
 function ServerSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
+  const { t } = useTranslation();
+
   if (isWeb) return null;
 
   const handleExportCertificate = async () => {
@@ -48,38 +51,29 @@ function ServerSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
 
   const certificateTrustHelp = (
     <>
-      {OS_PLATFORM === 'darwin' ? (
-        <>
-          <strong>Required on macOS</strong>
-          <br />
-          HTTPS requires the Synclan certificate to be trusted. Export the
-          certificate, import it into Keychain Access, set it to{' '}
-          <strong>Always Trust</strong>, then restart Synclan before enabling
-          HTTPS.
-        </>
-      ) : OS_PLATFORM === 'linux' ? (
-        <>
-          <strong>Required on Linux</strong>
-          <br />
-          HTTPS requires the Synclan certificate to be trusted. Export the
-          certificate, import it into your system trust store, then restart
-          Synclan before enabling HTTPS.
-        </>
-      ) : (
-        <>
-          <strong>Required for HTTPS</strong>
-          <br />
-          HTTPS requires the Synclan certificate to be trusted by your operating
-          system. Export the certificate, add it to the trusted certificates,
-          then restart Synclan before enabling HTTPS.
-        </>
-      )}
+      <strong>
+        {OS_PLATFORM === 'darwin'
+          ? t('settings.server.certificateTrustHelp.requiredMacOS')
+          : OS_PLATFORM === 'linux'
+            ? t('settings.server.certificateTrustHelp.requiredLinux')
+            : t('settings.server.certificateTrustHelp.requiredHttps')}
+      </strong>
+
+      <br />
+
+      {OS_PLATFORM === 'darwin'
+        ? t('settings.server.certificateTrustHelp.macOS')
+        : OS_PLATFORM === 'linux'
+          ? t('settings.server.certificateTrustHelp.linux')
+          : t('settings.server.certificateTrustHelp.default')}
     </>
   );
 
   return (
     <FieldSet>
-      <FieldLegend className='text-muted-foreground pl-3'>Server</FieldLegend>
+      <FieldLegend className='text-muted-foreground pl-3'>
+        {t('settings.server.title')}
+      </FieldLegend>
       <div className='overflow-hidden rounded-xl'>
         <FieldGroup className='gap-0'>
           <Controller
@@ -94,7 +88,9 @@ function ServerSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                     className='hover:bg-muted rounded-none'
                   >
                     <ItemContent>
-                      <ItemTitle>HTTP Server Port</ItemTitle>
+                      <ItemTitle>
+                        {t('settings.server.httpServerPort')}
+                      </ItemTitle>
                       {fieldState.invalid && (
                         <FieldError errors={[fieldState.error]} />
                       )}
@@ -134,7 +130,7 @@ function ServerSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                   >
                     <ItemContent>
                       <ItemTitle>
-                        Enable HTTPS
+                        {t('settings.server.enableHttps')}
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <CircleHelp className='text-muted-foreground h-4 w-4 cursor-help' />
@@ -171,7 +167,7 @@ function ServerSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
           >
             <ItemContent>
               <ItemTitle>
-                Export Certificate
+                {t('settings.server.exportCertificate')}
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <CircleHelp className='text-muted-foreground h-4 w-4 cursor-help' />

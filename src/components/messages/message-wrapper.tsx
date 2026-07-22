@@ -12,7 +12,6 @@ import {
 } from '@/components/ui';
 import { cn } from '@/lib/utils';
 
-import type { MessageContextMenuInfo } from './message-context-menu';
 import { ImageMessage } from './message-image';
 import { TextMessage } from './message-text';
 import { VideoMessage } from './message-video';
@@ -27,15 +26,9 @@ type Props = {
   message: IMessage;
   previousMessage?: IMessage;
   align?: 'start' | 'end';
-  onOpenContextMenu?: (info: MessageContextMenuInfo) => void;
 };
 
-function MessageWrapper({
-  message,
-  previousMessage,
-  align = 'start',
-  onOpenContextMenu,
-}: Props) {
+function MessageWrapper({ message, previousMessage, align = 'start' }: Props) {
   const renderMessage = () => {
     if (message.type === 'text') {
       return <TextMessage message={message} />;
@@ -91,17 +84,7 @@ function MessageWrapper({
         )}
       </MessageAvatar>
       <MessageContent>
-        <Bubble
-          variant='secondary'
-          onContextMenu={(evt) => {
-            evt.preventDefault();
-
-            onOpenContextMenu?.({
-              x: evt.clientX,
-              y: evt.clientY,
-            });
-          }}
-        >
+        <Bubble variant='secondary'>
           <BubbleContent>{renderMessage()}</BubbleContent>
         </Bubble>
       </MessageContent>

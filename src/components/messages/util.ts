@@ -53,8 +53,6 @@ export function isSameDay(time: number, diffTime?: number) {
   return date.isSame(diffDate, 'day');
 }
 
-export const MEDIA_MAX_WIDTH = 640;
-
 export const THRESHOLD = 5 * 60 * 1000;
 
 export function parseTextMessageContent(content?: string) {

@@ -12,6 +12,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { useAppContext } from '@/app-context';
 import { Transmitter, type CompositionInputProps } from '@/components';
 import { MessageAnimatedWrapper } from '@/components/messages';
+import type { TransmitterMoreMenuProps } from '@/components/transmitter-more-menu';
 import {
   MessageScroller,
   MessageScrollerButton,
@@ -20,8 +21,9 @@ import {
   MessageScrollerViewport,
 } from '@/components/ui';
 import { prepareMessageContent } from '@/lib/attachment';
+import { createAttachmentMessage } from '@/lib/media';
 import { HttpStatus } from '@/lib/types';
-import { getMessages } from '@/services/cmd';
+import { getMessages, uploadFile } from '@/services/cmd';
 import {
   useCurrentConversation,
   useDeviceStore,
@@ -141,6 +143,14 @@ function DevicesPage() {
     virtualizer.scrollToIndex(messages.length - 1);
   }, [virtualizer, messages.length, autoHistoryEnabled]);
 
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      setAutoHistoryEnabled(true);
+    }, 250);
+
+    return () => window.clearTimeout(id);
+  }, []);
+
   const debouncedAction = useMemo(() => {
     return debounce(() => {
       autoScrollEnabledRef.current = true;
@@ -164,14 +174,6 @@ function DevicesPage() {
       debouncedAction.cancel();
     };
   }, [virtualizer, debouncedAction]);
-
-  useEffect(() => {
-    const id = window.setTimeout(() => {
-      setAutoHistoryEnabled(true);
-    }, 250);
-
-    return () => window.clearTimeout(id);
-  }, []);
 
   useEffect(() => {
     if (!params.id) return;
@@ -225,6 +227,10 @@ function DevicesPage() {
     useMessageAnimationStore.getState().add(message.uuid);
     addMessage(deviceId, message, current.id);
 
+    if (latestMessageInViewRef.current) {
+      setTimeout(() => virtualizer.scrollToEnd({ behavior: 'smooth' }));
+    }
+
     let finalContent: string;
     try {
       finalContent = await prepareMessageContent(trimmedContent, attachments);
@@ -246,7 +252,121 @@ function DevicesPage() {
       }
     } catch (error) {
       console.error('Failed to send message:', error);
+      // TODO
     }
+  };
+
+  const onSelectMedia: TransmitterMoreMenuProps['onSelectMedia'] = async (
+    files,
+  ) => {
+    if (!files.length) return;
+
+    const deviceId = params.id;
+    if (!deviceId || !current) return;
+
+    const pendingMessages = (
+      await Promise.all(
+        files.map(async (file) => {
+          const message = await createAttachmentMessage(
+            file,
+            current.id,
+            deviceId,
+          );
+          if (message.type === 'file') return null;
+
+          useMessageAnimationStore.getState().add(message.uuid);
+          addMessage(deviceId, message, current.id);
+
+          if (latestMessageInViewRef.current) {
+            setTimeout(() => virtualizer.scrollToEnd({ behavior: 'smooth' }));
+          }
+
+          return {
+            file,
+            message,
+          };
+        }),
+      )
+    ).filter((m) => m !== null);
+
+    await Promise.all(
+      pendingMessages.map(async ({ file, message }) => {
+        try {
+          const url = await uploadFile(file);
+
+          const readyMessage = {
+            ...message,
+            content: url,
+            updatedAt: Date.now(),
+          };
+          const result = await sendMessage(readyMessage);
+          if (result.statusCode === HttpStatus.OK && result.data) {
+            reconcileServerMessage(deviceId, message.uuid, result.data);
+          }
+
+          if (message.content) {
+            URL.revokeObjectURL(message.content);
+          }
+        } catch {
+          // TODO
+        }
+      }),
+    );
+  };
+
+  const onSelectFile: TransmitterMoreMenuProps['onSelectFile'] = async (
+    files,
+  ) => {
+    if (!files.length) return;
+
+    const deviceId = params.id;
+    if (!deviceId || !current) return;
+
+    const pendingMessages = await Promise.all(
+      files.map(async (file) => {
+        const message = await createAttachmentMessage(
+          file,
+          current.id,
+          deviceId,
+        );
+
+        useMessageAnimationStore.getState().add(message.uuid);
+        addMessage(deviceId, message, current.id);
+
+        if (latestMessageInViewRef.current) {
+          setTimeout(() => virtualizer.scrollToEnd({ behavior: 'smooth' }));
+        }
+
+        return {
+          file,
+          message,
+        };
+      }),
+    );
+
+    await Promise.all(
+      pendingMessages.map(async ({ file, message }) => {
+        try {
+          const url = await uploadFile(file);
+
+          const readyMessage = {
+            ...message,
+            content: url,
+            updatedAt: Date.now(),
+          };
+          const result = await sendMessage(readyMessage);
+          if (result.statusCode === HttpStatus.OK && result.data) {
+            reconcileServerMessage(deviceId, message.uuid, result.data);
+          }
+
+          if (message.content) {
+            URL.revokeObjectURL(message.content);
+          }
+        } catch {
+          // TODO
+        }
+      }),
+    );
   };
 
   const virtualItems = virtualizer.getVirtualItems();
@@ -334,7 +454,11 @@ function DevicesPage() {
           ref={footerRef}
           className='footer-gradient w-full shrink-0 pr-4 pb-2 pl-2'
         >
-          <Transmitter onSend={onSend} />
+          <Transmitter
+            onSend={onSend}
+            onSelectFile={onSelectFile}
+            onSelectMedia={onSelectMedia}
+          />
         </footer>
       </div>
     </MessageScrollerProvider>

@@ -1,3 +1,4 @@
+import { AutoFocusExtension } from '@lexical/extension';
 import { LexicalExtensionComposer } from '@lexical/react/LexicalExtensionComposer';
 import {
   $getRoot,
@@ -25,6 +26,10 @@ import { SynclanEditorExtension } from '@/components/extensions';
 import { ImageNode } from '@/components/nodes';
 import { $isEmpty, FixedTextFormatToolbar } from '@/components/plugins';
 import {
+  TransmitterMoreMenu,
+  type TransmitterMoreMenuProps,
+} from '@/components/transmitter-more-menu';
+import {
   Button,
   Tooltip,
   TooltipContent,
@@ -33,7 +38,15 @@ import {
 import { useIsMobile } from '@/hooks';
 import { cn } from '@/lib/utils';
 
-function Transmitter({ onSend }: { onSend?: CompositionInputProps['onSend'] }) {
+function Transmitter({
+  onSend,
+  onSelectFile,
+  onSelectMedia,
+}: {
+  onSend?: CompositionInputProps['onSend'];
+  onSelectFile?: TransmitterMoreMenuProps['onSelectFile'];
+  onSelectMedia?: TransmitterMoreMenuProps['onSelectMedia'];
+}) {
   const [isEmpty, setIsEmpty] = useState<boolean>(true);
   const [lineOverflow, setLineOverflow] = useState<boolean>(false);
   const [isFixedTools, setIsFixedTools] = useState<boolean>(false);
@@ -47,7 +60,7 @@ function Transmitter({ onSend }: { onSend?: CompositionInputProps['onSend'] }) {
   const extension = useMemo(
     () =>
       defineExtension({
-        dependencies: [SynclanEditorExtension],
+        dependencies: [AutoFocusExtension, SynclanEditorExtension],
         name: 'synclan-editor',
         namespace: 'synclan-editor',
       }),
@@ -150,11 +163,11 @@ function Transmitter({ onSend }: { onSend?: CompositionInputProps['onSend'] }) {
           <ul className={cn('flex items-center pl-4 pr-3 py-2')}>
             {!isMobile && (
               <li className='flex items-center'>
-                <Tooltip>
+                <Tooltip delayDuration={300}>
                   <TooltipTrigger asChild>
                     <Button
                       className={cn(
-                        'text-muted-foreground hover:text-muted-foreground',
+                        'px-1.5 text-muted-foreground hover:text-muted-foreground',
                         isFixedTools &&
                           'bg-primary/10 text-primary hover:bg-primary/10! hover:text-primary!',
                       )}
@@ -181,12 +194,18 @@ function Transmitter({ onSend }: { onSend?: CompositionInputProps['onSend'] }) {
                 }}
               />
             </li>
+            <li className='flex items-center'>
+              <TransmitterMoreMenu
+                onSelectFile={onSelectFile}
+                onSelectMedia={onSelectMedia}
+              />
+            </li>
             {/*{!isMobile && (
-              <li className='m flex items-center'>
+              <li className='flex items-cenÏter'>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      className='text-muted-foreground hover:text-muted-foreground'
+                      className='text-muted-foreground hover:text-muted-foreground px-1.5'
                       size='sm'
                       variant='ghost'
                       onClick={() => {
@@ -200,16 +219,18 @@ function Transmitter({ onSend }: { onSend?: CompositionInputProps['onSend'] }) {
                 </Tooltip>
               </li>
             )}*/}
-            <li className='flex items-center'>
-              {isMobile ? (
-                renderSend()
-              ) : (
-                <Tooltip>
-                  <TooltipTrigger asChild>{renderSend()}</TooltipTrigger>
-                  <TooltipContent>发送(Enter)</TooltipContent>
-                </Tooltip>
-              )}
-            </li>
+            {!isMobile && (
+              <li className='ml-1 flex items-center'>
+                {isMobile ? (
+                  renderSend()
+                ) : (
+                  <Tooltip>
+                    <TooltipTrigger asChild>{renderSend()}</TooltipTrigger>
+                    <TooltipContent>发送(Enter)</TooltipContent>
+                  </Tooltip>
+                )}
+              </li>
+            )}
           </ul>
         </div>
       </div>

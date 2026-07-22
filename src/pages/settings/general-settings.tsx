@@ -1,5 +1,6 @@
 import { ChevronRightIcon } from 'lucide-react';
 import { Controller, type UseFormReturn } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 
 import {
   DropdownMenu,
@@ -31,9 +32,13 @@ const LOCALES = {
 };
 
 function GeneralSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
+  const { t } = useTranslation();
+
   return (
     <FieldSet>
-      <FieldLegend className='text-muted-foreground pl-3'>General</FieldLegend>
+      <FieldLegend className='text-muted-foreground pl-3'>
+        {t('settings.general.title')}
+      </FieldLegend>
       <div className='overflow-hidden rounded-xl'>
         <FieldGroup className='gap-0'>
           <Controller
@@ -48,7 +53,7 @@ function GeneralSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                       className='hover:bg-muted rounded-none py-3'
                     >
                       <ItemContent>
-                        <ItemTitle>Language</ItemTitle>
+                        <ItemTitle>{t('settings.general.language')}</ItemTitle>
                         {fieldState.invalid && (
                           <FieldError errors={[fieldState.error]} />
                         )}
@@ -100,7 +105,9 @@ function GeneralSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                         className='hover:bg-muted rounded-none py-3'
                       >
                         <ItemContent>
-                          <ItemTitle>Auto Check Update</ItemTitle>
+                          <ItemTitle>
+                            {t('settings.general.autoCheckForUpdates')}
+                          </ItemTitle>
                           {fieldState.invalid && (
                             <FieldError errors={[fieldState.error]} />
                           )}
@@ -134,7 +141,9 @@ function GeneralSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                         className='hover:bg-muted rounded-none py-3'
                       >
                         <ItemContent>
-                          <ItemTitle>Launch at Login</ItemTitle>
+                          <ItemTitle>
+                            {t('settings.general.launchAtLogin')}
+                          </ItemTitle>
                           {fieldState.invalid && (
                             <FieldError errors={[fieldState.error]} />
                           )}
@@ -168,7 +177,9 @@ function GeneralSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                         className='hover:bg-muted rounded-none py-3'
                       >
                         <ItemContent>
-                          <ItemTitle>Start Minimized</ItemTitle>
+                          <ItemTitle>
+                            {t('settings.general.startMinimized')}
+                          </ItemTitle>
                           {fieldState.invalid && (
                             <FieldError errors={[fieldState.error]} />
                           )}

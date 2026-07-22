@@ -37,7 +37,9 @@ function StorageSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
 
   return (
     <FieldSet>
-      <FieldLegend className='text-muted-foreground pl-3'>Storage</FieldLegend>
+      <FieldLegend className='text-muted-foreground pl-3'>
+        {t('settings.storage.title')}
+      </FieldLegend>
       <div className='overflow-hidden rounded-xl'>
         <FieldGroup className='gap-0'>
           <Controller
@@ -62,7 +64,9 @@ function StorageSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                   }}
                 >
                   <ItemContent>
-                    <ItemTitle>Upload Directory</ItemTitle>
+                    <ItemTitle>
+                      {t('settings.storage.uploadDirectory')}
+                    </ItemTitle>
                     {fieldState.invalid && (
                       <FieldError errors={[fieldState.error]} />
                     )}
@@ -101,7 +105,9 @@ function StorageSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                       className='hover:bg-muted rounded-none py-3'
                     >
                       <ItemContent>
-                        <ItemTitle>Auto File Cleanup</ItemTitle>
+                        <ItemTitle>
+                          {t('settings.storage.autoFileCleanup')}
+                        </ItemTitle>
                         {fieldState.invalid && (
                           <FieldError errors={[fieldState.error]} />
                         )}
@@ -111,7 +117,7 @@ function StorageSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                           className='text-muted-foreground'
                           aria-invalid={fieldState.invalid}
                         >
-                          {t(`auto_log_clean_${field.value}`)}
+                          {t(`settings.log.autoClean.${field.value}`)}
                         </span>
                         <ChevronRightIcon className='size-4' />
                       </ItemActions>
@@ -125,7 +131,7 @@ function StorageSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                       >
                         {AUTO_FILE_CLEANUP.map((val) => (
                           <DropdownMenuRadioItem key={val} value={val}>
-                            {t(`auto_log_clean_${val}`)}
+                            {t(`settings.log.autoClean.${val}`)}
                           </DropdownMenuRadioItem>
                         ))}
                       </DropdownMenuRadioGroup>

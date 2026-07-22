@@ -45,7 +45,9 @@ function LoggerSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
 
   return (
     <FieldSet>
-      <FieldLegend className='text-muted-foreground pl-3'>Log</FieldLegend>
+      <FieldLegend className='text-muted-foreground pl-3'>
+        {t('settings.log.title')}
+      </FieldLegend>
       <div className='overflow-hidden rounded-xl'>
         <FieldGroup className='gap-0'>
           <Controller
@@ -61,7 +63,7 @@ function LoggerSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                       className='hover:bg-muted rounded-none py-3'
                     >
                       <ItemContent>
-                        <ItemTitle>Log Level</ItemTitle>
+                        <ItemTitle>{t('settings.log.level')}</ItemTitle>
                         {fieldState.invalid && (
                           <FieldError errors={[fieldState.error]} />
                         )}
@@ -109,7 +111,7 @@ function LoggerSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                       className='hover:bg-muted rounded-none py-3'
                     >
                       <ItemContent>
-                        <ItemTitle>Log Cleanup</ItemTitle>
+                        <ItemTitle>{t('settings.log.cleanup')}</ItemTitle>
                         {fieldState.invalid && (
                           <FieldError errors={[fieldState.error]} />
                         )}
@@ -119,7 +121,7 @@ function LoggerSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                           className='text-muted-foreground'
                           aria-invalid={fieldState.invalid}
                         >
-                          {t(`auto_log_clean_${field.value}`)}
+                          {t(`settings.log.autoClean.${field.value}`)}
                         </span>
                         <ChevronRightIcon className='size-4' />
                       </ItemActions>
@@ -133,7 +135,7 @@ function LoggerSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                       >
                         {AUTO_LOG_CLEAN.map((val) => (
                           <DropdownMenuRadioItem key={val} value={val}>
-                            {t(`auto_log_clean_${val}`)}
+                            {t(`settings.log.autoClean.${val}`)}
                           </DropdownMenuRadioItem>
                         ))}
                       </DropdownMenuRadioGroup>
@@ -156,7 +158,7 @@ function LoggerSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                     className='hover:bg-muted rounded-none'
                   >
                     <ItemContent>
-                      <ItemTitle>Max Log Size</ItemTitle>
+                      <ItemTitle>{t('settings.log.maxSize')}</ItemTitle>
                       {fieldState.invalid && (
                         <FieldError errors={[fieldState.error]} />
                       )}
@@ -196,7 +198,7 @@ function LoggerSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                     className='hover:bg-muted rounded-none'
                   >
                     <ItemContent>
-                      <ItemTitle>Max Log Count</ItemTitle>
+                      <ItemTitle>{t('settings.log.maxCount')}</ItemTitle>
                       {fieldState.invalid && (
                         <FieldError errors={[fieldState.error]} />
                       )}
@@ -214,7 +216,7 @@ function LoggerSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                           }}
                         />
                         <InputGroupAddon align='inline-end'>
-                          <FieldLabel>File</FieldLabel>
+                          <FieldLabel>{t('settings.log.fileCount')}</FieldLabel>
                         </InputGroupAddon>
                       </InputGroup>
                     </ItemActions>

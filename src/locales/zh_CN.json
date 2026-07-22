@@ -1,7 +1,72 @@
 {
-  "auto_log_clean_0": "不清理",
-  "auto_log_clean_1": "保留 1 天",
-  "auto_log_clean_2": "保留 7 天",
-  "auto_log_clean_3": "保留 30 天",
-  "auto_log_clean_4": "保留 90 天Ï"
+  "settings": {
+    "title": "设置",
+
+    "general": {
+      "title": "通用",
+      "language": "语言",
+      "autoCheckForUpdates": "自动检查更新",
+      "launchAtLogin": "登录时启动",
+      "startMinimized": "启动时最小化"
+    },
+
+    "appearance": {
+      "title": "外观",
+      "theme": "主题",
+      "system": "跟随系统",
+      "dark": "深色",
+      "light": "浅色"
+    },
+
+    "server": {
+      "title": "服务",
+      "httpServerPort": "HTTP 服务端口",
+      "enableHttps": "启用 HTTPS",
+      "exportCertificate": "导出证书",
+      "certificateTrustHelp": {
+        "requiredMacOS": "macOS 必需",
+        "requiredLinux": "Linux 必需",
+        "requiredHttps": "HTTPS 必需",
+        "macOS": "HTTPS 需要信任 Synclan 证书。请导出证书，将其导入钥匙串访问，设置为“始终信任”，然后重启 Synclan 后再启用 HTTPS。",
+        "linux": "HTTPS 需要信任 Synclan 证书。请导出证书，将其导入系统信任存储，然后重启 Synclan 后再启用 HTTPS。",
+        "default": "HTTPS 需要操作系统信任 Synclan 证书。请导出证书，将其添加到受信任证书列表，然后重启 Synclan 后再启用 HTTPS。"
+      }
+    },
+
+    "storage": {
+      "title": "存储",
+      "uploadDirectory": "上传目录",
+      "autoFileCleanup": "自动清理文件"
+    },
+
+    "log": {
+      "title": "日志",
+      "level": "日志级别",
+      "cleanup": "日志清理",
+      "maxSize": "最大日志大小",
+      "maxCount": "最大日志数量",
+      "fileCount": "个",
+      "autoClean": {
+        "0": "不清理",
+        "1": "保留 1 天",
+        "2": "保留 7 天",
+        "3": "保留 30 天",
+        "4": "保留 90 天"
+      }
+    },
+
+    "about": {
+      "title": "关于",
+      "checkForUpdates": "检查更新",
+      "checkNow": "立即检查更新",
+      "version": "版本",
+      "versionCopied": "版本号已复制到剪贴板"
+    }
+  },
+
+  "updater": {
+    "upToDate": "当前已是最新版本",
+    "failedToCheck": "检查更新失败",
+    "checkFailedDescription": "请检查网络连接后重试。"
+  }
 }

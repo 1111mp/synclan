@@ -1,7 +1,72 @@
 {
-  "auto_log_clean_0": "Never Clean",
-  "auto_log_clean_1": "Retain 1 Day",
-  "auto_log_clean_2": "Retain 7 Days",
-  "auto_log_clean_3": "Retain 30 Days",
-  "auto_log_clean_4": "Retain 90 Days"
+  "settings": {
+    "title": "Settings",
+
+    "general": {
+      "title": "General",
+      "language": "Language",
+      "autoCheckForUpdates": "Auto Check for Updates",
+      "launchAtLogin": "Launch at Login",
+      "startMinimized": "Start Minimized"
+    },
+
+    "appearance": {
+      "title": "Appearance",
+      "theme": "Theme",
+      "system": "System",
+      "dark": "Dark",
+      "light": "Light"
+    },
+
+    "server": {
+      "title": "Server",
+      "httpServerPort": "HTTP Server Port",
+      "enableHttps": "Enable HTTPS",
+      "exportCertificate": "Export Certificate",
+      "certificateTrustHelp": {
+        "requiredMacOS": "Required on macOS",
+        "requiredLinux": "Required on Linux",
+        "requiredHttps": "Required for HTTPS",
+        "macOS": "HTTPS requires the Synclan certificate to be trusted. Export the certificate, import it into Keychain Access, set it to Always Trust, then restart Synclan before enabling HTTPS.",
+        "linux": "HTTPS requires the Synclan certificate to be trusted. Export the certificate, import it into your system trust store, then restart Synclan before enabling HTTPS.",
+        "default": "HTTPS requires the Synclan certificate to be trusted by your operating system. Export the certificate, add it to the trusted certificates, then restart Synclan before enabling HTTPS."
+      }
+    },
+
+    "storage": {
+      "title": "Storage",
+      "uploadDirectory": "Upload Directory",
+      "autoFileCleanup": "Auto File Cleanup"
+    },
+
+    "log": {
+      "title": "Log",
+      "level": "Log Level",
+      "cleanup": "Log Cleanup",
+      "maxSize": "Max Log Size",
+      "maxCount": "Max Log Count",
+      "fileCount": "File",
+      "autoClean": {
+        "0": "Never Clean",
+        "1": "Retain 1 Day",
+        "2": "Retain 7 Days",
+        "3": "Retain 30 Days",
+        "4": "Retain 90 Days"
+      }
+    },
+
+    "about": {
+      "title": "About",
+      "checkForUpdates": "Check for Updates",
+      "checkNow": "Check Now",
+      "version": "Version",
+      "versionCopied": "Version copied to clipboard"
+    }
+  },
+
+  "updater": {
+    "upToDate": "You're using the latest version",
+    "failedToCheck": "Failed to check for updates",
+    "checkFailedDescription": "Please check your network connection and try again."
+  }
 }

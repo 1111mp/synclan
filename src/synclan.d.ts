@@ -37,12 +37,14 @@ interface IDevice {
   updatedAt: number;
 }
 
+type LastMessage = Omit<IMessage, 'content'>;
+
 interface IConversations {
   id: string; // 设备/会话 ID (主键)
   device?: IDevice | null;
   unreadCount: number;
   lastAccessed: number;
-  lastMessage?: IMessage;
+  lastMessage?: LastMessage;
 }
 
 type Attachment = {

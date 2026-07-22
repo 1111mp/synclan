@@ -1,6 +1,7 @@
 import { check } from '@tauri-apps/plugin-updater';
 import { ChevronRightIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
 import {
@@ -21,13 +22,17 @@ import { useUpdaterStore } from '@/stores';
 function AboutSettings() {
   const [version, setVersion] = useState<string>('');
 
+  const { t } = useTranslation();
+
   useEffect(() => {
     void getAppVersion().then(setVersion);
   }, []);
 
   return (
     <FieldSet>
-      <FieldLegend className='text-muted-foreground pl-3'>About</FieldLegend>
+      <FieldLegend className='text-muted-foreground pl-3'>
+        {t('settings.about.title')}
+      </FieldLegend>
       <div className='overflow-hidden rounded-xl'>
         <FieldGroup className='gap-0'>
           {!isWeb && (
@@ -42,11 +47,11 @@ function AboutSettings() {
             className='hover:bg-muted rounded-none py-3'
             onClick={async () => {
               await navigator.clipboard.writeText(version);
-              toast.success('Version copied to clipboard');
+              toast.success(t('settings.about.versionCopied'));
             }}
           >
             <ItemContent>
-              <ItemTitle>Synclan Version</ItemTitle>
+              <ItemTitle>Synclan {t('settings.about.version')}</ItemTitle>
             </ItemContent>
             <ItemActions>
               <span className='text-muted-foreground'>v{version}</span>
@@ -62,6 +67,8 @@ function AboutSettings() {
 function CheckForUpdatesItem() {
   const [loading, setLoading] = useState<boolean>(false);
 
+  const { t } = useTranslation();
+
   const checkForUpdates = async () => {
     if (loading) return;
 
@@ -73,11 +80,11 @@ function CheckForUpdatesItem() {
         store.setUpdate(update);
         store.setOpen(true);
       } else {
-        toast.success('You are already using the latest version');
+        toast.success(t('updater.upToDate'));
       }
     } catch {
-      toast.error('Failed to check for updates', {
-        description: 'Please check your network connection and try again.',
+      toast.error(t('updater.failedToCheck'), {
+        description: t('updater.checkFailedDescription'),
       });
     } finally {
       setLoading(false);
@@ -92,10 +99,12 @@ function CheckForUpdatesItem() {
       onClick={checkForUpdates}
     >
       <ItemContent>
-        <ItemTitle>Check for Updates</ItemTitle>
+        <ItemTitle>{t('settings.about.checkForUpdates')}</ItemTitle>
       </ItemContent>
       <ItemActions>
-        <span className='text-muted-foreground'>Check Now</span>
+        <span className='text-muted-foreground'>
+          {t('settings.about.checkNow')}
+        </span>
         {loading ? <Spinner /> : <ChevronRightIcon className='size-4' />}
       </ItemActions>
     </Item>

@@ -42,6 +42,10 @@ type IUIMessage = IMessage & { showTimestamp: boolean };
 type MediaMessageExtra = Record<string, any> & {
   width?: number;
   height?: number;
+  duration?: number;
+  size?: number;
+  name?: string;
+  mimeType?: string;
 };
 
 type CursorPaginatedMessages = {
