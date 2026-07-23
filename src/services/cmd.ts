@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { api } from '@/lib/api';
 import { isWeb } from '@/lib/constant';
 import { db } from '@/lib/db';
+import { uploadFile } from '@/services/upload';
 
 const SYNCLAN_CONFIG_TORAGE_KEY = '__SYNCLAN_CONFIG__';
 
@@ -291,22 +292,6 @@ export async function uploadAttachment(attachment: Attachment) {
   return payload;
 }
 
-export async function uploadFile(file: File, permanent: boolean = false) {
-  const formData = new FormData();
-  formData.append('name', `${uuidv4()}__${file.name}`);
-  formData.append('file', file);
-  if (permanent) {
-    formData.append('permanent', 'true');
-  }
-
-  const resp = await api.upload<string>('/upload', formData);
-  const payload = resp.payload ?? null;
-  if (payload === null) {
-    throw new Error('Failed to upload file');
-  }
-  return payload;
-}
-
 export async function onPickImage(): Promise<string | null> {
   if (isWeb) {
     return new Promise((resolve, reject) => {
@@ -323,7 +308,7 @@ export async function onPickImage(): Promise<string | null> {
         }
 
         try {
-          const url = await uploadFile(file, true);
+          const url = await uploadFile(file, { permanent: true });
           resolve(url);
         } catch (error) {
           reject(error);
@@ -365,6 +350,6 @@ export async function onPickImage(): Promise<string | null> {
 
   const file = new File([blob], fileName, { type: `image/${fileExtension}` });
 
-  const url = await uploadFile(file, true);
+  const url = await uploadFile(file, { permanent: true });
   return url;
 }

@@ -101,15 +101,25 @@ export const api = {
     });
   },
 
-  post<T>(path: string, body?: unknown) {
+  post<T>(
+    path: string,
+    body?: unknown,
+    options?: Omit<RequestOptions, 'method' | 'body'>,
+  ) {
     return request<ApiResponse<T>>(path, {
+      ...options,
       method: 'POST',
       body: body ? JSON.stringify(body) : undefined,
     });
   },
 
-  upload<T>(path: string, formData: FormData) {
+  upload<T>(
+    path: string,
+    formData: FormData,
+    options?: Omit<RequestOptions, 'method' | 'body'>,
+  ) {
     return request<ApiResponse<T>>(path, {
+      ...options,
       method: 'POST',
       body: formData,
     });

@@ -12,7 +12,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui';
 
-const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200MB
+// const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200MB
 const ACCEPT_MEDIA_TYPES = ['image/', 'video/'];
 
 type Props = {
@@ -47,10 +47,10 @@ function TransmitterMoreMenu({ onSelectMedia, onSelectFile }: Props) {
         return false;
       }
 
-      if (file.size > MAX_FILE_SIZE) {
-        console.warn(`File too large: ${file.name}`);
-        return false;
-      }
+      // if (file.size > MAX_FILE_SIZE) {
+      //   console.warn(`File too large: ${file.name}`);
+      //   return false;
+      // }
 
       return true;
     });
@@ -71,11 +71,11 @@ function TransmitterMoreMenu({ onSelectMedia, onSelectFile }: Props) {
       return;
     }
 
-    const validFiles = files.filter((file) => {
-      if (file.size > MAX_FILE_SIZE) {
-        console.warn(`File too large: ${file.name}`);
-        return false;
-      }
+    const validFiles = files.filter((_file) => {
+      // if (file.size > MAX_FILE_SIZE) {
+      //   console.warn(`File too large: ${file.name}`);
+      //   return false;
+      // }
 
       return true;
     });

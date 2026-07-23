@@ -2,6 +2,7 @@ export * from './app-sidebar';
 export * from './composition-input';
 export * from './confirm-dialog';
 export * from './device-discover';
+export * from './drag-upload-overlay';
 export * from './emoji';
 export * from './floating-context-menu';
 export * from './image-preview-provider';

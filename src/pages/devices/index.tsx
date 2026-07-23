@@ -10,7 +10,12 @@ import { v4 as uuidv4 } from 'uuid';
 import { useShallow } from 'zustand/react/shallow';
 
 import { useAppContext } from '@/app-context';
-import { Transmitter, type CompositionInputProps } from '@/components';
+import {
+  DragUploadOverlay,
+  Transmitter,
+  type CompositionInputProps,
+  type DragUploadOverlayProps,
+} from '@/components';
 import { MessageAnimatedWrapper } from '@/components/messages';
 import type { TransmitterMoreMenuProps } from '@/components/transmitter-more-menu';
 import {
@@ -20,10 +25,13 @@ import {
   MessageScrollerProvider,
   MessageScrollerViewport,
 } from '@/components/ui';
+import { useIsMobile } from '@/hooks';
 import { prepareMessageContent } from '@/lib/attachment';
 import { createAttachmentMessage } from '@/lib/media';
 import { HttpStatus } from '@/lib/types';
-import { getMessages, uploadFile } from '@/services/cmd';
+import { cn } from '@/lib/utils';
+import { getMessages } from '@/services/cmd';
+import { uploadFile } from '@/services/upload';
 import {
   useCurrentConversation,
   useDeviceStore,
@@ -62,6 +70,8 @@ function DevicesPage() {
   const reconcileServerMessage = useIMStore((s) => s.reconcileServerMessage);
   const syncDeviceInfo = useIMStore((s) => s.syncDeviceInfo);
   const exitConversation = useIMStore((s) => s.exitConversation);
+
+  const isMobile = useIsMobile();
 
   const {
     // status,
@@ -369,99 +379,109 @@ function DevicesPage() {
     );
   };
 
+  const onDrop: DragUploadOverlayProps['onDrop'] = async (files) => {
+    await onSelectFile(files);
+  };
+
   const virtualItems = virtualizer.getVirtualItems();
 
   return (
-    <MessageScrollerProvider defaultScrollPosition='end'>
-      <div
-        id='synclan-device-message-list'
-        className='relative flex h-dvh flex-col overflow-hidden'
-      >
-        <MessageScroller>
-          <MessageScrollerViewport
-            ref={viewportRef}
-            className='min-h-0 w-full overflow-x-hidden overflow-y-auto'
-            onScroll={(event) => {
-              if (
-                !autoHistoryEnabled ||
-                !mounted.current ||
-                virtualizer.isAtEnd(80) ||
-                isFetchingPreviousPage ||
-                !hasPreviousPage ||
-                isFetching.current
-              )
-                return;
-
-              if (
-                event.currentTarget &&
-                (event.currentTarget as HTMLElement).scrollTop < 120
-              ) {
-                isFetching.current = true;
-                void fetchPreviousPage().finally(() => {
-                  setTimeout(() => {
-                    isFetching.current = false;
-                  }, 300);
-                });
-              }
-            }}
-          >
-            <DeviceHeader device={conversation?.device} />
-            <MessageScrollerContent
-              // aria-busy={isBusy}
-              className='block min-h-[calc(100%-56px)]'
-            >
-              <div ref={virtualizer.containerRef} className='relative w-full'>
-                {virtualItems.map((virtualItem) => {
-                  const message = messages[virtualItem.index],
-                    previousMessage = messages[virtualItem.index - 1] || void 0,
-                    isUserMessage = message.sender === current?.id,
-                    user = isUserMessage ? current : conversation?.device,
-                    isLatest = virtualItem.index === messages.length - 1;
-
-                  return (
-                    <div
-                      key={virtualItem.key}
-                      data-index={virtualItem.index}
-                      ref={virtualizer.measureElement}
-                      className='absolute top-0 left-0 w-full'
-                    >
-                      <InView
-                        as='div'
-                        skip={!isLatest}
-                        onChange={(inView) => {
-                          latestMessageInViewRef.current = inView;
-                        }}
-                      >
-                        <MessageAnimatedWrapper
-                          message={message}
-                          userVariant='muted'
-                          assistantVariant='muted'
-                          isUserMessage={isUserMessage}
-                          user={user}
-                          previousMessage={previousMessage}
-                        />
-                      </InView>
-                    </div>
-                  );
-                })}
-              </div>
-            </MessageScrollerContent>
-          </MessageScrollerViewport>
-          <MessageScrollerButton />
-        </MessageScroller>
-
-        <footer
-          ref={footerRef}
-          className='footer-gradient w-full shrink-0 pr-4 pb-2 pl-2'
+    <DragUploadOverlay onDrop={onDrop}>
+      <MessageScrollerProvider defaultScrollPosition='end'>
+        <div
+          id='synclan-device-message-list'
+          className='relative flex h-dvh flex-col overflow-hidden'
         >
-          <Transmitter
-            onSend={onSend}
-            onSelectFile={onSelectFile}
-            onSelectMedia={onSelectMedia}
-          />
-        </footer>
-      </div>
-    </MessageScrollerProvider>
+          <MessageScroller>
+            <MessageScrollerViewport
+              ref={viewportRef}
+              className='min-h-0 w-full overflow-x-hidden overflow-y-auto'
+              onScroll={(event) => {
+                if (
+                  !autoHistoryEnabled ||
+                  !mounted.current ||
+                  virtualizer.isAtEnd(80) ||
+                  isFetchingPreviousPage ||
+                  !hasPreviousPage ||
+                  isFetching.current
+                )
+                  return;
+
+                if (
+                  event.currentTarget &&
+                  (event.currentTarget as HTMLElement).scrollTop < 120
+                ) {
+                  isFetching.current = true;
+                  void fetchPreviousPage().finally(() => {
+                    setTimeout(() => {
+                      isFetching.current = false;
+                    }, 300);
+                  });
+                }
+              }}
+            >
+              <DeviceHeader device={conversation?.device} />
+              <MessageScrollerContent
+                // aria-busy={isBusy}
+                className='block min-h-[calc(100%-56px)]'
+              >
+                <div ref={virtualizer.containerRef} className='relative w-full'>
+                  {virtualItems.map((virtualItem) => {
+                    const message = messages[virtualItem.index],
+                      previousMessage =
+                        messages[virtualItem.index - 1] || void 0,
+                      isUserMessage = message.sender === current?.id,
+                      user = isUserMessage ? current : conversation?.device,
+                      isLatest = virtualItem.index === messages.length - 1;
+
+                    return (
+                      <div
+                        key={virtualItem.key}
+                        data-index={virtualItem.index}
+                        ref={virtualizer.measureElement}
+                        className='absolute top-0 left-0 w-full'
+                      >
+                        <InView
+                          as='div'
+                          skip={!isLatest}
+                          onChange={(inView) => {
+                            latestMessageInViewRef.current = inView;
+                          }}
+                        >
+                          <MessageAnimatedWrapper
+                            message={message}
+                            userVariant='muted'
+                            assistantVariant='muted'
+                            isUserMessage={isUserMessage}
+                            user={user}
+                            previousMessage={previousMessage}
+                          />
+                        </InView>
+                      </div>
+                    );
+                  })}
+                </div>
+              </MessageScrollerContent>
+            </MessageScrollerViewport>
+            <MessageScrollerButton />
+          </MessageScroller>
+
+          <footer
+            ref={footerRef}
+            className={cn(
+              'footer-gradient w-full shrink-0 pr-4 pb-2 pl-2',
+              isMobile && 'pr-2',
+            )}
+          >
+            <Transmitter
+              onSend={onSend}
+              onSelectFile={onSelectFile}
+              onSelectMedia={onSelectMedia}
+            />
+          </footer>
+        </div>
+      </MessageScrollerProvider>
+    </DragUploadOverlay>
   );
 }
 

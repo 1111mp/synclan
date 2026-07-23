@@ -186,7 +186,7 @@ impl HttpServer {
 
         let app = app
             .layer(layer)
-            .layer(DefaultBodyLimit::max(200 * 1024 * 1024))
+            .layer(DefaultBodyLimit::max(240 * 1024 * 1024))
             .layer(
                 CorsLayer::new()
                     .allow_credentials(true)

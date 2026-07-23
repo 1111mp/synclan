@@ -64,6 +64,9 @@ pub async fn build_new_window() -> Result<WebviewWindow, String> {
         // Because we use a self-signed certificate
         .additional_browser_args("--ignore-certificate-errors")
         .initialization_script(&initial_script)
+        // Disable native OS drag-and-drop interception.
+        // This allows HTML5 drag & drop events (e.g., react-dropzone) to work inside the Webview.
+        .disable_drag_drop_handler()
         .center();
 
     #[cfg(target_os = "macos")]

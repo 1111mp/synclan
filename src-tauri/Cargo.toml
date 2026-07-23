@@ -98,6 +98,7 @@ tower-http = { version = "0.7.0", features = ["cors", "fs", "trace"] }
 utoipa = { version = "5.5.0", features = ["axum_extras"] }
 utoipa-axum = "0.2.0"
 utoipa-swagger-ui = { version = "9.0.2", features = ["axum", "reqwest"] }
+uuid = { version = "1.24.0", features = ["v4"] }
 validator = { version = "0.20.0", features = ["derive"] }
 whoami = "2.1.2"
 

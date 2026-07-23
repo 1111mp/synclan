@@ -8,6 +8,7 @@ import {
 } from 'react';
 
 import { Button } from '@/components/ui';
+import { useIsMobile } from '@/hooks';
 import { cn } from '@/lib/utils';
 
 interface ExpandableProps extends PropsWithChildren {
@@ -25,11 +26,14 @@ function MessageExpandable({
   overlayClassName,
 }: ExpandableProps) {
   const [expanded, setExpanded] = useState<boolean>(false);
+  const [measured, setMeasured] = useState<boolean>(false);
   const [overflow, setOverflow] = useState<boolean>(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const measuredRef = useRef<boolean>(false);
+
+  const isMobile = useIsMobile();
 
   useLayoutEffect(() => {
     if (measuredRef.current) return;
@@ -39,6 +43,7 @@ function MessageExpandable({
 
     measuredRef.current = true;
     setOverflow(el.scrollHeight > maxHeight);
+    setMeasured(true);
   }, [children, maxHeight]);
 
   const handleCollapse = (expanded: boolean) => {
@@ -51,7 +56,7 @@ function MessageExpandable({
   };
 
   const containerStyle: CSSProperties =
-    !expanded && overflow
+    !expanded && (!measured || overflow)
       ? {
           maxHeight,
           overflow: 'hidden',
@@ -88,11 +93,16 @@ function MessageExpandable({
       )}
 
       {expanded && overflow && (
-        <div className='pointer-events-none absolute inset-x-0 bottom-2 flex justify-center opacity-0 transition-opacity duration-200 group-hover:opacity-100'>
+        <div
+          className={cn(
+            'pointer-events-none absolute inset-x-0 bottom-0 flex justify-center opacity-0 transition-opacity duration-200 group-hover:opacity-100',
+            isMobile && 'opacity-100',
+          )}
+        >
           <Button
             size='sm'
             variant='secondary'
-            className='pointer-events-auto rounded-full shadow-md'
+            className='bg-secondary/60 pointer-events-auto rounded-full shadow-md'
             onClick={() => handleCollapse(false)}
           >
             <ChevronUp className='mr-1 h-4 w-4' />

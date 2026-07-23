@@ -5,6 +5,7 @@ use validator::{Validate, ValidationError};
 pub mod device_dto;
 pub mod message_dto;
 pub mod synclan_dto;
+pub mod upload_dto;
 
 #[derive(Debug, Deserialize, IntoParams, ToSchema, Validate)]
 #[serde(rename_all = "camelCase")]

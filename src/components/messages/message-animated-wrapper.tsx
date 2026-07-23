@@ -189,7 +189,11 @@ function MessageAnimatedRow({
                     message.type === 'file' && 'p-0 border-none',
                   )}
                 >
-                  <MessageExpandable>{renderMessage()}</MessageExpandable>
+                  {message.type === 'text' ? (
+                    <MessageExpandable>{renderMessage()}</MessageExpandable>
+                  ) : (
+                    renderMessage()
+                  )}
                 </BubbleContent>
               </Bubble>
             </ContextMenuTrigger>

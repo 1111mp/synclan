@@ -6,7 +6,7 @@ use crate::{
 use anyhow::{Result, anyhow};
 use chrono::{Local, NaiveDate};
 use local_ip_address::local_ip;
-use std::net::IpAddr;
+use std::{net::IpAddr, path::Path};
 use tauri_plugin_dialog::{DialogExt, FilePath};
 use tokio::fs;
 
@@ -79,6 +79,14 @@ pub async fn uploaded_files_auto_cleanup() -> Result<()> {
         .file_upload_dir
         .as_ref()
         .ok_or(anyhow!("File upload directory is not configured."))?;
+
+    // Remove the chunk directory if it exists
+    let chunk_dir = Path::new(file_upload_dir).join("chunks");
+    if fs::try_exists(&chunk_dir).await.unwrap_or(false) {
+        if let Err(e) = fs::remove_dir_all(&chunk_dir).await {
+            logging!(warn, Type::Server, "Failed to remove chunk dir: {e}");
+        }
+    }
 
     let auto_file_clean = { synclan.auto_file_clean.unwrap_or(0) };
     let day = match auto_file_clean {
