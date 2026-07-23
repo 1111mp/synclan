@@ -82,10 +82,10 @@ pub async fn uploaded_files_auto_cleanup() -> Result<()> {
 
     // Remove the chunk directory if it exists
     let chunk_dir = Path::new(file_upload_dir).join("chunks");
-    if fs::try_exists(&chunk_dir).await.unwrap_or(false) {
-        if let Err(e) = fs::remove_dir_all(&chunk_dir).await {
-            logging!(warn, Type::Server, "Failed to remove chunk dir: {e}");
-        }
+    if fs::try_exists(&chunk_dir).await.unwrap_or(false)
+        && let Err(e) = fs::remove_dir_all(&chunk_dir).await
+    {
+        logging!(warn, Type::Server, "Failed to remove chunk dir: {e}");
     }
 
     let auto_file_clean = { synclan.auto_file_clean.unwrap_or(0) };
