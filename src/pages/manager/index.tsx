@@ -7,6 +7,7 @@ import {
   TrashIcon,
   User,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
 import { useConfirm } from '@/components';
@@ -59,6 +60,8 @@ function ManagePage() {
   const current = useDeviceStore((s) => s.current);
   const confirm = useConfirm();
 
+  const { t } = useTranslation();
+
   const queryClient = useQueryClient();
 
   const { data: devices = [], isPending } = useQuery({
@@ -101,10 +104,8 @@ function ManagePage() {
         {current && (
           <Card>
             <CardHeader>
-              <CardTitle>This Device</CardTitle>
-              <CardDescription>
-                Information about the current host.
-              </CardDescription>
+              <CardTitle>{t('manage.thisDevice')}</CardTitle>
+              <CardDescription>{t('manage.currentHostInfo')}</CardDescription>
             </CardHeader>
 
             <CardContent className='flex items-center gap-4'>
@@ -130,11 +131,11 @@ function ManagePage() {
                   ID: {current.id}
                 </div>
 
-                {current.fingerprintId && (
+                {/*{current.fingerprintId && (
                   <div className='text-muted-foreground text-sm'>
                     Fingerprint: {current.fingerprintId}
                   </div>
-                )}
+                )}*/}
 
                 <div className='text-muted-foreground flex items-center gap-2 text-sm'>
                   <PlatformIcon platform={current.platform} />
@@ -148,21 +149,19 @@ function ManagePage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Discovered Devices</CardTitle>
-            <CardDescription>
-              All devices currently known by Synclan.
-            </CardDescription>
+            <CardTitle>{t('manage.discoveredDevices')}</CardTitle>
+            <CardDescription>{t('manage.knownDevicesInfo')}</CardDescription>
           </CardHeader>
 
           <CardContent className='p-0'>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Device</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Platform</TableHead>
-                  <TableHead>Browser</TableHead>
-                  <TableHead>Updated</TableHead>
+                  <TableHead>{t('manage.device')}</TableHead>
+                  <TableHead>{t('manage.role')}</TableHead>
+                  <TableHead>{t('manage.platform')}</TableHead>
+                  <TableHead>{t('manage.browser')}</TableHead>
+                  <TableHead>{t('manage.updated')}</TableHead>
                   <TableHead className='bg-card sticky right-0 z-10 w-12' />
                 </TableRow>
               </TableHeader>
@@ -171,7 +170,7 @@ function ManagePage() {
                 {isPending ? (
                   <TableRow>
                     <TableCell colSpan={6} className='h-32 text-center'>
-                      Loading...
+                      {t('manage.loading')}
                     </TableCell>
                   </TableRow>
                 ) : devices.length === 0 ? (
@@ -180,7 +179,7 @@ function ManagePage() {
                       colSpan={6}
                       className='text-muted-foreground h-32 text-center'
                     >
-                      No devices found.
+                      {t('manage.noDevicesFound')}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -243,13 +242,13 @@ function ManagePage() {
                                 }
                               }}
                             >
-                              Copy Device ID
+                              {t('manage.copyDeviceId')}
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               variant='destructive'
                               onClick={() => handleRemoveDevice(device)}
                             >
-                              Remove
+                              {t('manage.remove')}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>

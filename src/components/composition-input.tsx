@@ -17,6 +17,7 @@ import {
   type LexicalEditor,
 } from 'lexical';
 import { useImperativeHandle, useRef, useState, type Ref } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { type EmojiPickerProps } from '@/components/emoji';
 import { $createEmojiNode, ImageNode } from '@/components/nodes';
@@ -85,6 +86,7 @@ function CompositionInput({
   const historyState = useRef<HistoryState>(createEmptyHistoryState());
 
   const isMobile = useIsMobile();
+  const { t } = useTranslation();
 
   useImperativeHandle(ref, () => ({
     getEditor: onGetEditor,
@@ -128,7 +130,7 @@ function CompositionInput({
         enterKeyHint='send'
         placeholder={
           <p className='text-muted-foreground pointer-events-none absolute top-0 inline-block text-sm select-none'>
-            Send Message
+            {t('transmitter.sendMessage')}
           </p>
         }
       />

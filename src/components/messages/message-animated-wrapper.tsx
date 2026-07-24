@@ -1,6 +1,7 @@
 import { CopyIcon, TrashIcon, User } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import { useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   Avatar,
@@ -35,7 +36,7 @@ import { TextMessage, type MessageContextMenuRef } from './message-text';
 import { VideoMessage } from './message-video';
 import {
   isSameDay as isSameDayHandler,
-  renderMessageTimee,
+  renderMessageTime,
   renderTime,
   THRESHOLD,
 } from './util';
@@ -112,6 +113,7 @@ function MessageAnimatedRow({
   const textMessageRef = useRef<MessageContextMenuRef>(null);
 
   const confirm = useConfirm();
+  const { t, i18n } = useTranslation();
 
   const renderMessage = () => {
     if (message.type === 'text') {
@@ -152,7 +154,7 @@ function MessageAnimatedRow({
     <>
       {isNewDay && (
         <div className='flex items-center justify-center pt-3 text-xs font-normal'>
-          {renderTime(message.createdAt)}
+          {renderTime(message.createdAt, t, i18n.language)}
         </div>
       )}
       <Message
@@ -207,7 +209,7 @@ function MessageAnimatedRow({
                   }}
                 >
                   <CopyIcon />
-                  Copy
+                  {t('message.copy')}
                 </ContextMenuItem>
               </ContextMenuGroup>
               <ContextMenuSeparator />
@@ -217,10 +219,9 @@ function MessageAnimatedRow({
                   onSelect={async () => {
                     const ok = await confirm({
                       icon: <TrashIcon />,
-                      title: 'Delete message?',
-                      description:
-                        'This will permanently delete this message from the database. This action cannot be undone, and the message will also be removed from the other device.',
-                      confirmText: 'Delete',
+                      title: t('message.deleteMessage'),
+                      description: t('message.deleteDescription'),
+                      confirmText: t('message.delete'),
                       actionVariant: 'destructive',
                     });
 
@@ -243,7 +244,7 @@ function MessageAnimatedRow({
                   }}
                 >
                   <TrashIcon />
-                  Delete
+                  {t('message.delete')}
                 </ContextMenuItem>
               </ContextMenuGroup>
             </ContextMenuContent>
@@ -261,7 +262,7 @@ function MessageAnimatedRow({
                 : 'top-1/2 right-0 -translate-y-1/2 mr-6',
           )}
         >
-          {renderMessageTimee(message.createdAt, isNewGroup)}
+          {renderMessageTime(message.createdAt, t, i18n.language, isNewGroup)}
         </p>
       </Message>
     </>

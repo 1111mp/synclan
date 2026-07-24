@@ -119,10 +119,9 @@ function SettingsPage() {
     if (!isWeb && restart) {
       const ok = await confirm({
         icon: <Power />,
-        title: 'Restart Synclan?',
-        description:
-          'Some changes require a restart to take effect. Synclan will restart now.',
-        confirmText: 'Restart',
+        title: t('settings.restartSynclan'),
+        description: t('settings.restartDescription'),
+        confirmText: t('settings.restart'),
         actionVariant: 'destructive',
       });
 

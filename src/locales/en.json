@@ -1,6 +1,99 @@
 {
+  "deviceSwitcher": {
+    "devices": "Devices",
+    "welcome": "Welcome",
+    "quickAccess": "Quick Access",
+    "devicesDiscover": "Devices Discover"
+  },
+
+  "qrCodeDialog": {
+    "title": "Scan QR Code",
+    "description": "Use your phone to scan this QR code.",
+    "scanWithPhone": "Please use your phone camera to scan this QR code.",
+    "step1": "1. Open the camera on your phone",
+    "step2": "2. Scan this QR code",
+    "step3": "3. Open the link in your browser after recognition",
+    "orVisitDirectly": "Or visit directly via"
+  },
+
+  "navUser": {
+    "profile": "Profile",
+    "settings": "Settings",
+    "manageDevices": "Manage Devices"
+  },
+
+  "welcome": {
+    "welcomeBack": "Welcome back",
+    "selectExistingOrDiscover": "Select an existing device or discover a new one to start messaging.",
+    "orContinueWith": "Or continue with",
+    "selectDeviceToStart": "Select your device to start.",
+    "myDevices": "My Devices",
+    "unknownDevice": "Unknown Device",
+    "noDevicesYet": "No devices yet",
+    "discoverFirstDevice": "Discover your first device to get started.",
+    "discoverDevices": "Discover Devices",
+    "selectDeviceToStartMessaging": "Select a device to start messaging"
+  },
+
+  "deviceDiscover": {
+    "title": "Devices Discover",
+    "ensureSameNetwork": "Please ensure that the desired target is also on the same Wi-Fi network."
+  },
+
+  "navDevices": {
+    "deleteDevice": "Delete Device?",
+    "deleteDescription": "This will permanently delete this chat conversation. All associated chat history will be permanently deleted from the database—not just removed from the cache—and cannot be recovered.",
+    "delete": "Delete"
+  },
+
+  "search": {
+    "search": "Search",
+    "searchDevices": "Search the devices..."
+  },
+
+  "confirm": {
+    "title": "Are you sure?",
+    "cancel": "Cancel",
+    "confirm": "Confirm"
+  },
+
+  "transmitterMoreMenu": {
+    "more": "More",
+    "photoOrVideo": "Photo or Video",
+    "file": "File",
+    "unsupportedFile": "Unsupported file:"
+  },
+
+  "manage": {
+    "thisDevice": "This Device",
+    "currentHostInfo": "Information about the current host.",
+    "discoveredDevices": "Discovered Devices",
+    "knownDevicesInfo": "All devices currently known by Synclan.",
+    "device": "Device",
+    "role": "Role",
+    "platform": "Platform",
+    "browser": "Browser",
+    "updated": "Updated",
+    "loading": "Loading...",
+    "noDevicesFound": "No devices found.",
+    "copyDeviceId": "Copy Device ID",
+    "remove": "Remove"
+  },
+
+  "profile": {
+    "done": "Done",
+    "edit": "Edit",
+    "profile": "Profile",
+    "name": "Name",
+    "enterNameAndPhoto": "Enter your name and add a profile photo.",
+    "uploadFailed": "Failed to upload profile"
+  },
+
   "settings": {
     "title": "Settings",
+    "restartSynclan": "Restart Synclan?",
+    "restartDescription": "Some changes require a restart to take effect. Synclan will restart now.",
+    "restart": "Restart",
 
     "general": {
       "title": "General",
@@ -67,6 +160,72 @@
   "updater": {
     "upToDate": "You're using the latest version",
     "failedToCheck": "Failed to check for updates",
-    "checkFailedDescription": "Please check your network connection and try again."
+    "checkFailedDescription": "Please check your network connection and try again.",
+    "updateInfo": "Update Info",
+    "updateDescription": "Update to enjoy a better experience with the latest improvements and fixes.",
+    "currentVersion": "Current Version",
+    "newVersion": "New Version",
+    "releaseNotes": "Release Notes",
+    "downloadProgress": "Download progress",
+    "quitAndInstall": "Quit and Install",
+    "update": "Update",
+    "downloadFailed": "Failed to download update",
+    "installFailed": "Update installation failed. Please try again."
+  },
+
+  "transmitter": {
+    "showFormattingToolbar": "Show formatting toolbar",
+    "send": "Send (Enter)",
+    "sendMessage": "Send Message"
+  },
+
+  "emoji": {
+    "title": "Emoji",
+    "search": "Search Emoji",
+    "noEmojiFound": "No emoji found"
+  },
+
+  "textFormatToolbar": {
+    "bold": "Bold ({{shortcut}})",
+    "boldMarkdown": "Markdown: **text** Space",
+
+    "strikethrough": "Strikethrough ({{shortcut}})",
+    "strikethroughMarkdown": "Markdown: ~~text~~ Space",
+
+    "italic": "Italic ({{shortcut}})",
+    "italicMarkdown": "Markdown: *text* Space",
+
+    "underline": "Underline ({{shortcut}})",
+    "underlineMarkdown": "Markdown: ~text~ Space",
+
+    "orderedList": "Ordered List ({{shortcut}})",
+    "orderedListMarkdown": "Markdown: 1. Space",
+
+    "unorderedList": "Unordered List ({{shortcut}})",
+    "unorderedListMarkdown": "Markdown: - Space",
+
+    "quote": "Quote ({{shortcut}})",
+    "quoteMarkdown": "Markdown: > Space",
+
+    "link": "Link ({{shortcut}})",
+    "linkMarkdown": "Markdown: [text](link) Space",
+
+    "codeBlock": "Code Block ({{shortcut}})",
+    "codeBlockMarkdown": "Markdown: ``` Space or ```language Space"
+  },
+
+  "message": {
+    "expand": "Expand",
+    "collapse": "Collapse",
+    "copy": "Copy",
+    "copiedToClipboard": "Copied to clipboard",
+    "delete": "Delete",
+    "deleteMessage": "Delete message?",
+    "deleteDescription": "This will permanently delete this message from the database. This action cannot be undone, and the message will also be removed from the other device."
+  },
+
+  "time": {
+    "yesterday": "Yesterday",
+    "theDayBeforeYesterday": "The day before yesterday"
   }
 }

@@ -1,3 +1,5 @@
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { chunk, debounce, flatMap, initial, last, zipObject } from 'lodash-es';
 import {
   Fragment,
   useCallback,
@@ -6,16 +8,17 @@ import {
   useRef,
   useState,
 } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { cn } from '@/lib/utils';
+
+import { Input } from '../ui';
+import { Emoji } from './emoji';
 import {
   EmojiCategory,
   type Props as EmojiCategoryProps,
 } from './emoji-category';
 import { dataByCategory, search, skinTonesData } from './lib';
-import { useVirtualizer } from '@tanstack/react-virtual';
-import { Emoji } from './emoji';
-import { cn } from '@/lib/utils';
-import { chunk, debounce, flatMap, initial, last, zipObject } from 'lodash-es';
-import { Input } from '../ui';
 
 export type EmojiPickDataType = { skinTone?: number; shortName: string };
 
@@ -62,6 +65,8 @@ function EmojiPicker({
   const [selectedTone, setSelectedTone] = useState<number>(
     disableSkinTones ? 0 : skinTone,
   );
+
+  const { t } = useTranslation();
 
   const content = useRef<HTMLDivElement>(null);
 
@@ -245,13 +250,13 @@ function EmojiPicker({
   );
 
   return (
-    <div className='w-83 h-107 grid grid-rows-[44px_1fr] grid-cols-1 rounded-lg z-10 select-none overflow-hidden'>
-      <header className='flex h-11 mx-3 flex-row justify-between items-center'>
+    <div className='z-10 grid h-107 w-83 grid-cols-1 grid-rows-[44px_1fr] overflow-hidden rounded-lg select-none'>
+      <header className='mx-3 flex h-11 flex-row items-center justify-between'>
         <EmojiCategory
           type='button'
           role='button'
           tabIndex={0}
-          aria-label='搜索表情'
+          aria-label={t('emoji.search')}
           category={searchMode ? 'close' : 'search'}
           onClick={handleToggleSearch}
         />
@@ -262,7 +267,7 @@ function EmojiPicker({
                 ref?.focus();
               }}
               className='h-7'
-              placeholder='Search Emoji'
+              placeholder={t('emoji.search')}
               onChange={handleSearchChange}
             />
           </div>
@@ -294,7 +299,7 @@ function EmojiPicker({
       </header>
       <div
         ref={content}
-        className='w-full pt-2 pb-0 px-2 outline-none overflow-x-hidden overflow-y-auto'
+        className='w-full overflow-x-hidden overflow-y-auto px-2 pt-2 pb-0 outline-none'
       >
         {emojiGrid.length ? (
           <div
@@ -314,7 +319,7 @@ function EmojiPicker({
                     return (
                       <div
                         key={column.key}
-                        className='absolute top-0 left-0 flex justify-center items-center rounded-md hover:bg-gray-05 dark:hover:bg-gray-80 cursor-pointer'
+                        className='hover:bg-gray-05 dark:hover:bg-gray-80 absolute top-0 left-0 flex cursor-pointer items-center justify-center rounded-md'
                         style={{
                           width: `${column.size}px`,
                           height: `${row.size}px`,
@@ -344,14 +349,14 @@ function EmojiPicker({
             })}
           </div>
         ) : (
-          <div className='flex justify-center items-center space-x-2'>
-            <span>No emoji found</span>
+          <div className='flex items-center justify-center space-x-2'>
+            <span>{t('emoji.noEmojiFound')}</span>
             <Emoji shortName='slightly_frowning_face' size={16} />
           </div>
         )}
       </div>
       {!disableSkinTones && (
-        <footer className='flex h-11 justify-center items-center'>
+        <footer className='flex h-11 items-center justify-center'>
           {skinTonesData.map((tone, index) => (
             <button
               key={tone}

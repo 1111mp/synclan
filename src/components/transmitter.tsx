@@ -15,6 +15,7 @@ import {
   useState,
   type Ref,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   CompositionInput,
@@ -56,6 +57,7 @@ function Transmitter({
   const shiftEnterHintRef = useRef<ShiftEnterHintRef>(null);
 
   const isMobile = useIsMobile();
+  const { t } = useTranslation();
 
   const extension = useMemo(
     () =>
@@ -180,7 +182,9 @@ function Transmitter({
                       <CaseSensitive className='size-6' />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>显示格式工具栏</TooltipContent>
+                  <TooltipContent>
+                    {t('transmitter.showFormattingToolbar')}
+                  </TooltipContent>
                 </Tooltip>
               </li>
             )}
@@ -226,7 +230,7 @@ function Transmitter({
                 ) : (
                   <Tooltip>
                     <TooltipTrigger asChild>{renderSend()}</TooltipTrigger>
-                    <TooltipContent>发送(Enter)</TooltipContent>
+                    <TooltipContent>{t('transmitter.send')}</TooltipContent>
                   </Tooltip>
                 )}
               </li>

@@ -9,6 +9,7 @@ import {
   type LexicalEditor,
 } from 'lexical';
 import { useImperativeHandle, useMemo, useRef, type Ref } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
 import { SynclanEditorExtension } from '@/components/extensions';
@@ -29,6 +30,8 @@ function TextMessage({ ref, message }: Props) {
 
   const lexicalMessageRef = useRef<MessageContextMenuRef>(null);
 
+  const { t } = useTranslation();
+
   useImperativeHandle(ref, () => ({
     onCopy: onCopyHandler,
   }));
@@ -39,7 +42,7 @@ function TextMessage({ ref, message }: Props) {
   const onCopyHandler = async () => {
     if (typeof initialState === 'string') {
       await navigator.clipboard.writeText(initialState);
-      toast.success('Copied to clipboard');
+      toast.success(t('message.copiedToClipboard'));
       return;
     }
 
@@ -63,6 +66,8 @@ function LexicalMessage({
   initialState: EditorState | ((editor: LexicalEditor) => void);
 }) {
   const editorRef = useRef<LexicalEditor>(null);
+
+  const { t } = useTranslation();
 
   useImperativeHandle(ref, () => ({
     onCopy: onCopyHandler,
@@ -98,7 +103,7 @@ function LexicalMessage({
           'text/plain': new Blob([plain], { type: 'text/plain' }),
         }),
       ]);
-      toast.success('Copied to clipboard');
+      toast.success(t('message.copiedToClipboard'));
     }
   };
 

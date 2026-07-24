@@ -6,6 +6,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   AlertDialog,
@@ -37,10 +38,10 @@ const ConfirmContext = createContext<ConfirmContextType | null>(null);
 
 export function ConfirmProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
-
   const [options, setOptions] = useState<ConfirmOptions>({});
-
   const [resolver, setResolver] = useState<(value: boolean) => void>();
+
+  const { t } = useTranslation();
 
   const confirm = useCallback((options: ConfirmOptions) => {
     return new Promise<boolean>((resolve) => {
@@ -76,7 +77,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
               </AlertDialogMedia>
             )}
             <AlertDialogTitle>
-              {options.title ?? 'Are you sure?'}
+              {options.title ?? t('confirm.title')}
             </AlertDialogTitle>
 
             <AlertDialogDescription>
@@ -86,14 +87,14 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
 
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => handleClose(false)}>
-              {options.cancelText ?? 'Cancel'}
+              {options.cancelText ?? t('confirm.cancel')}
             </AlertDialogCancel>
 
             <AlertDialogAction
               variant={options.actionVariant}
               onClick={() => handleClose(true)}
             >
-              {options.confirmText ?? 'Confirm'}
+              {options.confirmText ?? t('confirm.confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

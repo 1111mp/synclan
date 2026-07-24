@@ -2,6 +2,7 @@ import { relaunch } from '@tauri-apps/plugin-process';
 import debounce from 'lodash-es/debounce';
 import { Info } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Markdown from 'react-markdown';
 import { toast } from 'sonner';
 import { useShallow } from 'zustand/react/shallow';
@@ -29,14 +30,13 @@ import {
 } from '@/components/ui';
 import { useUpdaterStore } from '@/stores';
 
-const notes =
-  '### Features\n\n- Add `shim` subcommand to manage executable shims\n- Support Liquid Glass icons on macOS platform\n- Support Polish language\n\n### Features\n\n- Add `shim` subcommand to manage executable shims\n- Support Liquid Glass icons on macOS platform\n- Support Polish language';
-
 function UpdateDialog() {
   const [downloading, setDownloading] = useState<boolean>(false);
   const [downloaded, setDownloaded] = useState<boolean>(false);
   const [installing, setInstalling] = useState<boolean>(false);
   const [percentage, setPercentage] = useState<number>();
+
+  const { t } = useTranslation();
 
   const { open, update } = useUpdaterStore(
     useShallow((s) => ({
@@ -83,9 +83,9 @@ function UpdateDialog() {
       setDownloading(false);
       setDownloaded(true);
     } catch {
-      toast.error('Failed to download update', {
+      toast.error(t('updater.downloadFailed'), {
         toasterId: 'global',
-        description: 'Please check your network connection and try again.',
+        description: t('updater.checkFailedDescription'),
       });
       setDownloading(false);
     }
@@ -100,7 +100,7 @@ function UpdateDialog() {
       await update.install();
       await relaunch();
     } catch {
-      toast.error('Update installation failed. Please try again.', {
+      toast.error(t('updater.installFailed'), {
         toasterId: 'global',
       });
       setInstalling(false);
@@ -116,10 +116,9 @@ function UpdateDialog() {
           <AlertDialogMedia>
             <Info />
           </AlertDialogMedia>
-          <AlertDialogTitle>Update Info</AlertDialogTitle>
+          <AlertDialogTitle>{t('updater.updateInfo')}</AlertDialogTitle>
           <AlertDialogDescription>
-            Update to enjoy a better experience with the latest improvements and
-            fixes.
+            {t('updater.updateDescription')}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <div>
@@ -128,20 +127,20 @@ function UpdateDialog() {
               <ItemGroup className='grid grid-cols-2 gap-4'>
                 <Item>
                   <ItemContent>
-                    <ItemTitle>Current Version</ItemTitle>
-                    <ItemDescription>v0.0.1</ItemDescription>
+                    <ItemTitle>{t('updater.currentVersion')}</ItemTitle>
+                    <ItemDescription>{update.currentVersion}</ItemDescription>
                   </ItemContent>
                 </Item>
                 <Item>
                   <ItemContent>
-                    <ItemTitle>New Version</ItemTitle>
-                    <ItemDescription>v0.0.2</ItemDescription>
+                    <ItemTitle>{t('updater.newVersion')}</ItemTitle>
+                    <ItemDescription>{update.version}</ItemDescription>
                   </ItemContent>
                 </Item>
               </ItemGroup>
               <Item>
                 <ItemContent>
-                  <ItemTitle>Release Notes</ItemTitle>
+                  <ItemTitle>{t('updater.releaseNotes')}</ItemTitle>
                   <div className='bg-muted text-muted-foreground mt-2 max-h-50 overflow-auto rounded-sm p-3'>
                     <Markdown
                       components={{
@@ -174,7 +173,7 @@ function UpdateDialog() {
                         ),
                       }}
                     >
-                      {notes}
+                      {update.body}
                     </Markdown>
                   </div>
                 </ItemContent>
@@ -184,7 +183,7 @@ function UpdateDialog() {
           {percentage !== undefined && (
             <Field className='w-full px-3 py-2'>
               <FieldLabel htmlFor='progress-upload'>
-                <span>Download progress</span>
+                <span>{t('updater.downloadProgress')}</span>
                 <span className='ml-auto'>{percentage}%</span>
               </FieldLabel>
               <Progress value={percentage} id='progress-upload' />
@@ -206,7 +205,7 @@ function UpdateDialog() {
               }
             }}
           >
-            Cancel
+            {t('confirm.cancel')}
           </AlertDialogCancel>
           <AlertDialogAction
             disabled={!hasUpdate || downloading || installing}
@@ -219,7 +218,7 @@ function UpdateDialog() {
             }}
           >
             {(downloading || installing) && <Spinner />}
-            {downloaded ? 'Quit and Install' : 'Update'}
+            {downloaded ? t('updater.quitAndInstall') : t('updater.update')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

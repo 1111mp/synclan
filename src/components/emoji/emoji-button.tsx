@@ -1,5 +1,6 @@
 import { Smile } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { useIsMobile } from '@/hooks';
 import { isWeb } from '@/lib/constant';
@@ -24,6 +25,7 @@ function EmojiButton({ ...props }: Props) {
   const [open, setOpen] = useState<boolean>(false);
 
   const isMobile = useIsMobile();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const handleKeydown = (event: KeyboardEvent) => {
@@ -60,7 +62,7 @@ function EmojiButton({ ...props }: Props) {
             </Button>
           </TooltipTrigger>
         </PopoverTrigger>
-        <TooltipContent>Emoji</TooltipContent>
+        <TooltipContent>{t('emoji.title')}</TooltipContent>
       </Tooltip>
       <PopoverContent
         align='center'

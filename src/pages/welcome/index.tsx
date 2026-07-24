@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -55,6 +56,9 @@ function WelcomePage() {
   const needAnimation = useRef<boolean>(false);
 
   const navigate = useNavigate();
+
+  const { t } = useTranslation();
+
   const { config, updateTheme } = useSynclanStore(
     useShallow((s) => ({ config: s.config, updateTheme: s.updateTheme })),
   );
@@ -135,17 +139,16 @@ function WelcomePage() {
             >
               <Card className='w-full max-w-sm max-[400px]:max-w-[94%]'>
                 <CardHeader className='text-center'>
-                  <CardTitle>Welcome back</CardTitle>
+                  <CardTitle>{t('welcome.welcomeBack')}</CardTitle>
                   <CardDescription>
-                    Select an existing device or discover a new one to start
-                    messaging.
+                    {t('welcome.selectExistingOrDiscover')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <FieldGroup className='gap-8'>
                     <Field className='gap-3'>
                       <FieldLabel className='justify-center'>
-                        Appearance
+                        {t('settings.appearance.title')}
                       </FieldLabel>
                       <ToggleGroup
                         type='single'
@@ -164,7 +167,7 @@ function WelcomePage() {
                           className='group/toggle flex-1'
                         >
                           <SunMoon className='group-data-[state=on]/toggle:fill-foreground size-5' />
-                          <Label>System</Label>
+                          <Label>{t('settings.appearance.system')}</Label>
                         </ToggleGroupItem>
                         <ToggleGroupItem
                           value='dark'
@@ -172,7 +175,7 @@ function WelcomePage() {
                           className='group/toggle flex-1'
                         >
                           <MoonStar className='group-data-[state=on]/toggle:fill-foreground size-5' />
-                          <Label>Dark</Label>
+                          <Label>{t('settings.appearance.dark')}</Label>
                         </ToggleGroupItem>
                         <ToggleGroupItem
                           value='light'
@@ -180,12 +183,12 @@ function WelcomePage() {
                           className='group/toggle flex-1'
                         >
                           <Sun className='group-data-[state=on]/toggle:fill-foreground size-5' />
-                          <Label>Light</Label>
+                          <Label>{t('settings.appearance.light')}</Label>
                         </ToggleGroupItem>
                       </ToggleGroup>
                     </Field>
                     <FieldSeparator className='*:data-[slot=field-separator-content]:bg-card'>
-                      Or continue with
+                      {t('welcome.orContinueWith')}
                     </FieldSeparator>
                     <Field>
                       <DropdownMenu>
@@ -200,7 +203,7 @@ function WelcomePage() {
                             </ItemMedia>
                             <ItemContent>
                               <ItemTitle>
-                                Select your device to start.
+                                {t('welcome.selectDeviceToStart')}
                               </ItemTitle>
                             </ItemContent>
                             <ItemActions>
@@ -213,10 +216,12 @@ function WelcomePage() {
                             {hasDevices ? (
                               <>
                                 <DropdownMenuLabel>
-                                  My Devices
+                                  {t('welcome.myDevices')}
                                 </DropdownMenuLabel>
                                 {conversations.map((conv) => {
-                                  const name = conv?.device?.name ?? '未知设备';
+                                  const name =
+                                    conv?.device?.name ??
+                                    t('welcome.unknownDevice');
                                   return (
                                     <DropdownMenuItem
                                       key={conv.id}
@@ -253,10 +258,10 @@ function WelcomePage() {
                                 <FolderOpenIcon className='text-muted-foreground/50 size-6' />
                                 <div className='space-y-1'>
                                   <p className='text-sm font-medium'>
-                                    No devices yet
+                                    {t('welcome.noDevicesYet')}
                                   </p>
                                   <p className='text-muted-foreground text-xs'>
-                                    Discover your first device to get started.
+                                    {t('welcome.discoverFirstDevice')}
                                   </p>
                                 </div>
                               </div>
@@ -271,7 +276,7 @@ function WelcomePage() {
                           openDiscover();
                         }}
                       >
-                        Devices Discover
+                        {t('welcome.discoverDevices')}
                       </Button>
                     </Field>
                   </FieldGroup>
@@ -279,7 +284,7 @@ function WelcomePage() {
               </Card>
             </motion.div>
           ) : (
-            <p>Select a device to start messaging</p>
+            <p>{t('welcome.selectDeviceToStartMessaging')}</p>
           )}
         </AnimatePresence>
       </div>

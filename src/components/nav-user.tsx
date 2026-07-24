@@ -1,6 +1,7 @@
 'use client';
 
 import { ChevronsUpDown, Laptop, Settings, User, UserPen } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
 
 import {
@@ -26,6 +27,8 @@ export function NavUser({ current }: { current?: IDevice | null }) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { isMobile, toggleSidebar } = useSidebar();
+
+  const { t } = useTranslation();
 
   const handleNavigate = (path: string) => {
     if (pathname !== path) {
@@ -91,11 +94,11 @@ export function NavUser({ current }: { current?: IDevice | null }) {
             <DropdownMenuGroup>
               <DropdownMenuItem onClick={() => handleNavigate('/profile')}>
                 <UserPen />
-                Profile
+                {t('navUser.profile')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleNavigate('/settings')}>
                 <Settings />
-                Settings
+                {t('navUser.settings')}
               </DropdownMenuItem>
             </DropdownMenuGroup>
             {!isWeb && (
@@ -103,7 +106,7 @@ export function NavUser({ current }: { current?: IDevice | null }) {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => handleNavigate('/manager')}>
                   <Laptop />
-                  Manage Devices
+                  {t('navUser.manageDevices')}
                 </DropdownMenuItem>
               </>
             )}

@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui';
 import { useIsMobile } from '@/hooks';
@@ -34,6 +35,7 @@ function MessageExpandable({
   const measuredRef = useRef<boolean>(false);
 
   const isMobile = useIsMobile();
+  const { t } = useTranslation();
 
   useLayoutEffect(() => {
     if (measuredRef.current) return;
@@ -86,7 +88,7 @@ function MessageExpandable({
               onClick={() => handleCollapse(true)}
             >
               <ChevronDown className='mr-1 h-4 w-4' />
-              展开
+              {t('message.expand')}
             </Button>
           </div>
         </>
@@ -106,7 +108,7 @@ function MessageExpandable({
             onClick={() => handleCollapse(false)}
           >
             <ChevronUp className='mr-1 h-4 w-4' />
-            收起
+            {t('message.collapse')}
           </Button>
         </div>
       )}

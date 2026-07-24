@@ -48,6 +48,7 @@ import {
   type Dispatch,
   type JSX,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { cn } from '@/lib/utils';
 
@@ -68,6 +69,30 @@ import {
   SHORTCUT_LINK_CREATE_COMMAND,
   TOGGLE_LINK_CREATE_COMMAND,
 } from './link-plugin';
+
+export type ShortcutMap = {
+  bold: string;
+  strikethrough: string;
+  italic: string;
+  underline: string;
+  orderedList: string;
+  unorderedList: string;
+  quote: string;
+  link: string;
+  codeBlock: string;
+};
+const isMac = OS_PLATFORM === 'darwin';
+export const shortcuts: ShortcutMap = {
+  bold: isMac ? '⌘B' : 'Ctrl+B',
+  strikethrough: isMac ? '⌘+Shift+X' : 'Ctrl+Shift+X',
+  italic: isMac ? '⌘I' : 'Ctrl+I',
+  underline: isMac ? '⌘U' : 'Ctrl+U',
+  orderedList: isMac ? '⌘+Shift+7' : 'Ctrl+Shift+7',
+  unorderedList: isMac ? '⌘+Shift+8' : 'Ctrl+Shift+8',
+  quote: isMac ? '⌘+Shift+>' : 'Ctrl+Shift+>',
+  link: isMac ? '⌘+Shift+U' : 'Ctrl+Shift+U',
+  codeBlock: isMac ? '⌘⌥C' : 'Ctrl+Alt+C',
+};
 
 const OFFSET_X = 12;
 
@@ -101,6 +126,8 @@ function TextFormatToolbar({
   isOnlyText,
   onSetIsLinkEditMode,
 }: Omit<TextFormatFloatingToolbarProps, 'isText'>) {
+  const { t } = useTranslation();
+
   return (
     <div className='flex items-center p-2'>
       <Tooltip>
@@ -122,8 +149,12 @@ function TextFormatToolbar({
           </Button>
         </TooltipTrigger>
         <TooltipContent className='flex flex-col'>
-          <p>粗体（&#x2318;B）</p>
-          <p>Markdown：**文字** 空格</p>
+          <p>
+            {t('textFormatToolbar.bold', {
+              shortcut: shortcuts.bold,
+            })}
+          </p>
+          <p>{t('textFormatToolbar.boldMarkdown')}</p>
         </TooltipContent>
       </Tooltip>
       <Tooltip>
@@ -145,8 +176,12 @@ function TextFormatToolbar({
           </Button>
         </TooltipTrigger>
         <TooltipContent className='flex flex-col'>
-          <p>删除线（&#x2318;+Shift+X）</p>
-          <p>Markdown：~~文字~~ 空格</p>
+          <p>
+            {t('textFormatToolbar.strikethrough', {
+              shortcut: shortcuts.strikethrough,
+            })}
+          </p>
+          <p>{t('textFormatToolbar.strikethroughMarkdown')}</p>
         </TooltipContent>
       </Tooltip>
       <Tooltip>
@@ -168,8 +203,12 @@ function TextFormatToolbar({
           </Button>
         </TooltipTrigger>
         <TooltipContent className='flex flex-col'>
-          <p>斜体（&#x2318;I）</p>
-          <p>Markdown：*文字* 空格</p>
+          <p>
+            {t('textFormatToolbar.italic', {
+              shortcut: shortcuts.italic,
+            })}
+          </p>
+          <p>{t('textFormatToolbar.italicMarkdown')}</p>
         </TooltipContent>
       </Tooltip>
       <Tooltip>
@@ -191,8 +230,12 @@ function TextFormatToolbar({
           </Button>
         </TooltipTrigger>
         <TooltipContent className='flex flex-col'>
-          <p>下划线（&#x2318;U）</p>
-          <p>Markdown：~文字~ 空格</p>
+          <p>
+            {t('textFormatToolbar.underline', {
+              shortcut: shortcuts.underline,
+            })}
+          </p>
+          <p>{t('textFormatToolbar.underlineMarkdown')}</p>
         </TooltipContent>
       </Tooltip>
       <Tooltip>
@@ -220,8 +263,12 @@ function TextFormatToolbar({
           </Button>
         </TooltipTrigger>
         <TooltipContent className='flex flex-col'>
-          <p>有序列表（&#x2318;+Shift+7）</p>
-          <p>Markdown：1. 空格</p>
+          <p>
+            {t('textFormatToolbar.orderedList', {
+              shortcut: shortcuts.orderedList,
+            })}
+          </p>
+          <p>{t('textFormatToolbar.orderedListMarkdown')}</p>
         </TooltipContent>
       </Tooltip>
       <Tooltip>
@@ -249,8 +296,12 @@ function TextFormatToolbar({
           </Button>
         </TooltipTrigger>
         <TooltipContent className='flex flex-col'>
-          <p>无序列表（&#x2318;+Shift+8）</p>
-          <p>Markdown：- 空格</p>
+          <p>
+            {t('textFormatToolbar.unorderedList', {
+              shortcut: shortcuts.unorderedList,
+            })}
+          </p>
+          <p>{t('textFormatToolbar.unorderedListMarkdown')}</p>
         </TooltipContent>
       </Tooltip>
       <Tooltip>
@@ -278,8 +329,12 @@ function TextFormatToolbar({
           </Button>
         </TooltipTrigger>
         <TooltipContent className='flex flex-col'>
-          <p>引用（&#x2318;+Shift+&gt;）</p>
-          <p>Markdown：&gt; 空格</p>
+          <p>
+            {t('textFormatToolbar.quote', {
+              shortcut: shortcuts.quote,
+            })}
+          </p>
+          <p>{t('textFormatToolbar.quoteMarkdown')}</p>
         </TooltipContent>
       </Tooltip>
       <Tooltip>
@@ -324,8 +379,12 @@ function TextFormatToolbar({
           </Button>
         </TooltipTrigger>
         <TooltipContent className='flex flex-col'>
-          <p>链接（&#x2318;+Shift+U）</p>
-          <p>Markdown：[文字](链接) 空格</p>
+          <p>
+            {t('textFormatToolbar.link', {
+              shortcut: shortcuts.link,
+            })}
+          </p>
+          <p>{t('textFormatToolbar.linkMarkdown')}</p>
         </TooltipContent>
       </Tooltip>
       <Tooltip>
@@ -359,8 +418,12 @@ function TextFormatToolbar({
           </Button>
         </TooltipTrigger>
         <TooltipContent className='flex flex-col'>
-          <p>代码块（&#x2318;+&#x2325;+C）</p>
-          <p>Markdown：``` 空格 或 ```代码语言 空格</p>
+          <p>
+            {t('textFormatToolbar.codeBlock', {
+              shortcut: shortcuts.codeBlock,
+            })}
+          </p>
+          <p>{t('textFormatToolbar.codeBlockMarkdown')}</p>
         </TooltipContent>
       </Tooltip>
     </div>

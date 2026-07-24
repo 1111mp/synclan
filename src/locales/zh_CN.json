@@ -1,6 +1,99 @@
 {
+  "deviceSwitcher": {
+    "devices": "设备",
+    "welcome": "欢迎",
+    "quickAccess": "快速访问",
+    "devicesDiscover": "发现设备"
+  },
+
+  "qrCodeDialog": {
+    "title": "扫描二维码",
+    "description": "使用手机扫描此二维码。",
+    "scanWithPhone": "请使用手机相机扫描此二维码",
+    "step1": "1. 在您的手机上打开相机",
+    "step2": "2. 扫描此二维码",
+    "step3": "3. 识别后前往浏览器打开",
+    "orVisitDirectly": "或者通过以下地址直接访问"
+  },
+
+  "navUser": {
+    "profile": "个人资料",
+    "settings": "设置",
+    "manageDevices": "管理设备"
+  },
+
+  "welcome": {
+    "welcomeBack": "欢迎回来",
+    "selectExistingOrDiscover": "选择已有设备或发现新设备，开始聊天。",
+    "orContinueWith": "或者继续使用",
+    "selectDeviceToStart": "选择你的设备开始使用。",
+    "myDevices": "我的设备",
+    "unknownDevice": "未知设备",
+    "noDevicesYet": "暂无设备",
+    "discoverFirstDevice": "发现你的第一个设备，开始使用。",
+    "discoverDevices": "发现设备",
+    "selectDeviceToStartMessaging": "选择设备开始聊天"
+  },
+
+  "deviceDiscover": {
+    "title": "发现设备",
+    "ensureSameNetwork": "请确保目标设备也连接到同一个 Wi-Fi 网络。"
+  },
+
+  "navDevices": {
+    "deleteDevice": "删除设备？",
+    "deleteDescription": "此操作将永久删除该聊天会话。所有相关聊天记录将从数据库中永久删除，而不仅仅是从缓存中移除，并且无法恢复。",
+    "delete": "删除"
+  },
+
+  "confirm": {
+    "title": "确定吗？",
+    "cancel": "取消",
+    "confirm": "确定"
+  },
+
+  "transmitterMoreMenu": {
+    "more": "更多",
+    "photoOrVideo": "照片或视频",
+    "file": "文件",
+    "unsupportedFile": "不支持的文件："
+  },
+
+  "search": {
+    "search": "搜索",
+    "searchDevices": "搜索设备..."
+  },
+
+  "manage": {
+    "thisDevice": "此设备",
+    "currentHostInfo": "当前主机的信息。",
+    "discoveredDevices": "已发现的设备",
+    "knownDevicesInfo": "Synclan 当前已知的所有设备。",
+    "device": "设备",
+    "role": "角色",
+    "platform": "平台",
+    "browser": "浏览器",
+    "updated": "更新时间",
+    "loading": "加载中...",
+    "noDevicesFound": "未找到设备。",
+    "copyDeviceId": "复制设备 ID",
+    "remove": "移除"
+  },
+
+  "profile": {
+    "done": "完成",
+    "edit": "编辑",
+    "profile": "个人资料",
+    "name": "名称",
+    "enterNameAndPhoto": "输入你的名称并添加头像。",
+    "uploadFailed": "上传个人资料失败"
+  },
+
   "settings": {
     "title": "设置",
+    "restartSynclan": "重启 Synclan？",
+    "restartDescription": "部分更改需要重启后才能生效。Synclan 将立即重启。",
+    "restart": "重启",
 
     "general": {
       "title": "通用",
@@ -67,6 +160,72 @@
   "updater": {
     "upToDate": "当前已是最新版本",
     "failedToCheck": "检查更新失败",
-    "checkFailedDescription": "请检查网络连接后重试。"
+    "checkFailedDescription": "请检查网络连接后重试。",
+    "updateInfo": "更新信息",
+    "updateDescription": "更新以体验最新改进和修复，获得更好的使用体验。",
+    "currentVersion": "当前版本",
+    "newVersion": "新版本",
+    "releaseNotes": "更新日志",
+    "downloadProgress": "下载进度",
+    "quitAndInstall": "退出并安装",
+    "update": "更新",
+    "downloadFailed": "更新下载失败",
+    "installFailed": "更新安装失败，请重试。"
+  },
+
+  "transmitter": {
+    "showFormattingToolbar": "显示格式工具栏",
+    "send": "发送 (Enter)",
+    "sendMessage": "发送消息"
+  },
+
+  "emoji": {
+    "title": "表情",
+    "search": "搜索表情",
+    "noEmojiFound": "未找到表情"
+  },
+
+  "textFormatToolbar": {
+    "bold": "粗体 ({{shortcut}})",
+    "boldMarkdown": "Markdown：**文字** 空格",
+
+    "strikethrough": "删除线 ({{shortcut}})",
+    "strikethroughMarkdown": "Markdown：~~文字~~ 空格",
+
+    "italic": "斜体 ({{shortcut}})",
+    "italicMarkdown": "Markdown：*文字* 空格",
+
+    "underline": "下划线 ({{shortcut}})",
+    "underlineMarkdown": "Markdown：~文字~ 空格",
+
+    "orderedList": "有序列表 ({{shortcut}})",
+    "orderedListMarkdown": "Markdown：1. 空格",
+
+    "unorderedList": "无序列表 ({{shortcut}})",
+    "unorderedListMarkdown": "Markdown：- 空格",
+
+    "quote": "引用 ({{shortcut}})",
+    "quoteMarkdown": "Markdown：> 空格",
+
+    "link": "链接 ({{shortcut}})",
+    "linkMarkdown": "Markdown：[文字](链接) 空格",
+
+    "codeBlock": "代码块 ({{shortcut}})",
+    "codeBlockMarkdown": "Markdown：``` 空格 或 ```代码语言 空格"
+  },
+
+  "message": {
+    "expand": "展开",
+    "collapse": "收起",
+    "copy": "复制",
+    "copiedToClipboard": "已复制到剪贴板",
+    "delete": "删除",
+    "deleteMessage": "删除消息？",
+    "deleteDescription": "此操作将从数据库中永久删除此消息。该操作无法撤销，并且此消息也会从另一台设备中删除。"
+  },
+
+  "time": {
+    "yesterday": "昨天",
+    "theDayBeforeYesterday": "前天"
   }
 }

@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 
 import {
@@ -47,6 +48,8 @@ export function DeviceDiscoverProvider({ children }: { children: ReactNode }) {
   const current = useDeviceStore((s) => s.current);
   const conversations = useConversationList();
 
+  const { t } = useTranslation();
+
   const excludeIds = [
     ...(current ? [current.id] : []),
     ...conversations.map((c) => c.id),
@@ -81,10 +84,9 @@ export function DeviceDiscoverProvider({ children }: { children: ReactNode }) {
         </DialogTrigger>*/}
         <DialogContent className='min-h-36 sm:max-w-lg'>
           <DialogHeader>
-            <DialogTitle>Devices Discover</DialogTitle>
+            <DialogTitle>{t('deviceDiscover.title')}</DialogTitle>
             <DialogDescription>
-              Please ensure that the desired target is also on the same Wi-Fi
-              network.
+              {t('deviceDiscover.ensureSameNetwork')}
             </DialogDescription>
           </DialogHeader>
           <div className='max-h-[60vh] overflow-y-auto sm:max-h-[70vh]'>

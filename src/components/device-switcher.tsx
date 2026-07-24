@@ -3,6 +3,7 @@
 import { check } from '@tauri-apps/plugin-updater';
 import { AudioWaveform, ChevronsUpDown, Plus, QrCode } from 'lucide-react';
 import { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 
 import SynclanLogo from '@/assets/synclan.svg';
@@ -34,6 +35,8 @@ function DeviceSwitcher() {
   const { openDiscover } = useDeviceDiscover();
   const config = useSynclanStore((s) => s.config);
   const update = useUpdaterStore((s) => s.update);
+
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (isWeb || !config?.auto_check_update) return;
@@ -96,7 +99,7 @@ function DeviceSwitcher() {
               sideOffset={4}
             >
               <DropdownMenuLabel className='text-muted-foreground text-xs'>
-                Devices
+                {t('deviceSwitcher.devices')}
               </DropdownMenuLabel>
               <DropdownMenuItem
                 onClick={() => {
@@ -110,7 +113,7 @@ function DeviceSwitcher() {
                 <div className='flex size-6 items-center justify-center rounded-md border'>
                   <AudioWaveform className='size-3.5 shrink-0' />
                 </div>
-                Welcome
+                {t('deviceSwitcher.welcome')}
               </DropdownMenuItem>
               <DropdownMenuItem
                 className='gap-2 p-2'
@@ -121,7 +124,7 @@ function DeviceSwitcher() {
                 <div className='flex size-6 items-center justify-center rounded-md border bg-transparent'>
                   <QrCode className='size-3.5 shrink-0' />
                 </div>
-                Quick Access
+                {t('deviceSwitcher.quickAccess')}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -134,7 +137,7 @@ function DeviceSwitcher() {
                   <Plus className='size-4' />
                 </div>
                 <div className='text-muted-foreground font-medium'>
-                  Devices Discover
+                  {t('deviceSwitcher.devicesDiscover')}
                 </div>
               </DropdownMenuItem>
             </DropdownMenuContent>

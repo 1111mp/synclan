@@ -1,5 +1,6 @@
 import { CirclePlus, File, Image } from 'lucide-react';
 import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   Button,
@@ -26,6 +27,8 @@ function TransmitterMoreMenu({ onSelectMedia, onSelectFile }: Props) {
   const mediaInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const { t } = useTranslation();
+
   const handleMediaChange = async (
     evt: React.ChangeEvent<HTMLInputElement>,
   ) => {
@@ -43,7 +46,9 @@ function TransmitterMoreMenu({ onSelectMedia, onSelectFile }: Props) {
       );
 
       if (!isMedia) {
-        console.warn(`Unsupported file: ${file.name}`);
+        console.warn(
+          `${t('transmitterMoreMenu.unsupportedFile')} ${file.name}`,
+        );
         return false;
       }
 
@@ -118,7 +123,7 @@ function TransmitterMoreMenu({ onSelectMedia, onSelectFile }: Props) {
               </Button>
             </TooltipTrigger>
           </DropdownMenuTrigger>
-          <TooltipContent>更多</TooltipContent>
+          <TooltipContent>{t('transmitterMoreMenu.more')}</TooltipContent>
         </Tooltip>
         <DropdownMenuContent
           className='w-36'
@@ -130,7 +135,7 @@ function TransmitterMoreMenu({ onSelectMedia, onSelectFile }: Props) {
             }}
           >
             <Image />
-            Photo Or Video
+            {t('transmitterMoreMenu.photoOrVideo')}
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={() => {
@@ -138,7 +143,7 @@ function TransmitterMoreMenu({ onSelectMedia, onSelectFile }: Props) {
             }}
           >
             <File />
-            File
+            {t('transmitterMoreMenu.file')}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

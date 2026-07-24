@@ -1,5 +1,6 @@
 import { TrashIcon, User } from 'lucide-react';
 import { useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 
 import {
@@ -50,6 +51,7 @@ export function NavDevices({
 
   const navigate = useNavigate();
   const { isMobile, toggleSidebar } = useSidebar();
+  const { t } = useTranslation();
 
   const deleteConversation = useIMStore((s) => s.deleteConversation);
 
@@ -79,7 +81,7 @@ export function NavDevices({
       <SidebarGroupLabel>Devices</SidebarGroupLabel>
       <SidebarMenu>
         {conversations.map((conv) => {
-          const name = conv?.device?.name ?? '未知设备',
+          const name = conv?.device?.name ?? t('welcome.unknownDevice'),
             unread = conv?.unreadCount ?? 0;
 
           return (
@@ -150,13 +152,10 @@ export function NavDevices({
 
                 const ok = await confirm({
                   icon: <TrashIcon />,
-                  title: 'Delete Device?',
-                  description: `
-                    This will permanently delete this chat conversation. All
-                    associated chat history will be permanently deleted from the
-                    database—not just removed from the cache—and cannot be recovered.`,
+                  title: t('navDevices.deleteDevice'),
+                  description: t('navDevices.deleteDescription'),
                   actionVariant: 'destructive',
-                  confirmText: 'Delete',
+                  confirmText: t('navDevices.delete'),
                 });
 
                 if (ok) {
@@ -165,7 +164,7 @@ export function NavDevices({
               }}
             >
               <TrashIcon />
-              Delete
+              {t('navDevices.delete')}
             </FloatingContextMenuItem>
           </>
         )}

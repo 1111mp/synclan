@@ -1,40 +1,54 @@
 import dayjs from 'dayjs';
+import 'dayjs/locale/en';
+import 'dayjs/locale/zh-cn';
 import type { EditorState } from 'lexical';
 
 import type { EditorStateJSON } from '@/lib/attachment';
 
-export function renderTime(time: number) {
-  const date = dayjs(time),
-    now = dayjs(),
-    isSameYear = date.isSame(now, 'year'),
-    daysDiff = now.startOf('day').diff(date.startOf('day'), 'day');
+export function renderTime(
+  time: number,
+  t: (key: string) => string,
+  locale: string,
+) {
+  const isZh = locale === 'zh-CN';
 
-  if (isSameYear) {
-    if (daysDiff === 0) {
-      return date.format('HH:mm');
-    }
+  const date = dayjs(time).locale(isZh ? 'zh-cn' : 'en');
+  const now = dayjs().locale(isZh ? 'zh-cn' : 'en');
 
-    if (daysDiff === 1) {
-      return date.format('昨天 HH:mm');
-    }
+  const isSameYear = date.isSame(now, 'year');
+  const daysDiff = now.startOf('day').diff(date.startOf('day'), 'day');
 
-    if (daysDiff === 2) {
-      return date.format('前天 HH:mm');
-    }
-
-    if (daysDiff < 7) {
-      return date.format('dddd HH:mm');
-    }
-
-    return date.format('M月D日 HH:mm');
+  if (!isSameYear) {
+    return date.format('YYYY-MM-DD');
   }
 
-  return date.format('YYYY-MM-DD');
+  if (daysDiff === 0) {
+    return date.format('HH:mm');
+  }
+
+  if (daysDiff === 1) {
+    return `${t('time.yesterday')} ${date.format('HH:mm')}`;
+  }
+
+  if (daysDiff === 2) {
+    return `${t('time.theDayBeforeYesterday')} ${date.format('HH:mm')}`;
+  }
+
+  if (daysDiff < 7) {
+    return date.format('dddd HH:mm');
+  }
+
+  return date.format(isZh ? 'M月D日 HH:mm' : 'MMM D HH:mm');
 }
 
-export function renderMessageTimee(time: number, isNewGroup: boolean = false) {
+export function renderMessageTime(
+  time: number,
+  t: (key: string) => string,
+  locale: string,
+  isNewGroup: boolean = false,
+) {
   if (isNewGroup) {
-    return renderTime(time);
+    return renderTime(time, t, locale);
   }
   return dayjs(time).format('HH:mm');
 }
