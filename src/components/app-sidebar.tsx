@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router';
 
 import { DeviceSwitcher } from '@/components/device-switcher';
@@ -17,6 +18,8 @@ import { cn } from '@/lib/utils';
 import { useConversationList, useDeviceStore, useIMStore } from '@/stores';
 
 function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const [keyword, setKeyword] = useState<string>('');
+
   const params = useParams();
   const localtion = useLocation();
   const navigate = useNavigate();
@@ -26,6 +29,18 @@ function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const setActiveConversation = useIMStore((s) => s.setActiveConversation);
 
   const { isMobile, toggleSidebar } = useSidebar();
+
+  const filteredConversations = useMemo(() => {
+    const q = keyword.trim().toLowerCase();
+
+    if (!q) return conversations;
+
+    return conversations.filter(
+      (item) =>
+        item.device?.name.toLowerCase().includes(q) ||
+        item.lastMessage?.plainContent?.includes(q),
+    );
+  }, [conversations, keyword]);
 
   const onSelectDevice = (id: string) => {
     if (params?.id === id) return;
@@ -45,7 +60,12 @@ function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         className={cn(OS_PLATFORM !== 'win32' && !isWeb && 'pt-7')}
       >
         <DeviceSwitcher />
-        <SearchForm />
+        <SearchForm
+          onChange={(e) => {
+            console.log(e.target.value);
+            setKeyword(e.target.value);
+          }}
+        />
       </SidebarHeader>
       <SidebarContent
         onClick={(evt) => {
@@ -64,7 +84,7 @@ function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavDevices
           current={current}
           activeDeviceId={params.id}
-          conversations={conversations}
+          conversations={filteredConversations}
           onSelectDevice={onSelectDevice}
         />
       </SidebarContent>

@@ -30,6 +30,23 @@ pub struct Device {
 }
 
 impl Device {
+    pub async fn touch(id: &str) -> Result<()> {
+        let db_pool = db::get_db_pool()?;
+
+        sqlx::query(
+            r#"
+                  UPDATE devices
+                  SET updated_at = unixepoch()
+                  WHERE id = ?
+                  "#,
+        )
+        .bind(id)
+        .execute(&db_pool)
+        .await?;
+
+        Ok(())
+    }
+
     /// Get device by id
     pub async fn get_by_id(id: &str) -> Result<Option<Device>> {
         let db_pool = db::get_db_pool()?;
@@ -94,7 +111,7 @@ impl Device {
                     created_at,
                     updated_at
                 FROM devices WHERE id != $1
-                ORDER BY created_at DESC
+                ORDER BY updated_at DESC
                 "#,
                 )
                 .bind(id)
@@ -115,7 +132,7 @@ impl Device {
                     created_at,
                     updated_at
                 FROM devices
-                ORDER BY created_at DESC
+                ORDER BY updated_at DESC
                 "#,
                 )
                 .fetch_all(&db_pool)
@@ -152,6 +169,9 @@ impl Device {
             separated.push_bind(id);
         }
         separated.push_unseparated(") ");
+
+        query_builder.push("ORDER BY updated_at DESC");
+
         let devices = query_builder.build_query_as::<Device>().fetch_all(&db_pool).await?;
 
         Ok(devices)
@@ -204,6 +224,17 @@ impl Device {
         query_builder.push(" WHERE id = ").push_bind(&self.id);
 
         query_builder.build().execute(&db_pool).await?;
+
+        Ok(())
+    }
+
+    pub async fn remove(id: &str) -> Result<()> {
+        let db_pool = db::get_db_pool()?;
+
+        sqlx::query("DELETE FROM devices WHERE id = ?")
+            .bind(id)
+            .execute(&db_pool)
+            .await?;
 
         Ok(())
     }

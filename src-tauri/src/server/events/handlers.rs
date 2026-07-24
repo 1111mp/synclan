@@ -3,7 +3,10 @@ use super::{
     store::{Client, Clients},
 };
 use crate::{
-    module::{device, message::Message},
+    module::{
+        device::{self, Device},
+        message::Message,
+    },
     server::AppState,
 };
 use anyhow::{Result, anyhow};
@@ -67,6 +70,8 @@ pub async fn authenticate_middleware(
     let device = device::Device::get_by_id(&device_id)
         .await?
         .ok_or_else(|| anyhow!("Unauthorized"))?;
+
+    Device::touch(&device.id).await?;
 
     let client = Arc::new(Client::new(socket.id, device.id.clone()));
     if !clients.contains(&device.id) {

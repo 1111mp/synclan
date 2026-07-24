@@ -12,3 +12,7 @@ pub async fn get_devices(self_id: Option<String>) -> Result<Vec<Device>> {
 pub async fn devices_discover(exclude_ids: &[String]) -> Result<Vec<Device>> {
     Device::get_not_in(exclude_ids).await
 }
+
+pub async fn remove_device(id: String) -> Result<()> {
+    Device::remove(&id).await
+}

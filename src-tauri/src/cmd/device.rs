@@ -29,3 +29,9 @@ pub async fn register_device(payload: Device) -> CmdResult<Device> {
 pub async fn patch_device(payload: Device) -> CmdResult {
     payload.patch().await.stringify_err()
 }
+
+/// Remove device
+#[tauri::command]
+pub async fn remove_device(id: String) -> CmdResult {
+    feat::remove_device(id).await.stringify_err()
+}

@@ -201,7 +201,7 @@ function Transmitter({
               />
             </li>
             {/*{!isMobile && (
-              <li className='flex items-cenÏter'>
+              <li className='flex items-center'>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button

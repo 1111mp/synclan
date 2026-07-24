@@ -147,7 +147,7 @@ function SettingsPage() {
         )}
       >
         <form id='form-synclan-settings'>
-          <FieldGroup className='py-6'>
+          <FieldGroup className='pb-6'>
             <GeneralSettings form={form} />
             <AppearanceSettings form={form} />
             <ServerSettings form={form} />

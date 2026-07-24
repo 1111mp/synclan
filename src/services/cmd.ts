@@ -144,6 +144,12 @@ export async function registerDevice(
   return invoke<IDevice>('register_device', { payload: device });
 }
 
+export async function removeDevice(id: string) {
+  if (isWeb) return;
+
+  return invoke<void>('remove_device', { id });
+}
+
 export async function getSystemTheme() {
   if (isWeb) {
     const media = window.matchMedia('(prefers-color-scheme: dark)');

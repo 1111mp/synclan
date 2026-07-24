@@ -79,7 +79,7 @@ export function DeviceDiscoverProvider({ children }: { children: ReactNode }) {
             Devices Discover
           </Button>
         </DialogTrigger>*/}
-        <DialogContent className='top-2/5 sm:max-w-lg'>
+        <DialogContent className='min-h-36 sm:max-w-lg'>
           <DialogHeader>
             <DialogTitle>Devices Discover</DialogTitle>
             <DialogDescription>

@@ -59,6 +59,10 @@ export const router = isWeb
               path: 'settings',
               lazy: () => import('@/pages/settings'),
             },
+            {
+              path: 'manager',
+              lazy: () => import('@/pages/manager'),
+            },
           ],
         },
       ],

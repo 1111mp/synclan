@@ -90,6 +90,7 @@ pub fn run() {
             cmd::devices_discover,
             cmd::register_device,
             cmd::patch_device,
+            cmd::remove_device,
             // message
             cmd::get_messages,
             cmd::get_offline_messages,

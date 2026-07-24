@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronsUpDown, LogOut, Settings, User, UserPen } from 'lucide-react';
+import { ChevronsUpDown, Laptop, Settings, User, UserPen } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router';
 
 import {
@@ -19,6 +19,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui';
+import { isWeb } from '@/lib/constant';
 import { resolveResourceUrl } from '@/lib/utils';
 
 export function NavUser({ current }: { current?: IDevice | null }) {
@@ -97,11 +98,15 @@ export function NavUser({ current }: { current?: IDevice | null }) {
                 Settings
               </DropdownMenuItem>
             </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <LogOut />
-              Log out
-            </DropdownMenuItem>
+            {!isWeb && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => handleNavigate('/manager')}>
+                  <Laptop />
+                  Manage Devices
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
