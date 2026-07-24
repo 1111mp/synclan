@@ -60,7 +60,7 @@ pub async fn build_new_window() -> Result<WebviewWindow, String> {
         .inner_size(1080.0, 800.0)
         .min_inner_size(390.0, 550.0)
         .resizable(true)
-        .visible(true)
+        .visible(false)
         // Because we use a self-signed certificate
         .additional_browser_args("--ignore-certificate-errors")
         .initialization_script(&initial_script)

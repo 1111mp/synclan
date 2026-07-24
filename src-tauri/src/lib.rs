@@ -64,6 +64,10 @@ pub fn run() {
                 logging!(error, Type::Setup, "Failed to setup autostart: {}", e);
             }
 
+            if let Err(e) = setup_window_state(app) {
+                logging!(error, Type::Setup, "Failed to setup window state: {}", e);
+            }
+
             resolve::resolve_setup_async();
             resolve::resolve_server_setup_async();
 
@@ -198,5 +202,14 @@ pub fn setup_autostart(app: &tauri::App) -> Result<(), Box<dyn std::error::Error
             .app_name(&app.config().identifier);
     }
     app.handle().plugin(auto_start_plugin_builder.build())?;
+    Ok(())
+}
+
+pub fn setup_window_state(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
+    logging!(info, Type::Setup, "Set up window state management...");
+    let window_state_plugin = tauri_plugin_window_state::Builder::new()
+        .with_state_flags(tauri_plugin_window_state::StateFlags::default())
+        .build();
+    app.handle().plugin(window_state_plugin)?;
     Ok(())
 }
