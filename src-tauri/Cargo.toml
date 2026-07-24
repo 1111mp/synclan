@@ -36,7 +36,7 @@ axum-extra = { version = "0.12.6", features = ["typed-header"] }
 axum-macros = "0.5.1"
 axum-server = { version = "0.8.0", features = ["tls-rustls"] }
 axum_typed_multipart = "0.16.6"
-base64 = "0.22.1"
+base64 = "0.23.0"
 bitflags = { workspace = true }
 chrono = "0.4.45"
 console-subscriber = { version = "0.5.0", optional = true }
@@ -46,7 +46,7 @@ dunce = "1.0.5"
 flexi_logger = { workspace = true }
 futures = "0.3.32"
 getrandom = "0.4.3"
-libsqlite3-sys = { version = "0.37.0", features = [
+libsqlite3-sys = { version = "0.38.0", features = [
   "bundled-sqlcipher-vendored-openssl",
 ] }
 local-ip-address = "0.6.13"
