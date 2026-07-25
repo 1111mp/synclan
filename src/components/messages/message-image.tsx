@@ -35,6 +35,7 @@ function ImageMessage({ message }: Props) {
     <div style={{ width, height }}>
       <img
         loading='lazy'
+        draggable='false'
         data-synclan-preview-image
         src={getMediaUrl(message.content)}
         className='h-full w-full rounded-md object-contain'

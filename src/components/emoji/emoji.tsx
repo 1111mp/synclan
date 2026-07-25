@@ -64,6 +64,7 @@ function Emoji({
 
   return (
     <img
+      draggable='false'
       src={imageSrc}
       aria-label={emoji}
       title={emoji}
