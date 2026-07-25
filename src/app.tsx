@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { RouterProvider } from 'react-router';
+import { toast } from 'sonner';
 import { useShallow } from 'zustand/react/shallow';
 
 import { AppProvider } from '@/app-context';
@@ -27,13 +29,15 @@ function App() {
 
   useTheme();
 
+  const { t } = useTranslation();
+
   useEffect(() => {
     if (mounted.current) return;
     mounted.current = true;
 
     const initialization = async () => {
       try {
-        const [device, domain] = await Promise.all([
+        const [device, domain, _] = await Promise.all([
           getDevice(),
           getServerDomain(),
           hydrateConversations(),
@@ -43,7 +47,13 @@ function App() {
           await updateConvsFromOffline(device.id);
           updateCurrent(device);
         }
-        console.log('device', device);
+      } catch (error) {
+        console.error('App initialization failed:', error);
+
+        toast.error(t('toast.init_failed'), {
+          description:
+            error instanceof Error ? error.message : t('toast.unknown_error'),
+        });
       } finally {
         setTimeout(() => {
           updateLoading(false);
@@ -53,6 +63,7 @@ function App() {
 
     void initialization();
   }, [
+    t,
     updateLoading,
     updateCurrent,
     updateDomain,

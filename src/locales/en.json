@@ -157,6 +157,14 @@
     }
   },
 
+  "notFound": {
+    "title": "404 - Not Found",
+    "description": "The page you're looking for doesn't exist.",
+    "backHome": "Back to Home",
+    "needHelp": "Need help?",
+    "contactSupport": "Contact support"
+  },
+
   "updater": {
     "upToDate": "You're using the latest version",
     "failedToCheck": "Failed to check for updates",
@@ -227,5 +235,10 @@
   "time": {
     "yesterday": "Yesterday",
     "theDayBeforeYesterday": "The day before yesterday"
+  },
+
+  "toast": {
+    "init_failed": "Failed to initialize application",
+    "unknown_error": "Unknown error"
   }
 }

@@ -157,6 +157,14 @@
     }
   },
 
+  "notFound": {
+    "title": "404 - 页面不存在",
+    "description": "你访问的页面不存在。",
+    "backHome": "返回首页",
+    "needHelp": "需要帮助？",
+    "contactSupport": "联系支持"
+  },
+
   "updater": {
     "upToDate": "当前已是最新版本",
     "failedToCheck": "检查更新失败",
@@ -227,5 +235,10 @@
   "time": {
     "yesterday": "昨天",
     "theDayBeforeYesterday": "前天"
+  },
+
+  "toast": {
+    "init_failed": "应用初始化失败",
+    "unknown_error": "未知错误"
   }
 }

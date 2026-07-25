@@ -36,6 +36,11 @@ export const router = isWeb
           },
         ],
       },
+      // fallback
+      {
+        path: '*',
+        lazy: () => import('@/pages/not-found'),
+      },
     ])
   : createMemoryRouter(
       [
@@ -64,6 +69,11 @@ export const router = isWeb
               lazy: () => import('@/pages/manager'),
             },
           ],
+        },
+        // fallback
+        {
+          path: '*',
+          lazy: () => import('@/pages/not-found'),
         },
       ],
       {

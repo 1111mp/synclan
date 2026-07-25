@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router';
 
+import { ConnectionStatus } from '@/components/connection-status';
 import { DeviceSwitcher } from '@/components/device-switcher';
 import { SearchForm } from '@/components/form';
 import { NavDevices } from '@/components/nav-devices';
@@ -60,6 +61,7 @@ function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         className={cn(OS_PLATFORM !== 'win32' && !isWeb && 'pt-7')}
       >
         <DeviceSwitcher />
+        <ConnectionStatus />
         <SearchForm
           onChange={(e) => {
             console.log(e.target.value);

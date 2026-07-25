@@ -77,7 +77,7 @@ export function NavDevices({
   };
 
   return (
-    <SidebarGroup>
+    <SidebarGroup className='pt-0'>
       <SidebarGroupLabel>Devices</SidebarGroupLabel>
       <SidebarMenu>
         {conversations.map((conv) => {
