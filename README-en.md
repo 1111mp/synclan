@@ -38,6 +38,12 @@ English | [简体中文](./README.md)
   <img src="https://github.com/user-attachments/assets/f62224cb-5aff-4608-9412-9a09b2c54f00" width="24%" />
 </p>
 
+## UI Design
+
+The current SyncLan UI is mainly built with [shadcn/ui](https://ui.shadcn.com/), following its component style and design principles.
+
+The project is still continuously improving its UI details. If you have better UI design suggestions, interaction improvements, or complete design proposals (Figma / Sketch / images, etc.), feel free to submit feedback or contribute design ideas. Together, we can make SyncLan's user experience even better.
+
 ## Architecture
 
 SyncLan adopts a **"desktop-hosted services with browser-based clients"** architecture, which differs from applications like LocalSend that require installation on every device.

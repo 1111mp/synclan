@@ -38,6 +38,12 @@
   <img src="https://github.com/user-attachments/assets/f62224cb-5aff-4608-9412-9a09b2c54f00" width="24%" />
 </p>
 
+## UI 设计
+
+SyncLan 当前 UI 主要基于 [shadcn/ui](https://ui.shadcn.com/) 组件进行搭建，复用了其组件风格和设计规范。
+
+项目目前仍在持续优化 UI 细节，如果你有更好的 UI 设计建议、交互优化方案，或者完整的设计稿（Figma / Sketch / 图片等），欢迎提交反馈或贡献设计方案，一起让 SyncLan 的使用体验变得更好。
+
 ## 工作方式与架构设计
 
 SyncLan 采用 **“桌面端提供核心服务，浏览器端免安装加入”** 的设计模式。这与 LocalSend 等需要两端都安装客户端的工具不同：

@@ -21,6 +21,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui';
+import { useFormatMessageTime } from '@/hooks';
 import { resolveResourceUrl } from '@/lib/utils';
 import { deleteConversationMessages } from '@/services/cmd';
 import { useIMStore } from '@/stores';
@@ -56,6 +57,7 @@ export function NavDevices({
   const deleteConversation = useIMStore((s) => s.deleteConversation);
 
   const confirm = useConfirm();
+  const formatMessageTime = useFormatMessageTime();
 
   const onDeleteDevice = async (id?: string) => {
     if (!current?.id || !id) return;
@@ -120,9 +122,15 @@ export function NavDevices({
                     </Avatar>
                   </ItemMedia>
                   <ItemContent className='gap-1'>
-                    <ItemTitle className='line-clamp-1 break-all'>
-                      {name}
-                    </ItemTitle>
+                    <div className='flex items-center justify-between gap-2'>
+                      <ItemTitle className='line-clamp-1 break-all'>
+                        {name}
+                      </ItemTitle>
+
+                      <span className='text-muted-foreground shrink-0 text-xs'>
+                        {formatMessageTime(conv?.lastMessage?.createdAt)}
+                      </span>
+                    </div>
                     <ItemDescription className='line-clamp-1 break-all'>
                       {conv?.lastMessage?.plainContent}
                     </ItemDescription>
