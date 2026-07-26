@@ -1,8 +1,7 @@
 'use client';
 
-import { check } from '@tauri-apps/plugin-updater';
 import { AudioWaveform, ChevronsUpDown, Plus, QrCode } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 
@@ -25,7 +24,7 @@ import {
 } from '@/components/ui';
 import { isWeb } from '@/lib/constant';
 import { cn } from '@/lib/utils';
-import { useSynclanStore, useUpdaterStore } from '@/stores';
+import { useUpdaterStore } from '@/stores';
 
 function DeviceSwitcher() {
   const qrCodeRef = useRef<QRCodeDialogRef>(null);
@@ -33,20 +32,9 @@ function DeviceSwitcher() {
   const navigate = useNavigate();
   const { open, isMobile, toggleSidebar } = useSidebar();
   const { openDiscover } = useDeviceDiscover();
-  const config = useSynclanStore((s) => s.config);
   const update = useUpdaterStore((s) => s.update);
 
   const { t } = useTranslation();
-
-  useEffect(() => {
-    if (isWeb || !config?.auto_check_update) return;
-
-    void check().then((update) => {
-      if (update !== null) {
-        useUpdaterStore.getState().setUpdate(update);
-      }
-    });
-  }, [config?.auto_check_update]);
 
   const hasUpdate = update !== null;
 
