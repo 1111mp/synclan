@@ -1,4 +1,5 @@
 import { useImagePreview } from '@/components';
+import { useIsMobile } from '@/hooks';
 import { calculateMediaSize, getMediaUrl } from '@/lib/media';
 
 import { parseMessageExtra } from './util';
@@ -8,11 +9,16 @@ type Props = {
 };
 
 function ImageMessage({ message }: Props) {
+  const isMobile = useIsMobile();
   const { openPreview } = useImagePreview();
 
   const extra = parseMessageExtra<MediaMessageExtra>(message.extra);
 
-  const { width, height } = calculateMediaSize(extra?.width, extra?.height);
+  const { width, height } = calculateMediaSize({
+    width: extra?.width,
+    height: extra?.height,
+    isMobile,
+  });
 
   const onImagePreview = () => {
     if (!message.content) return;

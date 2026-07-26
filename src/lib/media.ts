@@ -110,12 +110,22 @@ export async function createAttachmentMessage(
 }
 
 export const MEDIA_MAX_WIDTH = 640;
+export const MOBILE_MEDIA_MAX_WIDTH = 240;
 
-export function calculateMediaSize(width?: number, height?: number) {
-  const mediaWidth = width ?? MEDIA_MAX_WIDTH;
-  const mediaHeight = height ?? MEDIA_MAX_WIDTH;
+export function calculateMediaSize({
+  width,
+  height,
+  isMobile = false,
+}: {
+  width?: number;
+  height?: number;
+  isMobile?: boolean;
+}) {
+  const maxWidth = isMobile ? MOBILE_MEDIA_MAX_WIDTH : MEDIA_MAX_WIDTH;
+  const mediaWidth = width ?? maxWidth;
+  const mediaHeight = height ?? maxWidth;
 
-  const scale = Math.min(MEDIA_MAX_WIDTH / mediaWidth, 640 / mediaHeight, 1);
+  const scale = Math.min(maxWidth / mediaWidth, 640 / mediaHeight, 1);
 
   return {
     width: mediaWidth * scale,
