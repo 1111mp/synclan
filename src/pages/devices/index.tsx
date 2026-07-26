@@ -69,7 +69,6 @@ function DevicesPage() {
   const setActiveConversation = useIMStore((s) => s.setActiveConversation);
   const reconcileServerMessage = useIMStore((s) => s.reconcileServerMessage);
   const syncDeviceInfo = useIMStore((s) => s.syncDeviceInfo);
-  const exitConversation = useIMStore((s) => s.exitConversation);
 
   const isMobile = useIsMobile();
 
@@ -109,9 +108,12 @@ function DevicesPage() {
 
   // Reset actived conversation when unmounted
   useEffect(() => {
-    if (!mounted.current) return;
-    return () => exitConversation();
-  }, [exitConversation]);
+    if (!params.id) return;
+
+    useIMStore.getState().enterConversation(params.id);
+
+    return () => useIMStore.getState().exitConversation();
+  }, [params.id]);
 
   useEffect(() => {
     if (queryData?.pages && queryData.pages.length > 0) {
