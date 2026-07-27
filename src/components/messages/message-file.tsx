@@ -10,7 +10,7 @@ import {
   AttachmentMedia,
   AttachmentTitle,
 } from '@/components/ui';
-import { downloadFile } from '@/lib/media';
+import { downloadFile, getMediaUrl } from '@/lib/media';
 
 import { parseMessageExtra } from './util';
 
@@ -51,7 +51,9 @@ function FileMessage({ message }: Props) {
             }
 
             try {
-              await downloadFile(message.content, extra.name);
+              const url = getMediaUrl(message.content);
+
+              await downloadFile(url, extra.name);
               toast.success('File downloaded');
             } catch {
               toast.error('Unable to download the file');

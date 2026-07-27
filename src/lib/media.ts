@@ -149,21 +149,43 @@ export function getMediaUrl(content?: string) {
 
 export async function downloadFile(url: string, fileName?: string) {
   if (isWeb) {
-    downloadInWeb(url, fileName);
+    await downloadInWeb(url, fileName);
   } else {
     await downloadInTauri(url, fileName);
   }
 }
 
-function downloadInWeb(url: string, fileName?: string) {
+async function downloadInWeb(url: string, fileName?: string) {
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(`Download failed: ${response.status}`);
+  }
+
+  const blob = await response.blob();
+
+  const blobUrl = URL.createObjectURL(blob);
+
   const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = fileName ?? '-';
-  anchor.target = '_blank';
-  anchor.rel = 'noopener noreferrer';
+  anchor.style.display = 'none';
+  anchor.href = blobUrl;
+  anchor.download = fileName || 'download';
+
   document.body.appendChild(anchor);
-  anchor.click();
+
+  anchor.dispatchEvent(
+    new MouseEvent('click', {
+      bubbles: true,
+      cancelable: true,
+      view: window,
+    }),
+  );
+
   document.body.removeChild(anchor);
+
+  setTimeout(() => {
+    URL.revokeObjectURL(blobUrl);
+  }, 1000);
 }
 
 async function downloadInTauri(url: string, fileName?: string) {
