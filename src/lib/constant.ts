@@ -21,19 +21,19 @@ function getServerUrl(forceProtocol?: string): URL {
  * Use HTTP unless the certificate has been manually trusted.
  */
 function getNativeServerUrl(): URL {
-  if (OS_PLATFORM === 'darwin') {
-    return getServerUrl('http:');
-  }
+  // if (OS_PLATFORM === 'darwin') {
+  //   return getServerUrl('http:');
+  // }
 
   return getServerUrl();
 }
 
 export function getBaseUrl(): string {
-  if (import.meta.env.DEV) {
-    return `http://127.0.0.1:53317${API_PATH}`;
-  }
-
   if (isWeb) {
+    if (import.meta.env.DEV) {
+      return `http://127.0.0.1:53317${API_PATH}`;
+    }
+
     return `${window.location.origin}${API_PATH}`;
   }
 
@@ -41,11 +41,11 @@ export function getBaseUrl(): string {
 }
 
 export function getWSUrl(): string {
-  if (import.meta.env.DEV) {
-    return 'ws://127.0.0.1:53317/socket';
-  }
-
   if (isWeb) {
+    if (import.meta.env.DEV) {
+      return 'ws://127.0.0.1:53317/socket';
+    }
+
     return `${isSecure ? 'wss' : 'ws'}://${window.location.host}${SOCKET_PATH}`;
   }
 
@@ -56,11 +56,11 @@ export function getWSUrl(): string {
 }
 
 export function getAttachmentBaseUrl(): string {
-  if (import.meta.env.DEV) {
-    return 'http://127.0.0.1:53317/attachments';
-  }
-
   if (isWeb) {
+    if (import.meta.env.DEV) {
+      return 'http://127.0.0.1:53317/attachments';
+    }
+
     return `${window.location.origin}${ATTACHMENT_PATH}`;
   }
 
