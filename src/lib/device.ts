@@ -14,6 +14,10 @@ export async function getDevice(): Promise<IDevice> {
 
   const device = await getDeviceById(deviceId);
   if (device) {
+    // update device id in local storage for tauri
+    if (!isWeb) {
+      localStorage.setItem(DEVICE_ID_STORAGE_KEY, device.id);
+    }
     return device;
   }
 
