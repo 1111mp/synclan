@@ -207,7 +207,8 @@ impl HttpServer {
                         Method::OPTIONS,
                     ])
                     .allow_origin(AllowOrigin::predicate(|origin, _request_parts| {
-                        origin.as_bytes().starts_with(b"http://localhost")
+                        let origin = origin.as_bytes();
+                        origin.starts_with(b"http://localhost") || origin.starts_with(b"tauri://localhost")
                     }))
                     .max_age(Duration::from_secs(3600)),
             )
