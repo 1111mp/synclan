@@ -1,23 +1,23 @@
 # SyncLan
 
-**SyncLan** 是一个面向局域网的即时通讯式文件传输工具。它把「聊天」和「传文件」放在同一个界面里：在同一 Wi‑Fi / LAN 下发现设备后，像发消息一样发送文字、图片和文件；桌面端负责运行本地服务，浏览器端也可以直接访问和使用。
+**SyncLan** is a LAN-based instant messaging and file transfer application. It combines **chatting** and **file sharing** into a single interface. Once devices are discovered on the same Wi-Fi or local network, you can exchange text messages, images, and files as naturally as chatting. The desktop application runs the local service, while browsers can directly access and use it without installation.
 
-> 适合在办公室、宿舍、家庭网络、无公网环境或不想依赖云盘时，在多台设备之间快速交换内容。
+> Perfect for quickly sharing files and messages across multiple devices in offices, dormitories, home networks, air-gapped environments, or anywhere you don't want to rely on cloud storage.
 
-[English](./README-en.md) | 简体中文
+English | [简体中文](./README-zh_CN.md)
 
-## 亮点
+## Highlights
 
-- 💬 **飞书级 IM 交互体验**：会话列表与聊天窗口的设计深度参考飞书（Lark），追求一致的精致感与操作直觉，极大地降低局域网传输工具的使用门槛。
-- 🖼️ **像素级打磨的富文本编辑器**：支持文本样式编辑、图片附件行内预览和消息历史滚动加载，核心交互体验努力与飞书对齐，让局域网聊天和文件互传也能拥有现代成熟 IM 的流畅感。
-- 📁 **局域网文件传输**：文件上传到本机配置的资源目录，并通过局域网地址分享给目标设备。
-- 🖥️ **桌面端 + 浏览器端**：基于 Tauri 的跨平台桌面应用，同时内置 Web 静态页面服务，浏览器可访问本机服务地址使用。
-- 🔎 **设备发现**：在同一网络中发现可连接设备，选择后即可开始会话。
-- 🔐 **可选 HTTPS**：可导出自签名证书，并在系统信任后启用 HTTPS。
-- ⚙️ **可配置体验**：支持语言、主题、开机启动、静默启动、自动更新检查、端口、上传目录、自动清理等设置。
-- 🧩 **开放 API 文档**：内置 Swagger UI，方便调试或扩展自动化集成。
+- 💬 **Lark-inspired IM experience** – The conversation list and chat interface are heavily inspired by Lark (Feishu), providing a familiar, polished, and intuitive messaging experience while dramatically lowering the learning curve for LAN file sharing.
+- 🖼️ **Pixel-perfect rich text editor** – Supports rich text formatting, inline image previews, and incremental message history loading. The editing experience is carefully refined to match the smoothness of modern IM applications like Lark.
+- 📁 **LAN file transfer** – Uploaded files are stored in a configurable local resource directory and shared with other devices through LAN URLs.
+- 🖥️ **Desktop + Browser** – Built with Tauri for cross-platform desktop support while simultaneously serving a built-in web application accessible from any browser.
+- 🔎 **Device discovery** – Automatically discover devices on the same network and start conversations instantly.
+- 🔐 **Optional HTTPS** – Export a self-signed certificate and enable HTTPS after trusting it in your operating system.
+- ⚙️ **Highly configurable** – Supports language, theme, launch at login, start minimized, automatic update checks, server port, upload directory, automatic cleanup, and more.
+- 🧩 **Built-in API documentation** – Includes Swagger UI for API debugging and integration.
 
-## 截图
+## Screenshots
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/721e4904-d470-4ad1-9064-9fb78168b43b" width="32%" />
@@ -38,194 +38,206 @@
   <img src="https://github.com/user-attachments/assets/f62224cb-5aff-4608-9412-9a09b2c54f00" width="24%" />
 </p>
 
-## UI 设计
+## UI Design
 
-SyncLan 当前 UI 主要基于 [shadcn/ui](https://ui.shadcn.com/) 组件进行搭建，复用了其组件风格和设计规范。
+The current SyncLan UI is mainly built with [shadcn/ui](https://ui.shadcn.com/), following its component style and design principles.
 
-项目目前仍在持续优化 UI 细节，如果你有更好的 UI 设计建议、交互优化方案，或者完整的设计稿（Figma / Sketch / 图片等），欢迎提交反馈或贡献设计方案，一起让 SyncLan 的使用体验变得更好。
+The project is still continuously improving its UI details. If you have better UI design suggestions, interaction improvements, or complete design proposals (Figma / Sketch / images, etc.), feel free to submit feedback or contribute design ideas. Together, we can make SyncLan's user experience even better.
 
-## 工作方式与架构设计
+## Architecture
 
-SyncLan 采用 **“桌面端提供核心服务，浏览器端免安装加入”** 的设计模式。这与 LocalSend 等需要两端都安装客户端的工具不同：
+SyncLan adopts a **"desktop-hosted services with browser-based clients"** architecture, which differs from applications like LocalSend that require installation on every device.
 
-1. **必须启动桌面端**：SyncLan 桌面应用是整个局域网通信的“基站”。启动它会同时在本机拉起 IM 通信服务（Socket.IO）和 Web 静态站点服务。
-2. **多端浏览器访问**：只要有一台电脑运行了桌面端，局域网内的其他电脑或设备**无需安装任何应用**，直接打开浏览器访问该电脑的局域网 IP 和端口，就能立刻加入聊天并互传文件。
-3. **关于移动端（iOS / Android）**：SyncLan 的架构需要常驻后台并运行完整的 IM 与 Web 站点服务，这种设计对移动端的电池和后台留存极不友好。因此，**本项目目前及未来均不打算开发移动端原生 App**。移动端设备请直接通过浏览器访问桌面端的服务地址来使用。
+1. **A desktop instance is required.** The SyncLan desktop application acts as the LAN hub. When launched, it starts both the IM service (Socket.IO) and the built-in web server.
+2. **Browser access for other devices.** As long as one computer is running SyncLan Desktop, any other device on the same LAN can join instantly by opening the host's IP address in a browser—no installation required.
+3. **About mobile devices (iOS / Android).** SyncLan relies on long-running background services that continuously provide IM and web server functionality. This architecture is not well suited to mobile operating systems due to battery usage and background execution restrictions. Therefore, **native mobile applications are not planned**, and mobile devices should simply access the desktop service through a browser.
 
-### 核心连接步骤
+### Connection Flow
 
 <p align="left">
   <img src="https://github.com/user-attachments/assets/004b8a75-1373-4ab6-bf66-696344f9d4df" width="200" />
   <img src="https://github.com/user-attachments/assets/d1d988e3-c30a-43d2-b682-1827560d079e" width="200" />
 </p>
 
-1. 在核心电脑上启动 SyncLan 桌面端。
-2. 确保所有设备处于同一个局域网 / Wi‑Fi，且防火墙允许 SyncLan 使用的端口。
-3. **桌面端之间**：打开「设备发现」，选择目标设备即可进入会话。
-4. **无客户端设备 / 移动端**：在浏览器中直接打开桌面端暴露的局域网服务地址。
+1. Launch SyncLan Desktop on the host computer.
+2. Ensure all devices are connected to the same LAN or Wi-Fi, and the firewall allows SyncLan's configured port.
+3. **Desktop clients:** Open **Device Discovery**, select a device, and start chatting.
+4. **Browser-only devices or mobile devices:** Open the desktop server's LAN address directly in your browser.
 
-默认本地服务端口为 `53317`，本机访问地址通常为：
+The default local service runs on port `53317`.
 
-- Web 页面：`http://127.0.0.1:53317`
-- API 文档：`http://127.0.0.1:53317/api/docs`
-- Socket.IO：`ws://127.0.0.1:53317/socket`
+- Web UI: `http://127.0.0.1:53317`
+- API Documentation: `http://127.0.0.1:53317/api/docs`
+- Socket.IO: `ws://127.0.0.1:53317/socket`
 
-> 端口与上传目录均可在应用设置中修改。
+> Both the server port and upload directory can be customized in Settings.
 
-## 安装与使用
+## Installation
 
-### 下载发布版
+### Download Releases
 
-如果你只是想使用 SyncLan，建议从 [GitHub Releases](https://github.com/1111mp/synclan/releases/latest) 下载适合系统的安装包。
+If you simply want to use SyncLan, download the latest installer from [GitHub Releases](https://github.com/1111mp/synclan/releases/latest).
 
-### 从源码运行
+### Build from Source
 
-#### 环境要求
+#### Requirements
 
-- Node.js（建议使用当前 LTS 版本）
+- Node.js (latest LTS recommended)
 - pnpm
-- [Rust](https://rust-lang.org/learn/get-started/)（仓库包含 `rust-toolchain.toml`，会使用项目指定工具链）
-- [Tauri 2](https://tauri.app/) 所需系统依赖
+- [Rust](https://rust-lang.org/learn/get-started/) (the repository includes `rust-toolchain.toml`)
+- [Tauri 2](https://tauri.app/) system dependencies
 
-不同系统的 Tauri 依赖安装方式略有差异，请参考 Tauri 官方文档完成 [WebView / 构建工具链](https://tauri.app/zh-cn/start/prerequisites/)准备。
+The installation process differs slightly across operating systems. Please refer to the official Tauri documentation to install the required [WebView runtime and toolchain](https://tauri.app/zh-cn/start/prerequisites/).
 
-#### 安装依赖
+#### Install Dependencies
 
 ```bash
 pnpm install
 ```
 
-#### 开发模式
+#### Development
 
 ```bash
 pnpm dev
 ```
 
-该命令会启动 Tauri 桌面端开发环境，并在启动前构建/启动对应前端资源。
+Starts the Tauri desktop application in development mode.
 
-#### 构建桌面应用
+#### Build Desktop Application
 
 ```bash
 pnpm build
 ```
 
-构建产物会输出到 Tauri 默认的 `src-tauri/target/release/bundle/` 目录下。
+The generated packages are located under:
 
-#### 仅构建 Web 页面
+```text
+src-tauri/target/release/bundle/
+```
+
+#### Build Web Assets Only
 
 ```bash
 pnpm web:build
 ```
 
-#### 仅构建桌面 UI
+#### Build Desktop UI Only
 
 ```bash
 pnpm ui:build
 ```
 
-## 常用设置说明
+## Common Settings
 
-| 设置项             | 说明                                                             |
+| Setting            | Description                                                      |
 | ------------------ | ---------------------------------------------------------------- |
-| Language           | 切换界面语言，目前包含简体中文与 English。                       |
-| Appearance         | 跟随系统、浅色或深色主题。                                       |
-| Launch at Login    | 桌面端开机自启动。                                               |
-| Start Minimized    | 启动后最小化到后台/托盘。                                        |
-| HTTP Server Port   | 本地 HTTP 服务端口，默认 `53317`。                               |
-| Enable HTTPS       | 启用 HTTPS。本功能需要先导出证书并加入系统信任。                 |
-| Export Certificate | 导出 SyncLan 自签名证书，用于系统信任。                          |
-| Upload Directory   | 接收/上传文件的保存目录。                                        |
-| Auto File Cleanup  | 自动清理上传资源，可选择不清理、保留 1 天、7 天、30 天或 90 天。 |
-| Auto Check Update  | 自动检查应用更新。                                               |
+| Language           | Switch between Simplified Chinese and English.                   |
+| Appearance         | System, Light, or Dark theme.                                    |
+| Launch at Login    | Start SyncLan automatically after login.                         |
+| Start Minimized    | Launch minimized to the system tray/background.                  |
+| HTTP Server Port   | HTTP service port. Default: `53317`.                             |
+| Enable HTTPS       | Enable HTTPS after trusting the exported certificate.            |
+| Export Certificate | Export the self-signed SyncLan certificate.                      |
+| Upload Directory   | Directory used to store uploaded files.                          |
+| Auto File Cleanup  | Automatically delete uploaded files after a configurable period. |
+| Auto Check Update  | Automatically check for application updates.                     |
 
-## 浏览器端访问
+## Browser Access
 
-桌面端启动后会同时提供 Web 静态资源服务。同一局域网内的其他设备可以通过桌面端设备的局域网 IP 加端口访问，例如：
+When the desktop application is running, it serves the web interface automatically.
+
+Devices on the same LAN can access it using the desktop machine's IP address, for example:
 
 ```text
 http://192.168.1.10:53317
 ```
 
-如果无法访问，请检查：
+If you cannot connect:
 
-- 两台设备是否在同一局域网 / Wi‑Fi 下。
-- 桌面端是否正在运行。
-- 端口是否被系统防火墙、杀毒软件或路由器隔离策略拦截。
-- 如果启用了 HTTPS，访问端是否已信任导出的 SyncLan 证书。
+- Ensure both devices are on the same LAN or Wi-Fi.
+- Make sure the desktop application is running.
+- Check whether the configured port is blocked by the firewall, antivirus software, or router isolation.
+- If HTTPS is enabled, ensure the SyncLan certificate has been trusted.
 
-## API 与扩展
+## API
 
-SyncLan 后端基于 Axum 提供 HTTP API，并通过 Socket.IO 处理实时消息。启动桌面端后，可以打开：
+SyncLan uses **Axum** for its HTTP API and **Socket.IO** for real-time communication.
+
+Once the desktop application is running, open:
 
 ```text
 http://127.0.0.1:53317/api/docs
 ```
 
-查看 OpenAPI / Swagger 文档。主要接口分组包括：
+to view the OpenAPI / Swagger documentation.
 
-- `Synclan`：应用访问校验等基础能力。
-- `Device`：设备信息与设备发现。
-- `Upload`：附件上传。
-- `Message`：消息发送与历史记录。
+Main API groups:
 
-## 项目结构
+- `Synclan` – Application authentication and common APIs.
+- `Device` – Device information and discovery.
+- `Upload` – File uploads.
+- `Message` – Messaging and chat history.
+
+## Project Structure
 
 ```text
 .
-├── src/                  # React 前端源码
-│   ├── components/       # 通用 UI、消息组件、设备发现等
-│   ├── pages/            # 页面：欢迎页、设备会话、设置、资料等
-│   ├── lib/              # API、附件、工具函数、类型等
-│   └── locales/          # 多语言资源
-├── src-tauri/            # Tauri / Rust 后端源码
-│   ├── src/server/       # HTTP API、Socket.IO、路由、任务 worker
-│   ├── src/config/       # 应用配置与加密字段
-│   ├── src/core/         # 托盘、日志、窗口、开机启动等核心能力
-│   └── resources/        # Web 静态资源、数据库迁移等打包资源
-├── scripts/              # 更新与发布辅助脚本
-├── package.json          # 前端依赖与常用脚本
-└── Cargo.toml            # Rust workspace 配置
+├── src/                  # React frontend
+│   ├── components/       # Shared UI, chat components, device discovery
+│   ├── pages/            # Welcome, Chat, Settings, Profile, etc.
+│   ├── lib/              # API, utilities, attachments, types
+│   └── locales/          # Localization resources
+├── src-tauri/            # Tauri / Rust backend
+│   ├── src/server/       # HTTP API, Socket.IO, workers
+│   ├── src/config/       # Configuration and encrypted fields
+│   ├── src/core/         # Tray, logging, windows, startup
+│   └── resources/        # Bundled web assets and database migrations
+├── scripts/              # Release and helper scripts
+├── package.json
+└── Cargo.toml
 ```
 
-## 开发脚本
+## Development Scripts
 
-| 命令                                                   | 说明                            |
-| ------------------------------------------------------ | ------------------------------- |
-| `pnpm dev`                                             | 启动 Tauri 开发模式。           |
-| `pnpm build`                                           | 构建桌面端安装包。              |
-| `pnpm app:dev`                                         | 构建 Web 端并启动桌面 UI 预览。 |
-| `pnpm app:build`                                       | 构建 Web 端与桌面 UI。          |
-| `pnpm web:dev`                                         | 启动浏览器端 Vite 开发服务。    |
-| `pnpm web:build`                                       | 构建浏览器端资源。              |
-| `pnpm ui:dev`                                          | 启动桌面 UI Vite 开发服务。     |
-| `pnpm ui:build`                                        | 类型检查并构建桌面 UI。         |
-| `pnpm typecheck`                                       | TypeScript 类型检查。           |
-| `pnpm oxlint`                                          | 运行前端 lint。                 |
-| `pnpm format:check`                                    | 检查前端格式。                  |
-| `pnpm test`                                            | 运行 Vitest。                   |
-| `cargo test -p synclan`                                | 运行 Rust 测试。                |
-| `cargo fmt --all -- --check`                           | 检查 Rust 格式。                |
-| `cargo clippy -p synclan --all-targets -- -D warnings` | 运行 Rust Clippy。              |
+| Command                                                | Description                                           |
+| ------------------------------------------------------ | ----------------------------------------------------- |
+| `pnpm dev`                                             | Start the Tauri development environment.              |
+| `pnpm build`                                           | Build desktop installers.                             |
+| `pnpm app:dev`                                         | Build the web application and preview the desktop UI. |
+| `pnpm app:build`                                       | Build both the web application and desktop UI.        |
+| `pnpm web:dev`                                         | Start the browser development server.                 |
+| `pnpm web:build`                                       | Build browser assets.                                 |
+| `pnpm ui:dev`                                          | Start the desktop UI development server.              |
+| `pnpm ui:build`                                        | Type-check and build the desktop UI.                  |
+| `pnpm typecheck`                                       | Run TypeScript type checking.                         |
+| `pnpm oxlint`                                          | Run frontend linting.                                 |
+| `pnpm format:check`                                    | Check frontend formatting.                            |
+| `pnpm test`                                            | Run Vitest tests.                                     |
+| `cargo test -p synclan`                                | Run Rust tests.                                       |
+| `cargo fmt --all -- --check`                           | Check Rust formatting.                                |
+| `cargo clippy -p synclan --all-targets -- -D warnings` | Run Rust Clippy.                                      |
 
-## 故障排查
+## Troubleshooting
 
-### 发现不到设备
+### Devices Cannot Be Discovered
 
-- 确认所有设备都连接到同一局域网。
-- 暂时关闭 VPN、代理或访客网络隔离策略后重试。
-- 检查系统防火墙是否允许 SyncLan 监听和访问配置端口。
-- 修改端口后请重启本地服务或重启应用。
+- Ensure all devices are connected to the same LAN.
+- Temporarily disable VPNs, proxies, or guest network isolation.
+- Verify that the system firewall allows SyncLan to use the configured port.
+- Restart the local service after changing the server port.
 
-### 浏览器无法打开 Web 页面
+### Cannot Open the Web Interface
 
-- 在桌面端设备上先访问 `http://127.0.0.1:53317`，确认本机服务正常。
-- 在其他设备上使用桌面端设备的局域网 IP，而不是 `127.0.0.1`。
-- 确认端口与设置中的 HTTP Server Port 一致。
+- First verify that `http://127.0.0.1:53317` works on the host machine.
+- Use the host machine's LAN IP instead of `127.0.0.1` on other devices.
+- Ensure the HTTP Server Port matches the configured value.
 
-### HTTPS 提示证书不受信任
+### HTTPS Certificate Not Trusted
 
-SyncLan 使用自签名证书。请在设置中导出证书，将其加入操作系统或浏览器的信任列表，然后重启 SyncLan 并再次访问。
+SyncLan uses a self-signed certificate.
 
-## 许可证
+Export the certificate from **Settings**, trust it in your operating system or browser, restart SyncLan, and try again.
 
-本项目基于 [MIT License](LICENSE) 开源。
+## License
+
+This project is licensed under the **MIT License**.
