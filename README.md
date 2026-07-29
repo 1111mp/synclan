@@ -1,23 +1,42 @@
-# SyncLan
+# 💬 SyncLan
 
-**SyncLan** is a LAN-based instant messaging and file transfer application. It combines **chatting** and **file sharing** into a single interface. Once devices are discovered on the same Wi-Fi or local network, you can exchange text messages, images, and files as naturally as chatting. The desktop application runs the local service, while browsers can directly access and use it without installation.
+**An Instant-Messaging-Style LAN File Transfer Tool**
 
-> Perfect for quickly sharing files and messages across multiple devices in offices, dormitories, home networks, air-gapped environments, or anywhere you don't want to rely on cloud storage.
+Bringing a "Lark/Feishu-grade IM experience" to local network file sharing. Anytime, anywhere, ready out of the box.
+
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+![Tauri](https://img.shields.io/badge/Tauri-v2-blue.svg?logo=tauri)
+![Rust](https://img.shields.io/badge/Rust-1.97+-orange.svg?logo=rust)
+![React](https://img.shields.io/badge/React-19-61dafb.svg?logo=react)
 
 English | [简体中文](./README-zh_CN.md)
 
-## Highlights
+---
 
-- 💬 **Lark-inspired IM experience** – The conversation list and chat interface are heavily inspired by Lark (Feishu), providing a familiar, polished, and intuitive messaging experience while dramatically lowering the learning curve for LAN file sharing.
-- 🖼️ **Pixel-perfect rich text editor** – Supports rich text formatting, inline image previews, and incremental message history loading. The editing experience is carefully refined to match the smoothness of modern IM applications like Lark.
-- 📁 **LAN file transfer** – Uploaded files are stored in a configurable local resource directory and shared with other devices through LAN URLs.
-- 🖥️ **Desktop + Browser** – Built with Tauri for cross-platform desktop support while simultaneously serving a built-in web application accessible from any browser.
-- 🔎 **Device discovery** – Automatically discover devices on the same network and start conversations instantly.
-- 🔐 **Optional HTTPS** – Export a self-signed certificate and enable HTTPS after trusting it in your operating system.
-- ⚙️ **Highly configurable** – Supports language, theme, launch at login, start minimized, automatic update checks, server port, upload directory, automatic cleanup, and more.
-- 🧩 **Built-in API documentation** – Includes Swagger UI for API debugging and integration.
+**SyncLan** is an instant-messaging-style file transfer tool built for local area networks (LANs). It breaks away from the cold, drag-and-drop workflow of traditional transfer tools by seamlessly integrating **chat** and **file sharing** into a single unified interface. Once devices on the same Wi-Fi or LAN are automatically discovered, you can exchange plain text, rich text, images, and files just as you would in a modern IM app.
 
-## Screenshots
+The desktop client acts as a "communication hub" running locally, allowing other LAN devices (smartphones, tablets, or other PCs) to **connect instantly via any web browser without installing any apps**.
+
+> 💡 **Ideal For**: Cross-device office collaboration, dorm/home network sharing, environments without public internet access, or any scenario where you want to avoid third-party cloud drives and chat apps for temporary file transfers.
+
+---
+
+## ✨ Features
+
+- 💬 **Lark-grade IM Experience**: Closely models the conversation list and chat layout of Lark/Feishu, featuring meticulous visual interaction details for zero learning curve.
+- 🖼️ **Pixel-Perfect Rich Text Editor**: Supports formatted text editing, inline live previews for images and attachments, and infinite scroll for message history, giving it the smooth feel of a mature IM application.
+- 📁 **High-Speed LAN Transfers**: Direct file transfers saved straight to your designated local folder, leveraging full local network bandwidth without public speed caps.
+- 🖥️ **Desktop Host + Zero-Install Web Client**: Built on Tauri 2 as a lightweight, cross-platform desktop app with a built-in web server. Mobile phones and other PCs can join instantly by scanning a QR code or entering the IP address in a browser.
+- 🔎 **Automatic Device Discovery**: Uses LAN broadcasts to discover online devices automatically and start messaging with a single click.
+- 🔐 **HTTPS Support**: Built-in self-signed certificate export functionality, enabling full HTTPS encryption once trusted.
+- ⚙️ **Highly Customizable**: Supports multi-language switching (English/Chinese), light/dark themes, auto-start on boot, silent tray launch, auto-cleanup of expired files, and more.
+- 🧩 **Open API Documentation**: Includes built-in Swagger UI (`/api/docs`) for easy secondary development and automated integrations.
+
+---
+
+## 📸 Screenshots
+
+### Desktop Interface
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/721e4904-d470-4ad1-9064-9fb78168b43b" width="32%" />
@@ -31,6 +50,8 @@ English | [简体中文](./README-zh_CN.md)
   <img src="https://github.com/user-attachments/assets/58107d41-1b8f-459d-b19f-cf70e97fac11" width="32%" />
 </p>
 
+### Mobile Browser View
+
 <p align="center">
   <img src="https://github.com/user-attachments/assets/8c050155-caa0-4cba-a1ac-df043715cbca" width="24%" />
   <img src="https://github.com/user-attachments/assets/a3d54954-cdd2-47fa-9f32-e80a30e28663" width="24%" />
@@ -38,166 +59,85 @@ English | [简体中文](./README-zh_CN.md)
   <img src="https://github.com/user-attachments/assets/f62224cb-5aff-4608-9412-9a09b2c54f00" width="24%" />
 </p>
 
-## UI Design
+---
 
-The current SyncLan UI is mainly built with [shadcn/ui](https://ui.shadcn.com/), following its component style and design principles.
+## 🎨 Design & UI System
 
-The project is still continuously improving its UI details. If you have better UI design suggestions, interaction improvements, or complete design proposals (Figma / Sketch / images, etc.), feel free to submit feedback or contribute design ideas. Together, we can make SyncLan's user experience even better.
+SyncLan's frontend UI is primarily built with [shadcn/ui](https://ui.shadcn.com/), following modern Web design standards.
 
-## Architecture
+> 🤝 **Contributions Welcome**: We are constantly refining the UI/UX details. If you have design suggestions, interaction improvements, or Figma/Sketch files to share, feel free to submit an issue or open a pull request!
 
-SyncLan adopts a **"desktop-hosted services with browser-based clients"** architecture, which differs from applications like LocalSend that require installation on every device.
+---
 
-1. **A desktop instance is required.** The SyncLan desktop application acts as the LAN hub. When launched, it starts both the IM service (Socket.IO) and the built-in web server.
-2. **Browser access for other devices.** As long as one computer is running SyncLan Desktop, any other device on the same LAN can join instantly by opening the host's IP address in a browser—no installation required.
-3. **About mobile devices (iOS / Android).** SyncLan relies on long-running background services that continuously provide IM and web server functionality. This architecture is not well suited to mobile operating systems due to battery usage and background execution restrictions. Therefore, **native mobile applications are not planned**, and mobile devices should simply access the desktop service through a browser.
+## 🏗️ Architecture & How It Works
 
-### Connection Flow
-
-<p align="left">
-  <img src="https://github.com/user-attachments/assets/004b8a75-1373-4ab6-bf66-696344f9d4df" width="200" />
-  <img src="https://github.com/user-attachments/assets/d1d988e3-c30a-43d2-b682-1827560d079e" width="200" />
-</p>
-
-1. Launch SyncLan Desktop on the host computer.
-2. Ensure all devices are connected to the same LAN or Wi-Fi, and the firewall allows SyncLan's configured port.
-3. **Desktop clients:** Open **Device Discovery**, select a device, and start chatting.
-4. **Browser-only devices or mobile devices:** Open the desktop server's LAN address directly in your browser.
-
-The default local service runs on port `53317`.
-
-- Web UI: `http://127.0.0.1:53317`
-- API Documentation: `http://127.0.0.1:53317/api/docs`
-- Socket.IO: `ws://127.0.0.1:53317/socket`
-
-> Both the server port and upload directory can be customized in Settings.
-
-## Installation
-
-### Download Releases
-
-If you simply want to use SyncLan, download the latest installer from [GitHub Releases](https://github.com/1111mp/synclan/releases/latest).
-
-### Build from Source
-
-#### Requirements
-
-- Node.js (latest LTS recommended)
-- pnpm
-- [Rust](https://rust-lang.org/learn/get-started/) (the repository includes `rust-toolchain.toml`)
-- [Tauri 2](https://tauri.app/) system dependencies
-
-The installation process differs slightly across operating systems. Please refer to the official Tauri documentation to install the required [WebView runtime and toolchain](https://tauri.app/zh-cn/start/prerequisites/).
-
-#### Install Dependencies
-
-```bash
-pnpm install
-```
-
-#### Development
-
-```bash
-pnpm dev
-```
-
-Starts the Tauri desktop application in development mode.
-
-#### Build Desktop Application
-
-```bash
-pnpm build
-```
-
-The generated packages are located under:
+SyncLan uses a **"Desktop Hub with Zero-Install Mobile/Web Access"** design philosophy:
 
 ```text
-src-tauri/target/release/bundle/
+[ Desktop Client (Tauri) ] ---- Port Listener (Default 53317) ---- Socket.IO / Web Server
+       |                                                                |
+       +---> Device Discovery (Finds other SyncLan desktop clients)      |
+       |                                                                |
+       +---> Other LAN Devices (Phones / Tablets / PCs) ----> [ Web Browser IP:53317 ]
 ```
 
-#### Build Web Assets Only
+1. **Desktop Host as Communication Hub**: Launching the desktop app automatically starts the backend IM service (Axum + Socket.IO) alongside a static web server.
+2. **Zero-Install Multi-Device Access**: Other devices on the same network don't need any app installed. Simply open a browser, navigate to the desktop host's local IP and port, and begin chatting or transferring files right away.
+3. **Note on Native Mobile Apps**: Real-time LAN communication requires persistent long-lived connections (Socket.IO), which drains battery and suffers from strict background termination on iOS and Android. As a result, **we currently have no plans for native mobile apps**; please use mobile browsers for instant access.
 
-```bash
-pnpm web:build
-```
+---
 
-#### Build Desktop UI Only
+## 🚀 Quick Start
 
-```bash
-pnpm ui:build
-```
+### 1. Download & Install
 
-## Common Settings
+Head to [GitHub Releases](https://github.com/1111mp/synclan/releases/latest) and download the appropriate installer for your platform (macOS / Windows / Linux).
 
-| Setting            | Description                                                      |
-| ------------------ | ---------------------------------------------------------------- |
-| Language           | Switch between Simplified Chinese and English.                   |
-| Appearance         | System, Light, or Dark theme.                                    |
-| Launch at Login    | Start SyncLan automatically after login.                         |
-| Start Minimized    | Launch minimized to the system tray/background.                  |
-| HTTP Server Port   | HTTP service port. Default: `53317`.                             |
-| Enable HTTPS       | Enable HTTPS after trusting the exported certificate.            |
-| Export Certificate | Export the self-signed SyncLan certificate.                      |
-| Upload Directory   | Directory used to store uploaded files.                          |
-| Auto File Cleanup  | Automatically delete uploaded files after a configurable period. |
-| Auto Check Update  | Automatically check for application updates.                     |
+### 2. Default Service Endpoints
 
-## Browser Access
+Once started, the application listens on port `53317` by default:
 
-When the desktop application is running, it serves the web interface automatically.
+- **Local Web App**: `http://127.0.0.1:53317` (Access from local PC browser)
+- **LAN Web App**: `http://<LAN-IP>:53317` (Access from phone or other devices)
+- **API Documentation**: `http://127.0.0.1:53317/api/docs` (Swagger UI for developers)
+- **WebSocket Node**: `ws://127.0.0.1:53317/socket` (Socket.IO real-time communication endpoint)
 
-Devices on the same LAN can access it using the desktop machine's IP address, for example:
+---
 
-```text
-http://192.168.1.10:53317
-```
+## 🛠️ Local Development Setup
 
-If you cannot connect:
+If you wish to contribute or build SyncLan from source:
 
-- Ensure both devices are on the same LAN or Wi-Fi.
-- Make sure the desktop application is running.
-- Check whether the configured port is blocked by the firewall, antivirus software, or router isolation.
-- If HTTPS is enabled, ensure the SyncLan certificate has been trusted.
+### Prerequisites
 
-## API
+- **Node.js**: LTS version (v18+ recommended)
+- **pnpm**: Package manager
+- **Rust**: Latest Stable release (includes `rust-toolchain.toml`)
+- **Tauri 2 Dependencies**: Follow the official [Tauri Prerequisites Guide](https://tauri.app/start/prerequisites/) for your OS.
 
-SyncLan uses **Axum** for its HTTP API and **Socket.IO** for real-time communication.
+### Steps
 
-Once the desktop application is running, open:
+1. Clone the repository and install dependencies:
 
-```text
-http://127.0.0.1:53317/api/docs
-```
+   ```bash
+   git clone https://github.com/1111mp/synclan.git
+   cd synclan
+   pnpm install
+   ```
 
-to view the OpenAPI / Swagger documentation.
+2. Run the desktop app in development mode:
 
-Main API groups:
+   ```bash
+   pnpm dev
+   ```
 
-- `Synclan` – Application authentication and common APIs.
-- `Device` – Device information and discovery.
-- `Upload` – File uploads.
-- `Message` – Messaging and chat history.
+3. Build for production:
+   ```bash
+   pnpm build
+   ```
+   _(Output binaries will be placed under target/release/bundle/)_
 
-## Project Structure
-
-```text
-.
-├── src/                  # React frontend
-│   ├── components/       # Shared UI, chat components, device discovery
-│   ├── pages/            # Welcome, Chat, Settings, Profile, etc.
-│   ├── lib/              # API, utilities, attachments, types
-│   └── locales/          # Localization resources
-├── src-tauri/            # Tauri / Rust backend
-│   ├── src/server/       # HTTP API, Socket.IO, workers
-│   ├── src/config/       # Configuration and encrypted fields
-│   ├── src/core/         # Tray, logging, windows, startup
-│   └── resources/        # Bundled web assets and database migrations
-├── scripts/              # Release and helper scripts
-├── package.json
-└── Cargo.toml
-```
-
-## Development Scripts
+### Useful Development Commands
 
 | Command                                                | Description                                           |
 | ------------------------------------------------------ | ----------------------------------------------------- |
@@ -217,27 +157,48 @@ Main API groups:
 | `cargo fmt --all -- --check`                           | Check Rust formatting.                                |
 | `cargo clippy -p synclan --all-targets -- -D warnings` | Run Rust Clippy.                                      |
 
-## Troubleshooting
+---
 
-### Devices Cannot Be Discovered
+## 📂 Project Structure
 
-- Ensure all devices are connected to the same LAN.
-- Temporarily disable VPNs, proxies, or guest network isolation.
-- Verify that the system firewall allows SyncLan to use the configured port.
-- Restart the local service after changing the server port.
+```text
+.
+├── src/                  # React frontend source (Desktop UI & Web client)
+│   ├── components/       # Base UI components, message items, device list, etc.
+│   ├── pages/            # View pages (Chat, Discovery, Settings, etc.)
+│   ├── lib/              # API wrappers, utility functions, type definitions
+│   └── locales/          # i18n internationalization setup
+├── src-tauri/            # Tauri / Rust backend source
+│   ├── src/server/       # Axum HTTP API, Socket.IO handlers, background workers
+│   ├── src/config/       # App configurations & credentials management
+│   ├── src/core/         # System tray, logging, window controls, auto-start
+│   └── resources/        # Static assets, DB migration scripts
+├── scripts/              # CI/CD and build scripts
+├── package.json          # Node dependencies and scripts
+└── Cargo.toml            # Rust workspace configuration
+```
 
-### Cannot Open the Web Interface
+---
 
-- First verify that `http://127.0.0.1:53317` works on the host machine.
-- Use the host machine's LAN IP instead of `127.0.0.1` on other devices.
-- Ensure the HTTP Server Port matches the configured value.
+## ❓ Troubleshooting
 
-### HTTPS Certificate Not Trusted
+### 1. Devices missing from the auto-discovery list?
 
-SyncLan uses a self-signed certificate.
+- Ensure all devices are connected to the exact same Wi-Fi / LAN subnet.
+- Check and temporarily disable **VPNs, global proxies**, or router **AP Isolation (Guest Network Isolation)**.
+- Check Windows Firewall or macOS Network Privacy settings to ensure SyncLan is allowed to listen on the configured port.
 
-Export the certificate from **Settings**, trust it in your operating system or browser, restart SyncLan, and try again.
+### 2. Mobile or remote browser cannot open the web page?
 
-## License
+- Verify you are entering the host computer's **LAN IP** (e.g., `192.168.1.X`), not `127.0.0.1`.
+- Ensure the desktop client is running and the port isn't blocked by local firewalls or occupied by another app.
 
-This project is licensed under the **MIT License**.
+### 3. HTTPS shows "Untrusted Certificate" warning?
+
+- SyncLan uses locally generated self-signed certificates. In the desktop settings, click **"Export Certificate"** and install/trust it in your browser or operating system's Trusted Root Certification Authorities store.
+
+---
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).
