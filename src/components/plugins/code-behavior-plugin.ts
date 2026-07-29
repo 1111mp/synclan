@@ -1,4 +1,5 @@
-import { useEffect, type JSX } from 'react';
+import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+import { mergeRegister } from '@lexical/utils';
 import {
   $getSelection,
   $isRangeSelection,
@@ -8,9 +9,9 @@ import {
   KEY_DELETE_COMMAND,
   SELECT_ALL_COMMAND,
 } from 'lexical';
-import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+import { useEffect, type JSX } from 'react';
+
 import { $isCodePlusNode } from '../nodes';
-import { mergeRegister } from '@lexical/utils';
 import { $findNearestCodeNode } from './lib';
 
 function CodeBehaviorPlugin(): JSX.Element | null {

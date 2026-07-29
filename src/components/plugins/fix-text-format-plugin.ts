@@ -1,4 +1,4 @@
-import { useEffect, type JSX } from 'react';
+import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import {
   $getSelection,
   $isRangeSelection,
@@ -6,7 +6,7 @@ import {
   COMMAND_PRIORITY_NORMAL,
   KEY_BACKSPACE_COMMAND,
 } from 'lexical';
-import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+import { useEffect, type JSX } from 'react';
 
 function FixTextFormatPlugin(): JSX.Element | null {
   const [editor] = useLexicalComposerContext();

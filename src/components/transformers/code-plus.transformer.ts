@@ -1,14 +1,15 @@
+import type {
+  ElementTransformer,
+  MultilineElementTransformer,
+} from '@lexical/markdown';
 import {
   $createParagraphNode,
   $createTextNode,
   ElementNode,
   type LexicalNode,
 } from 'lexical';
+
 import { $createCodePlusNode, $isCodePlusNode, CodePlusNode } from '../nodes';
-import type {
-  ElementTransformer,
-  MultilineElementTransformer,
-} from '@lexical/markdown';
 import { $matchLanguage } from '../plugins';
 
 const CODE_START_REGEX = /^[ \t]*```([\w-]+)?/;

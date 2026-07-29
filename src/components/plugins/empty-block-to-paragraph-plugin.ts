@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+import { mergeRegister } from '@lexical/utils';
 import {
   $createParagraphNode,
   $getSelection,
@@ -7,8 +8,8 @@ import {
   KEY_BACKSPACE_COMMAND,
   KEY_DELETE_COMMAND,
 } from 'lexical';
-import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { mergeRegister } from '@lexical/utils';
+import { useEffect } from 'react';
+
 import { $isSimpleQuoteNode, SimpleListItemNode } from '../nodes';
 import { $findNearestListNode } from './lib';
 

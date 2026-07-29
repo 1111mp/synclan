@@ -1,6 +1,7 @@
-import { $getState, $setState, createState, type ElementNode } from 'lexical';
 import type { ListType } from '@lexical/list';
 import { QUOTE, type ElementTransformer } from '@lexical/markdown';
+import { $getState, $setState, createState, type ElementNode } from 'lexical';
+
 import {
   $createSimpleListItemNode,
   $createSimpleListNode,

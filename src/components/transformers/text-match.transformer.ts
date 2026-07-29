@@ -1,11 +1,11 @@
-import { $createTextNode } from 'lexical';
-import type { TextMatchTransformer } from '@lexical/markdown';
 import {
   $createLinkNode,
   $isAutoLinkNode,
   $isLinkNode,
   LinkNode,
 } from '@lexical/link';
+import type { TextMatchTransformer } from '@lexical/markdown';
+import { $createTextNode } from 'lexical';
 
 const BOLD_STAR: TextMatchTransformer = {
   dependencies: [],
