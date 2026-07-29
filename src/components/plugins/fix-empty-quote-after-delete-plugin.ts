@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+import { mergeRegister } from '@lexical/utils';
 import {
   COMMAND_PRIORITY_HIGH,
   KEY_BACKSPACE_COMMAND,
@@ -6,8 +7,8 @@ import {
   $getSelection,
   $isRangeSelection,
 } from 'lexical';
-import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { mergeRegister } from '@lexical/utils';
+import { useEffect } from 'react';
+
 import { $isSimpleQuoteNode } from '../nodes';
 
 function FixEmptyQuoteAfterDeletePlugin() {
