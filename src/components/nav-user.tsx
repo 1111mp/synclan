@@ -1,6 +1,13 @@
 'use client';
 
-import { ChevronsUpDown, Laptop, Settings, User, UserPen } from 'lucide-react';
+import {
+  ArchiveRestore,
+  ChevronsUpDown,
+  Laptop,
+  Settings,
+  User,
+  UserPen,
+} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
 
@@ -101,9 +108,15 @@ export function NavUser({ current }: { current?: IDevice | null }) {
                 {t('navUser.settings')}
               </DropdownMenuItem>
             </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            {isWeb && (
+              <DropdownMenuItem onClick={() => handleNavigate('/restore')}>
+                <ArchiveRestore />
+                {t('navUser.restoreDevice')}
+              </DropdownMenuItem>
+            )}
             {!isWeb && (
               <>
-                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => handleNavigate('/manager')}>
                   <Laptop />
                   {t('navUser.manageDevices')}

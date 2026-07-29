@@ -32,3 +32,11 @@ pub(crate) struct UpdateDeviceDto {
     pub name: Option<String>,
     pub avatar: Option<String>,
 }
+
+#[derive(Debug, Deserialize, IntoParams, Validate, ToSchema)]
+pub(crate) struct SearchDeviceDto {
+    /// Device ID or device name
+    #[schema(value_type = String)]
+    #[validate(length(min = 1, message = "Invalid keyword"))]
+    pub keyword: String,
+}

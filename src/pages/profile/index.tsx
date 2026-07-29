@@ -164,6 +164,17 @@ function ProfilePage() {
                   );
                 }}
               />
+              <p
+                className='text-muted-foreground text-sm'
+                onClick={async () => {
+                  if (current?.id) {
+                    await navigator.clipboard.writeText(current?.id);
+                    toast.success(t('profile.idCopied'));
+                  }
+                }}
+              >
+                ID: {current?.id}
+              </p>
             </FieldGroup>
 
             <FieldSet>

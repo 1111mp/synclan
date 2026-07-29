@@ -19,7 +19,8 @@
   "navUser": {
     "profile": "个人资料",
     "settings": "设置",
-    "manageDevices": "管理设备"
+    "manageDevices": "管理设备",
+    "restoreDevice": "恢复设备"
   },
 
   "welcome": {
@@ -86,7 +87,24 @@
     "profile": "个人资料",
     "name": "名称",
     "enterNameAndPhoto": "输入你的名称并添加头像。",
-    "uploadFailed": "上传个人资料失败"
+    "uploadFailed": "上传个人资料失败",
+    "idCopied": "ID 已复制到剪贴板"
+  },
+
+  "restoreDevice": {
+    "title": "恢复设备",
+    "description": "查找并恢复之前的设备。你可以使用个人资料页面中的设备 ID，或者通过设备名称搜索。",
+    "keywordLabel": "设备 ID 或名称",
+    "keywordPlaceholder": "输入设备 ID 或设备名称",
+    "keywordHint": "你可以在个人资料页面找到设备 ID。复制设备 ID 并搜索，以恢复之前的设备。",
+    "next": "下一步",
+    "searching": "搜索中...",
+    "selectDescription": "选择你想恢复的设备，请确保设备 ID 与之前的设备一致。",
+    "restore": "恢复此设备",
+    "back": "返回",
+    "notFoundTitle": "未找到设备",
+    "notFoundDescription": "没有找到匹配的设备，请检查设备 ID 或设备名称后重试。",
+    "searchFailed": "搜索设备失败，请稍后重试。"
   },
 
   "settings": {

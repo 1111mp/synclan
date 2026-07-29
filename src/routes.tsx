@@ -34,6 +34,10 @@ export const router = isWeb
             path: 'settings',
             lazy: () => import('@/pages/settings'),
           },
+          {
+            path: 'restore',
+            lazy: () => import('@/pages/restore'),
+          },
         ],
       },
       // fallback

@@ -359,3 +359,15 @@ export async function onPickImage(): Promise<string | null> {
   const url = await uploadFile(file, { permanent: true });
   return url;
 }
+
+export async function searchRestoreDevice(keyword: string): Promise<IDevice[]> {
+  if (isWeb) {
+    const response = await api.get<IDevice[]>('/devices/search', {
+      keyword,
+    });
+    return response?.payload ?? [];
+  }
+
+  // TODO
+  return [];
+}

@@ -4,7 +4,7 @@ use crate::{
     module::device::{Device, DevicePatch},
     server::{
         api_doc,
-        dtos::device_dto::{DiscoverDeviceDto, RegistorDeviceDto, UpdateDeviceDto},
+        dtos::device_dto::{DiscoverDeviceDto, RegistorDeviceDto, SearchDeviceDto, UpdateDeviceDto},
         exception::HttpException,
         extractors::{Body, Query},
         guards::Claims,
@@ -20,6 +20,7 @@ pub fn protected_route() -> OpenApiRouter<Arc<AppState>> {
         .routes(routes!(get_by_id))
         .routes(routes!(get_all))
         .routes(routes!(discover_all))
+        .routes(routes!(search))
         .routes(routes!(update_one));
     OpenApiRouter::new().nest("/devices", router)
 }
@@ -170,4 +171,32 @@ pub(crate) async fn update_one(
 
     let device = Device::get_by_id(&id).await?;
     json_response!(device);
+}
+
+/// Search Device
+///
+/// Search Device by id or name.
+#[utoipa::path(
+  get,
+  path = "/search",
+  responses(
+    (
+      status = 200,
+      description = "Search Device successfully",
+      body = JsonResponse<Vec<Device>>
+    )
+  ),
+  params(
+    SearchDeviceDto
+  ),
+  security(
+    ("bearer_auth" = [])
+  ),
+  tag = api_doc::DEVICE_TAG
+)]
+#[debug_handler]
+pub(crate) async fn search(Query(query): Query<SearchDeviceDto>) -> Result<HttpResponse<Vec<Device>>, HttpException> {
+    let devices = Device::search(&query.keyword).await?;
+
+    json_response!(devices);
 }

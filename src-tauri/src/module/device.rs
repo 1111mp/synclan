@@ -238,6 +238,45 @@ impl Device {
 
         Ok(())
     }
+
+    pub async fn search(keyword: &str) -> Result<Vec<Device>> {
+        let db_pool = db::get_db_pool()?;
+        let keyword = keyword.trim();
+        if keyword.is_empty() {
+            return Ok(Vec::new());
+        }
+
+        let devices = sqlx::query_as::<_, Device>(
+            r#"
+            SELECT
+                id,
+                name,
+                avatar,
+                fingerprint_id,
+                role,
+                platform,
+                browser,
+                created_at,
+                updated_at
+            FROM devices
+            WHERE id = ?
+               OR name LIKE ?
+            ORDER BY
+                CASE
+                    WHEN id = ? THEN 0
+                    ELSE 1
+                END,
+                updated_at DESC
+            "#,
+        )
+        .bind(keyword)
+        .bind(format!("%{}%", keyword))
+        .bind(keyword)
+        .fetch_all(&db_pool)
+        .await?;
+
+        Ok(devices)
+    }
 }
 
 #[derive(Debug, Default, Deserialize, ToSchema)]

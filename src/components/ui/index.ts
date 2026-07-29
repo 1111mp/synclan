@@ -25,6 +25,7 @@ export * from './message';
 export * from './message-scroller';
 export * from './popover';
 export * from './progress';
+export * from './radio-group';
 export * from './resizable';
 export * from './scroll-area';
 export * from './separator';

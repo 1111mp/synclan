@@ -19,7 +19,8 @@
   "navUser": {
     "profile": "Profile",
     "settings": "Settings",
-    "manageDevices": "Manage Devices"
+    "manageDevices": "Manage Devices",
+    "restoreDevice": "Restore Device"
   },
 
   "welcome": {
@@ -86,7 +87,24 @@
     "profile": "Profile",
     "name": "Name",
     "enterNameAndPhoto": "Enter your name and add a profile photo.",
-    "uploadFailed": "Failed to upload profile"
+    "uploadFailed": "Failed to upload profile",
+    "idCopied": "ID copied to clipboard"
+  },
+
+  "restoreDevice": {
+    "title": "Restore Device",
+    "description": "Find and restore your previous device. You can use the Device ID from your Profile page or search by device name.",
+    "keywordLabel": "Device ID or Name",
+    "keywordPlaceholder": "Enter device ID or name",
+    "keywordHint": "You can find your Device ID in the Profile page. Copy the ID and search here to restore your previous device.",
+    "next": "Next",
+    "searching": "Searching...",
+    "selectDescription": "Select the device you want to restore. Make sure the Device ID matches your previous device.",
+    "restore": "Restore This Device",
+    "back": "Back",
+    "notFoundTitle": "No Device Found",
+    "notFoundDescription": "We couldn't find a device matching your search. Check your Device ID or device name and try again.",
+    "searchFailed": "Failed to search device. Please try again."
   },
 
   "settings": {
