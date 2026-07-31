@@ -1,10 +1,9 @@
-## v0.1.1
+## v0.1.2-rc.1
 
-本版本主要修复了一些使用过程中发现的问题，提升了 Web 端访问和文件下载的稳定性。
+### ✨ What's New
 
-### 🐛 修复
+- Added **Device Recovery**
+  - Restore previously used devices when reinstalling Synclan or moving to a new device.
+  - Recover device identity through the new recovery flow.
 
-- 修复跨域（CORS）配置问题，解决部分客户端无法发送文件的问题
-- 修复文件下载异常问题，解决文件下载时打开预览页面而无法正常保存的问题
-
-感谢大家的测试与反馈，如果遇到其他问题，欢迎继续提交 Issue 或反馈。
+Thanks for supporting Synclan ❤️
