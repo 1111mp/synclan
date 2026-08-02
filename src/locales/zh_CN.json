@@ -258,5 +258,9 @@
   "toast": {
     "init_failed": "应用初始化失败",
     "unknown_error": "未知错误"
+  },
+
+  "notification": {
+    "newMessage": "你收到了一条新消息"
   }
 }

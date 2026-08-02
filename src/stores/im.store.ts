@@ -1,3 +1,4 @@
+import { sendNotification } from '@tauri-apps/plugin-notification';
 import omit from 'lodash-es/omit';
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
@@ -6,6 +7,8 @@ import { useShallow } from 'zustand/react/shallow';
 
 import { isSameDay, THRESHOLD } from '@/components/messages/util';
 import { db } from '@/lib/db';
+import { i18n } from '@/lib/i18n';
+import { setBadgeCount } from '@/services/api';
 import {
   getDeviceById,
   getOfflineMsgsSummary,
@@ -249,6 +252,15 @@ export const useIMStore = create<IMState>()(
       addMessage: async (deviceId, msg, currentId) => {
         const isCurrentActive = get().activeDeviceId === deviceId;
         const isFromOthers = msg.sender !== currentId;
+
+        if (!isCurrentActive && isFromOthers) {
+          sendNotification({
+            title:
+              get().conversations.get(msg.sender)?.device?.name ??
+              i18n.t('welcome.unknownDevice'),
+            body: msg.plainContent ?? i18n.t('notification.newMessage'),
+          });
+        }
 
         let conv = get().conversations.get(deviceId);
         if (!conv) {
@@ -530,6 +542,22 @@ useIMStore.subscribe(
     prevKeys = currentKeys;
   },
   { fireImmediately: true },
+);
+
+useIMStore.subscribe(
+  (state) => {
+    let total = 0;
+    for (const conv of state.conversations.values()) {
+      total += conv.unreadCount || 0;
+    }
+    return total;
+  },
+  (totalUnreadCount) => {
+    void setBadgeCount(totalUnreadCount);
+  },
+  {
+    fireImmediately: true,
+  },
 );
 
 export const useConversationList = () => {

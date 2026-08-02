@@ -1,4 +1,4 @@
-import { createContext, useContext, type ReactNode } from 'react';
+import { createContext, useContext, useMemo, type ReactNode } from 'react';
 
 import { useSocketIO, type ReadyState, type SendMessage } from '@/hooks';
 import { getWSUrl } from '@/lib/constant';
@@ -13,7 +13,6 @@ export const AppContext = createContext<AppContext | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const current = useDeviceStore((s) => s.current);
-  const addMessage = useIMStore((s) => s.addMessage);
 
   const { state: socketState, sendMessage } = useSocketIO(getWSUrl(), {
     transports: ['websocket'],
@@ -23,13 +22,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     onMessage(message) {
       if (!current?.id) return;
       useMessageAnimationStore.getState().add(message.uuid);
-      addMessage(message.sender, message, current.id);
+      useIMStore.getState().addMessage(message.sender, message, current.id);
     },
   });
 
-  return (
-    <AppContext value={{ socketState, sendMessage }}>{children}</AppContext>
+  const value = useMemo(
+    () => ({
+      socketState,
+      sendMessage,
+    }),
+    [socketState, sendMessage],
   );
+
+  return <AppContext value={value}>{children}</AppContext>;
 }
 
 export function useAppContext() {

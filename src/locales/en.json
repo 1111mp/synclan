@@ -258,5 +258,9 @@
   "toast": {
     "init_failed": "Failed to initialize application",
     "unknown_error": "Unknown error"
+  },
+
+  "notification": {
+    "newMessage": "You received a new message"
   }
 }

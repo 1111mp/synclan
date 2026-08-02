@@ -1,5 +1,6 @@
 import { getVersion } from '@tauri-apps/api/app';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 
 import { isWeb } from '@/lib/constant';
 
@@ -61,4 +62,11 @@ export async function setWebviewWindowTheme(theme: AppBaseTheme | null) {
   if (!isWeb) {
     await getCurrent().setTheme(theme);
   }
+}
+
+export async function setBadgeCount(count: number) {
+  if (isWeb) return;
+  if (OS_PLATFORM === 'win32') return;
+
+  await getCurrentWindow().setBadgeCount(count > 0 ? count : undefined);
 }
