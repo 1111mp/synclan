@@ -72,7 +72,7 @@ pub fn run() {
             resolve::resolve_setup_async();
             resolve::resolve_server_setup_async();
 
-            logging!(info, Type::Setup, "初始化已启动");
+            logging!(info, Type::Setup, "Setup has started.");
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
