@@ -40,9 +40,11 @@ pub async fn get_server_domain() -> Result<String> {
 }
 
 /// Exporting a Self-Signed Certificate
-pub async fn export_server_cert(app_handle: &tauri::AppHandle) -> Result<()> {
+/// Returns whether a certificate was exported. `false` means the user cancelled
+/// the destination-folder picker.
+pub async fn export_server_cert(app_handle: &tauri::AppHandle) -> Result<bool> {
     let Some(FilePath::Path(folder_path)) = app_handle.dialog().file().blocking_pick_folder() else {
-        return Ok(());
+        return Ok(false);
     };
     // certificate content
     let cert_pem = Config::synclan().await.data_arc().cert_pem.clone();
@@ -69,7 +71,7 @@ pub async fn export_server_cert(app_handle: &tauri::AppHandle) -> Result<()> {
     // writing to a file
     tokio::fs::write(&cert_path, cert_pem).await?;
 
-    Ok(())
+    Ok(true)
 }
 
 /// Automatically clear uploaded files

@@ -34,9 +34,10 @@ function ServerSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
 
   const handleExportCertificate = async () => {
     try {
-      await exportServerCert();
-
-      toast.success('Certificate exported successfully.');
+      const exported = await exportServerCert();
+      if (exported) {
+        toast.success('Certificate exported successfully.');
+      }
     } catch (err) {
       const message =
         typeof err === 'string'

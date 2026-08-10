@@ -16,7 +16,7 @@ export async function restartApp() {
 }
 
 export async function exportServerCert() {
-  return invoke<void>('export_server_cert');
+  return invoke<boolean>('export_server_cert');
 }
 
 /**

@@ -9,7 +9,7 @@ pub async fn get_server_domain() -> CmdResult<String> {
 
 /// Exporting a Self-Signed Certificate
 #[tauri::command]
-pub async fn export_server_cert(app_handle: tauri::AppHandle) -> CmdResult {
+pub async fn export_server_cert(app_handle: tauri::AppHandle) -> CmdResult<bool> {
     feat::export_server_cert(&app_handle).await.stringify_err()
 }
 

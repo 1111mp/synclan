@@ -177,6 +177,9 @@ impl ISynclan {
         }
 
         patch!(app_log_level);
+        patch!(app_log_max_size);
+        patch!(app_log_max_count);
+
         patch!(locale);
         patch!(theme);
         patch!(enable_auto_launch);
