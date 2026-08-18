@@ -47,8 +47,7 @@ pub async fn on_connection(socket: SocketRef) {
 
     socket.on_disconnect(
         async |_s: SocketRef, Extension::<Arc<Client>>(client), State::<Clients>(clients)| {
-            // remove client from clients
-            clients.remove(&client.client_id);
+            clients.remove_if_socket_matches(&client.client_id, client.socket_id);
         },
     );
 }
@@ -73,10 +72,10 @@ pub async fn authenticate_middleware(
 
     Device::touch(&device.id).await?;
 
+    // Always retain the newest socket for a device. Mobile browsers commonly
+    // reconnect before the previous transport is reported as disconnected.
     let client = Arc::new(Client::new(socket.id, device.id.clone()));
-    if !clients.contains(&device.id) {
-        clients.add(client.clone());
-    }
+    clients.add(client.clone());
 
     socket.extensions.insert(client);
 

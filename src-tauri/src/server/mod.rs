@@ -16,9 +16,10 @@ use apalis::prelude::{BackoffConfig, IntervalStrategy, StrategyBuilder};
 use apalis_sqlite::SqliteStorage;
 use api_doc::ApiDoc;
 use axum::{
+    Router,
     extract::DefaultBodyLimit,
     handler::HandlerWithoutStateExt,
-    http::{Method, StatusCode, header},
+    http::{HeaderName, HeaderValue, Method, StatusCode, header},
 };
 use axum_server::Handle;
 use parking_lot::Mutex;
@@ -32,6 +33,7 @@ use std::{
 use tower_http::{
     cors::{AllowOrigin, CorsLayer},
     services::{ServeDir, ServeFile},
+    set_header::SetResponseHeaderLayer,
 };
 use utoipa::OpenApi;
 use utoipa_axum::router::OpenApiRouter;
@@ -164,8 +166,35 @@ impl HttpServer {
         let resources = dirs::app_resources_dir()?;
         let web_static_dir = resources.join("web");
         let synclan = Config::synclan().await.latest_arc();
-        let static_server =
-            ServeDir::new(&web_static_dir).not_found_service(ServeFile::new(web_static_dir.join("index.html")));
+        let assets_server = Router::new()
+            .fallback_service(ServeDir::new(web_static_dir.join("assets")))
+            // Deployments replace this directory and remove old lazy-loaded
+            // chunks. Do not retain assets locally, otherwise an old page can
+            // request a chunk that no longer exists on the server.
+            .layer(SetResponseHeaderLayer::overriding(
+                header::CACHE_CONTROL,
+                HeaderValue::from_static("no-store"),
+            ));
+        let spa_server = Router::new()
+            .fallback_service(
+                ServeDir::new(&web_static_dir).not_found_service(ServeFile::new(web_static_dir.join("index.html"))),
+            )
+            // The entry document and SPA fallbacks must never be retained so
+            // they always reference the latest assets after an update.
+            .layer(SetResponseHeaderLayer::overriding(
+                header::CACHE_CONTROL,
+                HeaderValue::from_static("no-store"),
+            ))
+            // Chrome clears resources cached by an older deployment as soon as
+            // it receives the latest SPA entry document. Keep local storage
+            // intact so the browser's device identity is not reset.
+            .layer(SetResponseHeaderLayer::overriding(
+                HeaderName::from_static("clear-site-data"),
+                HeaderValue::from_static("\"cache\""),
+            ));
+        let static_server = Router::new()
+            .nest_service("/assets", assets_server)
+            .fallback_service(spa_server);
 
         let mut app = router
             // swagger ui

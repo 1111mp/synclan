@@ -96,7 +96,7 @@ tempfile = "3.27.0"
 thiserror = { workspace = true }
 tokio = { workspace = true }
 tokio-util = "0.7.18"
-tower-http = { version = "0.7.0", features = ["cors", "fs", "trace"] }
+tower-http = { version = "0.7.0", features = ["cors", "fs", "set-header", "trace"] }
 utoipa = { version = "5.5.0", features = ["axum_extras"] }
 utoipa-axum = "0.2.0"
 utoipa-swagger-ui = { version = "9.0.2", features = ["axum", "reqwest"] }

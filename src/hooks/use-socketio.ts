@@ -75,8 +75,20 @@ export function useSocketIO(url: string, options: UseSocketOptions = {}) {
       setState(ReadyState.DISCONNECT);
     }
 
+    function recoverFromPageResume() {
+      if (document.visibilityState !== 'visible') return;
+
+      // Mobile browsers may suspend a page while retaining a stale WebSocket.
+      // Recreate it when the page becomes active so the server records the
+      // current socket instead of delivering to the suspended one.
+      socket.disconnect();
+      socket.connect();
+    }
+
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
+    document.addEventListener('visibilitychange', recoverFromPageResume);
+    window.addEventListener('online', recoverFromPageResume);
 
     let onMessage: EmitEvents[EventNames.MESSAGE];
     if (optionsRef.current?.onMessage) {
@@ -93,6 +105,8 @@ export function useSocketIO(url: string, options: UseSocketOptions = {}) {
     return () => {
       socket.off('connect', onConnect);
       socket.off('disconnect', onDisconnect);
+      document.removeEventListener('visibilitychange', recoverFromPageResume);
+      window.removeEventListener('online', recoverFromPageResume);
 
       if (optionsRef.current?.onMessage && onMessage) {
         socket.off(EventNames.MESSAGE, onMessage);
@@ -126,8 +140,12 @@ export function useSocketIO(url: string, options: UseSocketOptions = {}) {
 
               resolve(resp);
             });
+          return;
         }
-        // TODO push messages quene
+        reject({
+          statusCode: HttpStatus.SERVICE_UNAVAILABLE,
+          message: 'not connected',
+        });
       });
     },
     [],

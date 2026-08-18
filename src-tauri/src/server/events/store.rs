@@ -39,11 +39,14 @@ impl Clients {
         self.0.insert(client.client_id.clone(), client);
     }
 
-    pub fn remove(&self, client_id: &str) -> Option<Arc<Client>> {
-        self.0.remove(client_id).map(|(_, v)| v)
-    }
-
-    pub fn contains(&self, client_id: &str) -> bool {
-        self.0.contains_key(client_id)
+    /// Removes a client only when the disconnected socket is still the
+    /// socket currently registered for that device.
+    ///
+    /// A device can reconnect before the previous socket's disconnect event
+    /// arrives. In that case, the old event must not remove the new socket.
+    pub fn remove_if_socket_matches(&self, client_id: &str, socket_id: Sid) -> Option<Arc<Client>> {
+        self.0
+            .remove_if(client_id, |_, client| client.socket_id == socket_id)
+            .map(|(_, client)| client)
     }
 }

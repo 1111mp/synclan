@@ -1,4 +1,3 @@
-import { sendNotification } from '@tauri-apps/plugin-notification';
 import omit from 'lodash-es/omit';
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
@@ -8,6 +7,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { isSameDay, THRESHOLD } from '@/components/messages/util';
 import { db } from '@/lib/db';
 import { i18n } from '@/lib/i18n';
+import { sendNotification } from '@/lib/notification';
 import { setBadgeCount } from '@/services/api';
 import {
   getDeviceById,
@@ -249,12 +249,12 @@ export const useIMStore = create<IMState>()(
           cache.hydrated = true;
           cache.loadingHistory = false;
         }),
-      addMessage: async (deviceId, msg, currentId) => {
+      addMessage: (deviceId, msg, currentId) => {
         const isCurrentActive = get().activeDeviceId === deviceId;
         const isFromOthers = msg.sender !== currentId;
 
         if (!isCurrentActive && isFromOthers) {
-          sendNotification({
+          void sendNotification({
             title:
               get().conversations.get(msg.sender)?.device?.name ??
               i18n.t('welcome.unknownDevice'),
@@ -264,13 +264,11 @@ export const useIMStore = create<IMState>()(
 
         let conv = get().conversations.get(deviceId);
         if (!conv) {
-          const device = await getDeviceById(deviceId);
           set((state) => {
             const now = Date.now();
             const initialUnreadCount = !isCurrentActive && isFromOthers ? 1 : 0;
             state.conversations.set(deviceId, {
               id: deviceId,
-              device,
               unreadCount: initialUnreadCount,
               lastAccessed: now,
               lastMessage: toLastMessage(msg),
@@ -298,6 +296,20 @@ export const useIMStore = create<IMState>()(
                 state.conversations,
               );
             }
+          });
+
+          // Do not wait for a device lookup before updating the conversation
+          // list. This makes a newly received message visible immediately on
+          // the welcome page; the device information can arrive afterwards.
+          void getDeviceById(deviceId).then((device) => {
+            if (!device) return;
+
+            set((state) => {
+              const conversation = state.conversations.get(deviceId);
+              if (conversation) {
+                conversation.device = device;
+              }
+            });
           });
           return;
         }
