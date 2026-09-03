@@ -258,11 +258,6 @@ function ShiftEnterHint({
   const [focused, setFocused] = useState<boolean>(false);
   const [isEmpty, setEmpty] = useState<boolean>(false);
 
-  useImperativeHandle(ref, () => ({
-    focus: focusHandler,
-    empty: emptyHandler,
-  }));
-
   const focusHandler = (value: boolean) => {
     setFocused(value);
   };
@@ -270,6 +265,11 @@ function ShiftEnterHint({
   const emptyHandler = (value: boolean) => {
     setEmpty(value);
   };
+
+  useImperativeHandle(ref, () => ({
+    focus: focusHandler,
+    empty: emptyHandler,
+  }));
 
   return (
     <AnimatePresence>

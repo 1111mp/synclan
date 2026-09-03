@@ -4,12 +4,12 @@ import { useSocketIO, type ReadyState, type SendMessage } from '@/hooks';
 import { getWSUrl } from '@/lib/constant';
 import { useDeviceStore, useIMStore, useMessageAnimationStore } from '@/stores';
 
-type AppContext = {
+type AppContextType = {
   socketState: ReadyState;
   sendMessage: SendMessage;
 };
 
-export const AppContext = createContext<AppContext | null>(null);
+export const AppContext = createContext<AppContextType | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const current = useDeviceStore((s) => s.current);

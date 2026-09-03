@@ -27,13 +27,13 @@ function QRCodeDialog({ ref }: QRCodeDialogProps) {
 
   const domain = useAppServerStore((s) => s.domain);
 
-  useImperativeHandle(ref, () => ({
-    open: onOpen,
-  }));
-
   const onOpen = () => {
     setOpen(true);
   };
+
+  useImperativeHandle(ref, () => ({
+    open: onOpen,
+  }));
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

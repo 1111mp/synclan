@@ -78,9 +78,11 @@ function EmojiPickerPlugin() {
         refs.setPositionReference({
           getBoundingClientRect: r.getRect,
         });
+        // oxlint-disable-next-line react/immutability
         editor.__emojiMenuOpen = true;
       }}
       onClose={() => {
+        // oxlint-disable-next-line react/immutability
         editor.__emojiMenuOpen = false;
       }}
       menuRenderFn={(
