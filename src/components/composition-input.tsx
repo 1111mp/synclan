@@ -88,11 +88,6 @@ function CompositionInput({
   const isMobile = useIsMobile();
   const { t } = useTranslation();
 
-  useImperativeHandle(ref, () => ({
-    getEditor: onGetEditor,
-    onPickEmoji: onPickEmojiHandle,
-  }));
-
   const onGetEditor = () => editorRef.current;
 
   const onPickEmojiHandle: EmojiPickerProps['onPickEmoji'] = ({
@@ -108,6 +103,11 @@ function CompositionInput({
       selection.insertNodes([$createEmojiNode(shortName, skinTone)]);
     });
   };
+
+  useImperativeHandle(ref, () => ({
+    getEditor: onGetEditor,
+    onPickEmoji: onPickEmojiHandle,
+  }));
 
   // const onChange = (_editorState: EditorState, editor: LexicalEditor) => {
   //   editor.read(() => {

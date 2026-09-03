@@ -69,24 +69,6 @@ function LexicalMessage({
 
   const { t } = useTranslation();
 
-  useImperativeHandle(ref, () => ({
-    onCopy: onCopyHandler,
-  }));
-
-  const extension = useMemo(
-    () =>
-      defineExtension({
-        dependencies: [SynclanEditorExtension],
-        $initialEditorState: initialState,
-        name: 'synclan-editor/message-extension',
-        editable: false,
-        theme: {
-          code: 'block relative pt-4 pb-4 pl-[72px] pr-2 my-0 border rounded-md indent-0 before:box-border before:absolute before:top-0 before:left-0 before:content-[attr(data-gutter)] before:w-14 before:pt-4 before:px-2 before:pb-0 before:font-thin before:text-right',
-        },
-      }),
-    [initialState],
-  );
-
   const onCopyHandler = async () => {
     const editor = editorRef.current;
     if (editor) {
@@ -106,6 +88,24 @@ function LexicalMessage({
       toast.success(t('message.copiedToClipboard'));
     }
   };
+
+  useImperativeHandle(ref, () => ({
+    onCopy: onCopyHandler,
+  }));
+
+  const extension = useMemo(
+    () =>
+      defineExtension({
+        dependencies: [SynclanEditorExtension],
+        $initialEditorState: initialState,
+        name: 'synclan-editor/message-extension',
+        editable: false,
+        theme: {
+          code: 'block relative pt-4 pb-4 pl-[72px] pr-2 my-0 border rounded-md indent-0 before:box-border before:absolute before:top-0 before:left-0 before:content-[attr(data-gutter)] before:w-14 before:pt-4 before:px-2 before:pb-0 before:font-thin before:text-right',
+        },
+      }),
+    [initialState],
+  );
 
   return (
     <LexicalExtensionComposer extension={extension} contentEditable={null}>

@@ -71,11 +71,6 @@ function FloatingContextMenu<T>({
     }),
   });
 
-  useImperativeHandle(ref, () => ({
-    open: onOpenHandler,
-    hide: onHideHandler,
-  }));
-
   const onOpenHandler = ({ x, y, data }: FloatingContextMenuInfo<T>) => {
     setData(data);
 
@@ -101,6 +96,11 @@ function FloatingContextMenu<T>({
       setIsOpen(false);
     }
   };
+
+  useImperativeHandle(ref, () => ({
+    open: onOpenHandler,
+    hide: onHideHandler,
+  }));
 
   return (
     <FloatingPortal>
