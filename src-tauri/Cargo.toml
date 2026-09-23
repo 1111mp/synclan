@@ -97,9 +97,9 @@ thiserror = { workspace = true }
 tokio = { workspace = true }
 tokio-util = "0.7.19"
 tower-http = { version = "0.7.1", features = ["cors", "fs", "set-header", "trace"] }
-utoipa = { version = "5.5.0", features = ["axum_extras"] }
-utoipa-axum = "0.2.0"
-utoipa-swagger-ui = { version = "9.0.2", features = ["axum", "reqwest"] }
+utoipa = { version = "6.0.0", features = ["axum_extras"] }
+utoipa-axum = "0.3.0"
+utoipa-swagger-ui = { version = "10.0.1", features = ["axum", "reqwest"] }
 uuid = { version = "1.26.0", features = ["v4"] }
 validator = { version = "0.21.0", features = ["derive"] }
 whoami = "2.1.3"

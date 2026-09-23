@@ -278,7 +278,7 @@ jobs:
           releaseBody: 'Draft release, will be updated later.'
           tauriScript: pnpm
           args: --target ${{ matrix.target }}
-          includeUpdaterJson: true
+          uploadUpdaterJson: true
 
       - name: Attest Windows bundles
         if: matrix.os == 'windows-latest'
