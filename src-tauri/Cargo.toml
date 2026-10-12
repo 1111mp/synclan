@@ -28,7 +28,7 @@ apalis = { version = "1.0.0-rc.9", features = [
   "timeout",
   "tracing",
 ] }
-apalis-codec = { version = "0.1.0-rc.9" }
+apalis-codec = { version = "1.0.0" }
 apalis-sqlite = { git = "https://github.com/1111mp/apalis-sqlite" }
 async-trait = "0.1.92"
 axum = { version = "0.8.9", features = ["multipart"] }
