@@ -101,27 +101,17 @@ checksum = "330a5ed07fa54e4702c9d6c4174f74427fc0ef6e214bbd677ae50a5099946470"
 
 [[package]]
 name = "apalis"
-version = "1.0.0-rc.9"
+version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7780d1e7082500a4fdb463b0a6fc1c00e4012cd9b2af101c26fcabbb2f390f2c"
+checksum = "c4c83691f0f26716d21207e3fd154086a19cd25f7716133fa2f1260ffd73508d"
 dependencies = [
  "apalis-core",
  "futures-util",
  "pin-project",
+ "serde",
  "thiserror 2.0.21",
  "tower 0.5.3",
  "tracing",
-]
-
-[[package]]
-name = "apalis-codec"
-version = "0.1.0-rc.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c506e7f00c7c9c38eeb02290b3ec6328695f0614a257faefaeb8e8286746a665"
-dependencies = [
- "apalis-core",
- "serde",
- "serde_json",
 ]
 
 [[package]]
@@ -153,31 +143,18 @@ dependencies = [
  "tower-layer",
  "tower-service",
  "tracing",
- "ulid 3.0.0",
+ "ulid",
  "uuid",
 ]
 
 [[package]]
-name = "apalis-sql"
-version = "1.0.0-rc.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09b555912820da093b004a055105af258df116edcea761db6b759d01aabac2ec"
-dependencies = [
- "apalis-core",
- "chrono",
- "serde",
- "serde_json",
- "thiserror 2.0.21",
-]
-
-[[package]]
 name = "apalis-sqlite"
-version = "1.0.0-rc.8"
-source = "git+https://github.com/1111mp/apalis-sqlite#68cfae9076f88c62ff9747d5444f97e4a3df906e"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a499ee33ec9efc2b44486ed8775b972f0446455307d96edc7ac602e50a71de21"
 dependencies = [
- "apalis-codec 0.1.0-rc.9",
+ "apalis-codec",
  "apalis-core",
- "apalis-sql",
  "futures",
  "log",
  "pin-project",
@@ -186,7 +163,7 @@ dependencies = [
  "sqlx",
  "thiserror 2.0.21",
  "tokio",
- "ulid 1.2.1",
+ "ulid",
 ]
 
 [[package]]
@@ -6412,7 +6389,7 @@ dependencies = [
  "aes-gcm",
  "anyhow",
  "apalis",
- "apalis-codec 1.0.0",
+ "apalis-codec",
  "apalis-sqlite",
  "async-trait",
  "axum 0.8.9",
@@ -7787,17 +7764,6 @@ dependencies = [
  "memoffset",
  "tempfile",
  "windows-sys 0.61.2",
-]
-
-[[package]]
-name = "ulid"
-version = "1.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "470dbf6591da1b39d43c14523b2b469c86879a53e8b758c8e090a470fe7b1fbe"
-dependencies = [
- "rand 0.9.5",
- "serde",
- "web-time",
 ]
 
 [[package]]

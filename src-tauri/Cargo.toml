@@ -22,14 +22,14 @@ name = "synclan_lib"
 [dependencies]
 aes-gcm = { version = "0.11.1" }
 anyhow = { workspace = true }
-apalis = { version = "1.0.0-rc.9", features = [
+apalis = { version = "1.0.0", features = [
   "limit",
   "retry",
   "timeout",
   "tracing",
 ] }
 apalis-codec = { version = "1.0.0" }
-apalis-sqlite = { git = "https://github.com/1111mp/apalis-sqlite" }
+apalis-sqlite = { version = "1.0.0" }
 async-trait = "0.1.92"
 axum = { version = "0.8.9", features = ["multipart"] }
 axum-extra = { version = "0.12.6", features = ["typed-header"] }
@@ -38,7 +38,7 @@ axum-server = { version = "0.8.0", features = ["tls-rustls"] }
 axum_typed_multipart = "0.16.7"
 base64 = "0.23.1"
 bitflags = { workspace = true }
-chrono = "0.4.45"
+chrono = { version = "0.4.45", features = ["serde"] }
 console-subscriber = { version = "0.5.0", optional = true }
 dark-light = { git = "https://github.com/rust-dark-light/dark-light" }
 dashmap = "6.2.1"
