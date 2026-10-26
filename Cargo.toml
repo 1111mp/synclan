@@ -7,7 +7,7 @@ anyhow = "1.0.104"
 bitflags = { version = "2.13.1" }
 flexi_logger = "0.31.10"
 log = "0.4.34"
-parking_lot = { version = "0.13.0", features = ["hardware-lock-elision"] }
+parking_lot = { version = "0.13.0" }
 serde = { version = "1.0.229" }
 serde_json = { version = "1.0.151" }
 serde_yaml_ng = { version = "0.10.0" }

@@ -20,6 +20,12 @@
   },
   "packageRules": [
     {
+      "description": "Keep libsqlite3-sys within the range supported by sqlx-sqlite 0.9; revisit when upgrading SQLx",
+      "matchManagers": ["cargo"],
+      "matchPackageNames": ["libsqlite3-sys"],
+      "allowedVersions": "<0.38.0"
+    },
+    {
       "matchUpdateTypes": ["patch"],
       "automerge": true
     },
