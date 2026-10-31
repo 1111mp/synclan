@@ -60,11 +60,11 @@ importers:
         specifier: ^0.53.0
         version: 0.53.0(typescript@7.0.2)
       '@lottiefiles/dotlottie-react':
-        specifier: ^0.20.0
-        version: 0.20.0(react@19.2.8)
+        specifier: ^0.21.0
+        version: 0.21.0(react@19.2.8)
       '@lottiefiles/dotlottie-web':
-        specifier: ^0.81.0
-        version: 0.81.0
+        specifier: ^0.82.0
+        version: 0.82.0
       '@shadcn/react':
         specifier: ^0.3.1
         version: 0.3.1(@types/react@19.2.18)(react@19.2.8)
@@ -892,14 +892,14 @@ packages:
       typescript:
         optional: true
 
-  '@lottiefiles/dotlottie-react@0.20.0':
-    resolution: {integrity: sha512-M4HLo6RxNTbYwByZw7ns2zaGgPx0PpGZU1xfyMdj8VEoTasSJ1uhsJZjl+l55TPQ7g0soF7JVHEJLTOv1TIeMA==}
+  '@lottiefiles/dotlottie-react@0.21.0':
+    resolution: {integrity: sha512-ccacY0zPQNwKEbokVZujydBq1InfIY3xYfoV50AW1bMfTSWynZRag7aW8TU8ImncqMrlh/wvPI38sGPj8Nf54Q==}
     engines: {node: '>=18.17.0', npm: '>=9.5.0'}
     peerDependencies:
       react: ^17 || ^18 || ^19
 
-  '@lottiefiles/dotlottie-web@0.81.0':
-    resolution: {integrity: sha512-BmX/+0eaK2unVexuB0VZLvBsax2BS8fLwwIdUqF4AO9C7tFw97eTi90C//20QVK4q08SDhnnszysCGX0Qt7XPA==}
+  '@lottiefiles/dotlottie-web@0.82.0':
+    resolution: {integrity: sha512-Gp0rKaBAWHs3KXO69oNu7tgh+9VYVaJqv6NDYvH0YdUJR4JxDujvX1kE03yp6o9NgeQiYnvUgHZgnZisw1Mr+Q==}
     engines: {node: '>=18.17.0', npm: '>=9.5.0'}
 
   '@modelcontextprotocol/sdk@1.30.0':
@@ -5787,12 +5787,12 @@ snapshots:
     optionalDependencies:
       typescript: 7.0.2
 
-  '@lottiefiles/dotlottie-react@0.20.0(react@19.2.8)':
+  '@lottiefiles/dotlottie-react@0.21.0(react@19.2.8)':
     dependencies:
-      '@lottiefiles/dotlottie-web': 0.81.0
+      '@lottiefiles/dotlottie-web': 0.82.0
       react: 19.2.8
 
-  '@lottiefiles/dotlottie-web@0.81.0': {}
+  '@lottiefiles/dotlottie-web@0.82.0': {}
 
   '@modelcontextprotocol/sdk@1.30.0(zod@3.25.76)':
     dependencies:
