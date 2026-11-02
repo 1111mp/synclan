@@ -56,16 +56,17 @@ impl WorkerMonitor {
                                 .with_jitter(0.1),
                         ),
                     )
-                    .enable_tracing()
-                    .catch_panic()
                     // maybe we don't need rate limit
                     // .rate_limit(10, Duration::from_millis(1000))
                     .concurrency(20)
+                    // Keep panic handling and per-attempt tracing inside the retry layer.
                     .retry(
                         RetryPolicy::retries(3)
                             .with_backoff(backoff.clone())
                             .retry_if(|e: &BoxDynError| e.downcast_ref::<AbortError>().is_none()),
                     )
+                    .catch_panic()
+                    .enable_tracing()
                     .data(io.clone())
                     .data(clients.clone())
                     .build(message::MessageWorker::send_message)
