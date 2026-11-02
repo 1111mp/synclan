@@ -22,13 +22,14 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  sidebarDetailsClassName,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui';
 import { isWeb } from '@/lib/constant';
-import { resolveResourceUrl } from '@/lib/utils';
+import { cn, resolveResourceUrl } from '@/lib/utils';
 
 export function NavUser({ current }: { current?: IDevice | null }) {
   const { pathname } = useLocation();
@@ -54,7 +55,8 @@ export function NavUser({ current }: { current?: IDevice | null }) {
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size='lg'
-              className='data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[collapsible=icon]:ml-2 group-data-[collapsible=icon]:p-0!'
+              aria-label={current?.name || t('navUser.profile')}
+              className='data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground'
             >
               <Avatar className='size-8'>
                 <AvatarImage
@@ -66,11 +68,18 @@ export function NavUser({ current }: { current?: IDevice | null }) {
                   <User />
                 </AvatarFallback>
               </Avatar>
-              <div className='grid flex-1 text-left text-sm leading-tight'>
+              <div
+                className={cn(
+                  sidebarDetailsClassName,
+                  'grid w-[calc(var(--sidebar-width)-9rem)] shrink-0 text-left text-sm leading-tight',
+                )}
+              >
                 <span className='truncate font-medium'>{current?.name}</span>
                 {/*<span className='truncate text-xs'>{current?.id}</span>*/}
               </div>
-              <ChevronsUpDown className='ml-auto size-4' />
+              <ChevronsUpDown
+                className={cn(sidebarDetailsClassName, 'ml-auto size-4')}
+              />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent

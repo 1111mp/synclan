@@ -58,7 +58,10 @@ function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar modal={false} collapsible='icon' variant='floating' {...props}>
       <SidebarHeader
         data-tauri-drag-region
-        className={cn(OS_PLATFORM !== 'win32' && !isWeb && 'pt-7')}
+        className={cn(
+          'gap-3 px-3 pb-3 transition-[padding] duration-(--sidebar-motion-duration) ease-(--sidebar-motion-ease) motion-reduce:transition-none group-data-[collapsible=icon]:px-2',
+          OS_PLATFORM !== 'win32' && !isWeb && 'pt-7',
+        )}
       >
         <DeviceSwitcher />
         <ConnectionStatus />
@@ -90,7 +93,7 @@ function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           onSelectDevice={onSelectDevice}
         />
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className='px-3 transition-[padding] duration-(--sidebar-motion-duration) ease-(--sidebar-motion-ease) group-data-[collapsible=icon]:px-2 motion-reduce:transition-none'>
         <NavUser current={current} />
       </SidebarFooter>
       <SidebarRail />

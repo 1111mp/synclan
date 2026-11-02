@@ -14,6 +14,7 @@ import {
   ItemTitle,
   SidebarGroup,
   SidebarGroupLabel,
+  sidebarDetailsClassName,
   SidebarMenu,
   SidebarMenuAction,
   SidebarMenuBadge,
@@ -22,7 +23,7 @@ import {
   useSidebar,
 } from '@/components/ui';
 import { useFormatMessageTime } from '@/hooks';
-import { resolveResourceUrl } from '@/lib/utils';
+import { cn, resolveResourceUrl } from '@/lib/utils';
 import { deleteConversationMessages } from '@/services/cmd';
 import { useIMStore } from '@/stores';
 
@@ -79,7 +80,7 @@ export function NavDevices({
   };
 
   return (
-    <SidebarGroup className='pt-0'>
+    <SidebarGroup className='px-3 pt-0 transition-[padding] duration-(--sidebar-motion-duration) ease-(--sidebar-motion-ease) group-data-[collapsible=icon]:px-2 motion-reduce:transition-none'>
       <SidebarGroupLabel>Devices</SidebarGroupLabel>
       <SidebarMenu>
         {conversations.map((conv) => {
@@ -90,7 +91,9 @@ export function NavDevices({
             <SidebarMenuItem key={conv.id}>
               <SidebarMenuButton
                 asChild
+                className='rounded-md'
                 size='xl'
+                aria-label={name}
                 isActive={activeDeviceId === conv.id}
                 tooltip={name}
                 onClick={() => {
@@ -110,7 +113,7 @@ export function NavDevices({
                 }}
               >
                 <Item>
-                  <ItemMedia>
+                  <ItemMedia className='translate-y-0! self-center!'>
                     <Avatar size='lg'>
                       <AvatarImage
                         src={resolveResourceUrl(conv?.device?.avatar)}
@@ -121,7 +124,12 @@ export function NavDevices({
                       </AvatarFallback>
                     </Avatar>
                   </ItemMedia>
-                  <ItemContent className='gap-1'>
+                  <ItemContent
+                    className={cn(
+                      sidebarDetailsClassName,
+                      'w-[calc(var(--sidebar-width)-7.625rem)] flex-none gap-1',
+                    )}
+                  >
                     <div className='flex items-center justify-between gap-2'>
                       <ItemTitle className='line-clamp-1 break-all'>
                         {name}

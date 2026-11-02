@@ -132,7 +132,7 @@ function SettingsPage() {
   });
 
   return (
-    <div className='h-dvh w-full overflow-y-auto'>
+    <div className='[&_[data-slot=field-set]>div]:bg-card [&_[data-slot=item][data-variant=muted]:hover]:bg-muted h-dvh w-full overflow-y-auto [&_[data-slot=field-legend]]:text-xs [&_[data-slot=field-legend]]:font-medium [&_[data-slot=field-legend]]:tracking-wide [&_[data-slot=field-set]>div]:border [&_[data-slot=item][data-variant=muted]]:bg-transparent'>
       <header
         data-tauri-drag-region={OS_PLATFORM !== 'win32'}
         className='bg-background/80 sticky top-0 z-20 flex h-14 w-full shrink-0 items-center justify-center gap-2 px-4 backdrop-blur-xl transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12'
@@ -141,7 +141,7 @@ function SettingsPage() {
       </header>
       <div
         className={cn(
-          'mx-auto max-w-2xl px-4',
+          'mx-auto max-w-2xl px-6 pt-6',
           OS_PLATFORM === 'darwin' && 'min-h-full',
         )}
       >

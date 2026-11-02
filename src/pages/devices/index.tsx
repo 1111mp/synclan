@@ -40,6 +40,7 @@ import {
 } from '@/stores';
 
 import { DeviceHeader } from './header';
+import { useInitialConversationScroll } from './use-initial-conversation-scroll';
 
 function loader() {}
 
@@ -137,6 +138,8 @@ function DevicesPage() {
     overscan: 8,
     // paddingStart: 12,
     paddingEnd: 16,
+    // Include the bottom spacing when aligning the final message.
+    scrollPaddingEnd: 16,
     // gap: 12,
     estimateSize: () => 160,
     getScrollElement: () => viewportRef.current,
@@ -150,18 +153,16 @@ function DevicesPage() {
     directDomUpdates: true,
   });
 
-  useEffect(() => {
-    if (autoHistoryEnabled) return;
-    virtualizer.scrollToIndex(messages.length - 1);
-  }, [virtualizer, messages.length, autoHistoryEnabled]);
+  useInitialConversationScroll(virtualizer, params.id, messages.length);
 
   useEffect(() => {
+    setAutoHistoryEnabled(false);
     const id = window.setTimeout(() => {
       setAutoHistoryEnabled(true);
     }, 250);
 
     return () => window.clearTimeout(id);
-  }, []);
+  }, [params.id]);
 
   const debouncedAction = useMemo(() => {
     return debounce(() => {

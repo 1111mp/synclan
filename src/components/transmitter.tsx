@@ -73,12 +73,8 @@ function Transmitter({
     return (
       <Button
         disabled={isEmpty}
-        className={cn(
-          // 'transition-all duration-300',
-          !isEmpty && 'bg-primary/30 hover:bg-primary/30!',
-        )}
         size='sm'
-        variant='ghost'
+        variant={isEmpty ? 'secondary' : 'default'}
         onClick={async () => {
           if (isEmpty) return;
 
@@ -109,7 +105,7 @@ function Transmitter({
         }}
       >
         <svg
-          className={cn('size-5', isEmpty ? 'text-input' : 'text-primary')}
+          className='size-5'
           xmlns='http://www.w3.org/2000/svg'
           viewBox='0 0 24 24'
           fill='currentColor'
@@ -127,7 +123,7 @@ function Transmitter({
     <LexicalExtensionComposer extension={extension} contentEditable={null}>
       <div
         className={cn(
-          'flex flex-wrap border rounded-lg bg-card/60 backdrop-blur-sm',
+          'flex flex-wrap rounded-xl border bg-card shadow-(--composer-shadow) transition-[border-color,box-shadow] duration-180 ease-in-out focus-within:border-[color-mix(in_oklch,var(--ring)_60%,var(--border))] focus-within:ring-3 focus-within:ring-ring/10 motion-reduce:transition-none',
           multiLine && 'flex-col flex-nowrap',
         )}
       >

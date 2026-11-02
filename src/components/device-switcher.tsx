@@ -17,6 +17,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  sidebarDetailsClassName,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -46,16 +47,24 @@ function DeviceSwitcher() {
             <DropdownMenuTrigger asChild>
               <SidebarMenuButton
                 size='lg'
-                className='data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[collapsible=icon]:ml-2'
+                aria-label='Synclan'
+                className='data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground'
               >
-                <div className='flex aspect-square size-8 items-center justify-center rounded-lg'>
+                <div className='flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg'>
                   {/*<GalleryVerticalEnd className='size-4' />*/}
                   <img src={SynclanLogo} className='size-8' />
                 </div>
-                <div className='grid flex-1 text-left text-sm leading-tight'>
+                <div
+                  className={cn(
+                    sidebarDetailsClassName,
+                    'grid w-[calc(var(--sidebar-width)-9rem)] shrink-0 text-left text-sm leading-tight',
+                  )}
+                >
                   <span className='truncate font-medium'>Synclan</span>
                 </div>
-                <ChevronsUpDown className='ml-auto' />
+                <ChevronsUpDown
+                  className={cn(sidebarDetailsClassName, 'ml-auto')}
+                />
               </SidebarMenuButton>
             </DropdownMenuTrigger>
             {!isWeb && hasUpdate && (

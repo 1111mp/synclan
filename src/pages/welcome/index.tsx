@@ -72,7 +72,7 @@ function WelcomePage() {
       {(isWeb || OS_PLATFORM !== 'win32') && (
         <header
           data-tauri-drag-region
-          className='bg-background flex h-14 w-full items-center justify-end px-4'
+          className='flex h-14 w-full items-center justify-end px-4'
         >
           <Button
             variant='outline'
@@ -137,10 +137,12 @@ function WelcomePage() {
                 needAnimation.current = false;
               }}
             >
-              <Card className='w-full max-w-sm max-[400px]:max-w-[94%]'>
-                <CardHeader className='text-center'>
-                  <CardTitle>{t('welcome.welcomeBack')}</CardTitle>
-                  <CardDescription>
+              <Card className='w-full max-w-sm rounded-2xl shadow-(--surface-shadow) [--card-spacing:1.75rem] max-[400px]:max-w-[94%]'>
+                <CardHeader className='gap-2 text-center'>
+                  <CardTitle className='text-[1.375rem] font-semibold tracking-[-0.035em]'>
+                    {t('welcome.welcomeBack')}
+                  </CardTitle>
+                  <CardDescription className='leading-[1.7]'>
                     {t('welcome.selectExistingOrDiscover')}
                   </CardDescription>
                 </CardHeader>
