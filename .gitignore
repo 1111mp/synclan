@@ -31,3 +31,8 @@ dist-ssr
 skills-lock.json
 
 .pnpm-store
+# Test reports and browser diagnostics
+coverage/
+test-results/
+.vitest/
+playwright-report/

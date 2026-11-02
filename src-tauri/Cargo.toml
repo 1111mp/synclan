@@ -91,6 +91,8 @@ tauri-plugin-opener = "2.5.5"
 tauri-plugin-process = "2.3.1"
 tauri-plugin-single-instance = "2.4.4"
 tauri-plugin-updater = "2.11.0"
+tauri-plugin-wdio = { version = "1.5.1", optional = true }
+tauri-plugin-wdio-webdriver = { version = "1.5.1", optional = true }
 tauri-plugin-window-state = "2.4.1"
 tempfile = "3.27.0"
 thiserror = { workspace = true }
@@ -116,6 +118,7 @@ windows = { version = "0.62.2", features = ["Win32_Globalization"] }
 
 [features]
 default = []
+e2e = ["dep:tauri-plugin-wdio", "dep:tauri-plugin-wdio-webdriver"]
 tauri-dev = []
 tokio-trace = ["console-subscriber"]
 tracing = []

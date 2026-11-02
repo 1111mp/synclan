@@ -10,7 +10,7 @@ import {
 } from 'lexical';
 import { useEffect } from 'react';
 
-import { $isSimpleQuoteNode, SimpleListItemNode } from '../nodes';
+import { $isSimpleListItemNode, $isSimpleQuoteNode } from '../nodes';
 import { $findNearestListNode } from './lib';
 
 function EmptyBlockToParagraphPlugin() {
@@ -44,11 +44,10 @@ function EmptyBlockToParagraphPlugin() {
           nearestListNode.remove();
           topNode.selectStart();
         } else {
-          topNode.append(
-            ...(nearestListNode
-              .getFirstChild<SimpleListItemNode>()
-              ?.getChildren() ?? []),
-          );
+          const firstItem = nearestListNode.getFirstChild();
+          if ($isSimpleListItemNode(firstItem)) {
+            topNode.append(...firstItem.getChildren());
+          }
           nearestListNode.remove();
           topNode.selectStart();
         }
@@ -62,11 +61,10 @@ function EmptyBlockToParagraphPlugin() {
 
         const paragraph = $createParagraphNode();
         if (nearestListNode?.getTextContentSize() > 0) {
-          paragraph.append(
-            ...(nearestListNode
-              .getFirstChild<SimpleListItemNode>()
-              ?.getChildren() ?? []),
-          );
+          const firstItem = nearestListNode.getFirstChild();
+          if ($isSimpleListItemNode(firstItem)) {
+            paragraph.append(...firstItem.getChildren());
+          }
         }
         topNode.replace(paragraph);
         paragraph.selectStart();

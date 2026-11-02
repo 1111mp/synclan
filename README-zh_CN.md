@@ -39,24 +39,24 @@
 ### 桌面端体验
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/721e4904-d470-4ad1-9064-9fb78168b43b" width="32%" />
-  <img src="https://github.com/user-attachments/assets/63705921-9a4a-4a65-aa61-f22b81438589" width="32%" />
-  <img src="https://github.com/user-attachments/assets/a25c5804-7d55-42eb-a591-a940c85714ba" width="32%" />
+  <img src="./docs/screenshots/desktop-01.png" alt="桌面端截图 1" height="180" />
+  <img src="./docs/screenshots/desktop-02.png" alt="桌面端截图 2" height="180" />
+  <img src="./docs/screenshots/desktop-03.png" alt="桌面端截图 3" height="180" />
 </p>
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/f1144582-5fc8-4184-ae5d-57543298083d" width="32%" />
-  <img src="https://github.com/user-attachments/assets/e39f902f-85fe-4e1b-b157-f33162bacf67" width="32%" />
-  <img src="https://github.com/user-attachments/assets/58107d41-1b8f-459d-b19f-cf70e97fac11" width="32%" />
+  <img src="./docs/screenshots/desktop-04.png" alt="桌面端截图 4" height="180" />
+  <img src="./docs/screenshots/desktop-05.png" alt="桌面端截图 5" height="180" />
+  <img src="./docs/screenshots/desktop-06.png" alt="桌面端截图 6" height="180" />
 </p>
 
 ### 移动端浏览器适配
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/8c050155-caa0-4cba-a1ac-df043715cbca" width="24%" />
-  <img src="https://github.com/user-attachments/assets/a3d54954-cdd2-47fa-9f32-e80a30e28663" width="24%" />
-  <img src="https://github.com/user-attachments/assets/193e57b6-d895-495d-80bb-9e50d49b00bc" width="24%" />
-  <img src="https://github.com/user-attachments/assets/f62224cb-5aff-4608-9412-9a09b2c54f00" width="24%" />
+  <img src="./docs/screenshots/desktop-07.png" alt="移动端浏览器截图 1" height="320" />
+  <img src="./docs/screenshots/desktop-08.png" alt="移动端浏览器截图 2" height="320" />
+  <img src="./docs/screenshots/desktop-09.png" alt="移动端浏览器截图 3" height="320" />
+  <img src="./docs/screenshots/desktop-10.png" alt="移动端浏览器截图 4" height="320" />
 </p>
 
 ---

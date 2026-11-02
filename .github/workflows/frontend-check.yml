@@ -19,7 +19,10 @@ jobs:
         with:
           filters: |
             frontend:
+              - '.github/workflows/frontend-check.yml'
               - 'src/**'
+              - 'test/e2e/**'
+              - 'scripts/e2e.mjs'
               - '**/*.js'
               - '**/*.ts'
               - '**/*.tsx'
@@ -75,3 +78,18 @@ jobs:
       - name: Run TypeScript typecheck
         if: steps.check_frontend.outputs.frontend == 'true'
         run: pnpm typecheck
+
+      - name: Run unit, component and mocked Tauri tests
+        if: steps.check_frontend.outputs.frontend == 'true'
+        run: |
+          mkdir -p test-results/frontend
+          set -o pipefail
+          pnpm test --project unit --project component --project tauri --passWithNoTests 2>&1 | tee test-results/frontend/vitest.log
+
+      - name: Upload frontend test diagnostics
+        if: failure() && steps.check_frontend.outputs.frontend == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: frontend-test-results
+          path: test-results/frontend/
+          if-no-files-found: ignore

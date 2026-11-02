@@ -1,14 +1,13 @@
 import { MessageScroller } from '@shadcn/react/message-scroller';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { StrictMode, useRef } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { render, type RenderResult } from 'vitest-browser-react';
 
 import { useInitialConversationScroll } from './use-initial-conversation-scroll';
 
 type Conversation = { id: string; heights: number[] };
-let root: Root;
-let host: HTMLDivElement;
+let view: RenderResult | undefined;
 let strictMode = false;
 
 function Fixture({ id, heights }: Conversation) {
@@ -74,7 +73,7 @@ const media = {
   heights: Array.from({ length: 30 }, (_, i) => [640, 80, 420, 60][i % 4]),
 };
 function viewport() {
-  return host.querySelector<HTMLElement>('[data-conversation]')!;
+  return view!.container.querySelector<HTMLElement>('[data-conversation]')!;
 }
 function distanceFromEnd() {
   const element = viewport();
@@ -82,7 +81,13 @@ function distanceFromEnd() {
 }
 async function show(conversation: Conversation) {
   const fixture = <Fixture {...conversation} />;
-  root.render(strictMode ? <StrictMode>{fixture}</StrictMode> : fixture);
+  const ui = strictMode ? <StrictMode>{fixture}</StrictMode> : fixture;
+  if (view) {
+    // Preserve the mounted hook across conversation changes.
+    await view.rerender(ui);
+  } else {
+    view = await render(ui);
+  }
   await vi.waitFor(() => {
     expect(viewport()?.dataset.conversation).toBe(conversation.id);
     expect(viewport()?.dataset.count).toBe(String(conversation.heights.length));
@@ -104,12 +109,8 @@ async function scrollUp() {
 }
 
 beforeEach(() => {
-  host = document.body.appendChild(document.createElement('div'));
-  root = createRoot(host);
-});
-afterEach(() => {
-  root.unmount();
-  host.remove();
+  // vitest-browser-react cleans up the previous render before each test.
+  view = undefined;
 });
 
 describe.each([false, true])('StrictMode=%s', (strict) => {

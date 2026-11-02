@@ -1,0 +1,53 @@
+name: Desktop E2E
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  HUSKY: 0
+
+jobs:
+  desktop-e2e:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24.22.2'
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install native dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf xvfb dbus-x11
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: '. -> target'
+          key: desktop-e2e
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck:e2e
+      - run: pnpm test:e2e:build
+
+      - name: Run native desktop tests
+        run: xvfb-run -a dbus-run-session -- pnpm test:e2e
+
+      - name: Upload desktop diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: desktop-e2e-results
+          path: test-results/
+          if-no-files-found: ignore

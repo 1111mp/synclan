@@ -36,7 +36,7 @@ export default defineConfig(async ({ mode }) => ({
     OS_PLATFORM: `"${process.platform}"`,
     __APP_VERSION__: JSON.stringify(packageJson.version),
     MODULES_ROOT_PATH:
-      mode === 'production'
+      mode === 'production' || mode === 'e2e'
         ? `""`
         : `"/@fs/${normalizePath(resolve(__dirname, 'node_modules'))}"`,
   },

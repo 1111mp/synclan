@@ -164,7 +164,8 @@ impl HttpServer {
             ));
         let spa_server = Router::new()
             .fallback_service(
-                ServeDir::new(&web_static_dir).not_found_service(ServeFile::new(web_static_dir.join("index.html"))),
+                // SPA routes must return 200 with index.html, rather than a 404 page containing the app.
+                ServeDir::new(&web_static_dir).fallback(ServeFile::new(web_static_dir.join("index.html"))),
             )
             // The entry document and SPA fallbacks must never be retained so
             // they always reference the latest assets after an update.
@@ -232,7 +233,8 @@ impl HttpServer {
 
         logging!(info, Type::Server, "Starting HTTP server...");
 
-        let ip: IpAddr = "0.0.0.0".parse()?;
+        // Keep E2E fixtures off the LAN while exercising the real HTTP server.
+        let ip: IpAddr = if cfg!(feature = "e2e") { "127.0.0.1" } else { "0.0.0.0" }.parse()?;
         let port = synclan.http_server_port.unwrap_or(53317);
         let addr = SocketAddr::from((ip, port));
 

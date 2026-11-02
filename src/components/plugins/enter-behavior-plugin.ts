@@ -22,7 +22,6 @@ import {
   $isSimpleListItemNode,
   $isSimpleListNode,
   $isSimpleQuoteNode,
-  type SimpleListNode,
 } from '../nodes';
 import { $isEmpty } from './is-empty-plugin';
 import {
@@ -108,7 +107,7 @@ function EnterBehaviorPlugin({ onSend }: EnterPluginProps) {
 
                 if (parent.getChildrenSize() <= 0) {
                   if ($isSimpleListItemNode(parent)) {
-                    const listNode = parent.getParent<SimpleListNode>();
+                    const listNode = parent.getParent();
                     if (listNode?.is(topNode)) {
                       const paragraph = $createParagraphNode();
                       topNode.replace(paragraph);

@@ -1,3 +1,7 @@
+allowBuilds:
+  edgedriver: false
+  esbuild: true
+  geckodriver: false
 minimumReleaseAgeExclude:
   - '@lexical/a11y@0.50.0'
   - '@lexical/clipboard@0.50.0'

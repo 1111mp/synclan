@@ -13,6 +13,11 @@ pub use libc;
 use tauri_plugin_autostart::ManagerExt as _;
 
 pub async fn update_launch() -> Result<()> {
+    // E2E builds omit the autostart plugin and must never alter OS startup entries.
+    if cfg!(feature = "e2e") {
+        return Ok(());
+    }
+
     let enable_auto_launch = { Config::synclan().await.latest_arc().enable_auto_launch };
     let is_enable = enable_auto_launch.unwrap_or(false);
     logging!(info, Type::System, "Setting auto-launch enabled state to: {is_enable}");

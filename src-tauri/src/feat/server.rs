@@ -5,6 +5,7 @@ use crate::{
 };
 use anyhow::{Result, anyhow};
 use chrono::{Local, NaiveDate};
+#[cfg(not(feature = "e2e"))]
 use local_ip_address::local_ip;
 use std::{net::IpAddr, path::Path};
 use tauri_plugin_dialog::{DialogExt, FilePath};
@@ -28,6 +29,9 @@ use tokio::fs;
 /// Returns an error if the local IP address cannot be determined.
 pub async fn get_server_domain() -> Result<String> {
     let synclan = Config::synclan().await.latest_arc();
+    #[cfg(feature = "e2e")]
+    let ip: IpAddr = "127.0.0.1".parse()?;
+    #[cfg(not(feature = "e2e"))]
     let ip = local_ip()?;
     let port = synclan.http_server_port.unwrap_or(53317);
     let protocol = if synclan.enable_encryption.unwrap_or(false) {

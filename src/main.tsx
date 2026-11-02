@@ -36,6 +36,11 @@ window.addEventListener('pageshow', (event) => {
 });
 
 void (async () => {
+  // The test bridge is excluded from normal application builds.
+  if (import.meta.env.MODE === 'e2e') {
+    await import('@wdio/tauri-plugin');
+  }
+
   const [[config, sysTheme]] = await Promise.all([
     getAppInitialData(),
     initResources(),

@@ -5,6 +5,7 @@ use once_cell::sync::OnceCell;
 use std::{fs, path::PathBuf};
 use tauri::Manager;
 
+#[cfg(not(feature = "e2e"))]
 pub static APP_ID: &str = "io.github.1111mp.synclan";
 
 pub static PORTABLE_FLAG: OnceCell<bool> = OnceCell::new();
@@ -28,6 +29,16 @@ pub fn init_portable_flag() -> Result<()> {
 }
 
 /// get the syncio app home dir
+#[cfg(feature = "e2e")]
+pub fn app_home_dir() -> Result<PathBuf> {
+    let path = std::env::var_os("SYNCLAN_E2E_DATA_DIR")
+        .map(PathBuf::from)
+        .ok_or_else(|| anyhow::anyhow!("SYNCLAN_E2E_DATA_DIR is required for E2E builds"))?;
+    anyhow::ensure!(path.is_absolute(), "SYNCLAN_E2E_DATA_DIR must be absolute");
+    Ok(path)
+}
+
+#[cfg(not(feature = "e2e"))]
 pub fn app_home_dir() -> Result<PathBuf> {
     use tauri::utils::platform::current_exe;
 

@@ -2,7 +2,11 @@ import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext
 import { mergeRegister } from '@lexical/utils';
 import { useEffect, useRef } from 'react';
 
-import { SimpleListItemNode, SimpleListNode } from '../nodes';
+import {
+  $isSimpleListNode,
+  SimpleListItemNode,
+  SimpleListNode,
+} from '../nodes';
 import { $recomputeOrderedListNumbers } from './lib';
 
 export function OrderedListRecomputePlugin() {
@@ -24,7 +28,8 @@ export function OrderedListRecomputePlugin() {
       editor.registerNodeTransform(SimpleListItemNode, (node) => {
         if (isRecomputing.current) return;
 
-        if (node.getParent<SimpleListNode>()?.getListType() === 'number') {
+        const parent = node.getParent();
+        if ($isSimpleListNode(parent) && parent.getListType() === 'number') {
           isRecomputing.current = true;
           $recomputeOrderedListNumbers();
           isRecomputing.current = false;

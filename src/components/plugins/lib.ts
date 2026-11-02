@@ -597,8 +597,9 @@ export function $toggleQuoteNode(
           return preNode;
         }
 
-        // just `ListNode` and `QuoteNode` can contain `CodeNode`
-        const blockNode = preTopNode.getFirstChildOrThrow<SimpleListNode>();
+        // Preserve the containing block for code nested in a list or another quote.
+        const blockNode = preTopNode.getFirstChildOrThrow();
+        if (!$isElementNode(blockNode)) return null;
         $copyBlockFormatIndent(preTopNode, blockNode);
         preTopNode.replace(blockNode, true);
         return blockNode;
