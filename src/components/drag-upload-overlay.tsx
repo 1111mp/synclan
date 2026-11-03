@@ -14,6 +14,8 @@ function DragUploadOverlay({ children, disabled, onDrop }: Props) {
 
     noClick: true,
     noKeyboard: true,
+    // The editor owns pasted images; uploading here would also send the draft image.
+    noPaste: true,
 
     multiple: true,
 
