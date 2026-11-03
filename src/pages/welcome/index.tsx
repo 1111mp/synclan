@@ -68,7 +68,7 @@ function WelcomePage() {
   const hasDevices = conversations.length > 0;
 
   return (
-    <div className='flex flex-1 flex-col overflow-hidden'>
+    <div className='bg-card flex min-h-0 flex-1 flex-col overflow-y-auto'>
       {(isWeb || OS_PLATFORM !== 'win32') && (
         <header
           data-tauri-drag-region
@@ -101,7 +101,7 @@ function WelcomePage() {
           </Button>
         </header>
       )}
-      <div className='flex flex-1 items-center justify-center'>
+      <div className='flex flex-1 items-center justify-center px-5 py-8'>
         <AnimatePresence mode='popLayout'>
           {showCard ? (
             <motion.div
@@ -137,7 +137,7 @@ function WelcomePage() {
                 needAnimation.current = false;
               }}
             >
-              <Card className='w-full max-w-sm rounded-2xl shadow-(--surface-shadow) [--card-spacing:1.75rem] max-[400px]:max-w-[94%]'>
+              <Card className='border-border bg-popover w-full max-w-sm rounded-2xl shadow-[0_4px_12px_-4px_rgb(0_0_0/0.08),0_24px_64px_-20px_rgb(0_0_0/0.18)] [--card-spacing:1.75rem] max-[400px]:max-w-[94%]'>
                 <CardHeader className='gap-2 text-center'>
                   <CardTitle className='text-[1.375rem] font-semibold tracking-[-0.035em]'>
                     {t('welcome.welcomeBack')}
@@ -154,7 +154,7 @@ function WelcomePage() {
                       </FieldLabel>
                       <ToggleGroup
                         type='single'
-                        variant='outline'
+                        variant='selection'
                         value={config?.theme}
                         className='flex items-center gap-3'
                         onValueChange={async (val) => {
@@ -168,7 +168,7 @@ function WelcomePage() {
                           aria-label='System'
                           className='group/toggle flex-1'
                         >
-                          <SunMoon className='group-data-[state=on]/toggle:fill-foreground size-5' />
+                          <SunMoon className='size-5 group-data-[state=on]/toggle:fill-current' />
                           <Label>{t('settings.appearance.system')}</Label>
                         </ToggleGroupItem>
                         <ToggleGroupItem
@@ -176,7 +176,7 @@ function WelcomePage() {
                           aria-label='Dark'
                           className='group/toggle flex-1'
                         >
-                          <MoonStar className='group-data-[state=on]/toggle:fill-foreground size-5' />
+                          <MoonStar className='size-5 group-data-[state=on]/toggle:fill-current' />
                           <Label>{t('settings.appearance.dark')}</Label>
                         </ToggleGroupItem>
                         <ToggleGroupItem
@@ -184,12 +184,12 @@ function WelcomePage() {
                           aria-label='Light'
                           className='group/toggle flex-1'
                         >
-                          <Sun className='group-data-[state=on]/toggle:fill-foreground size-5' />
+                          <Sun className='size-5 group-data-[state=on]/toggle:fill-current' />
                           <Label>{t('settings.appearance.light')}</Label>
                         </ToggleGroupItem>
                       </ToggleGroup>
                     </Field>
-                    <FieldSeparator className='*:data-[slot=field-separator-content]:bg-card'>
+                    <FieldSeparator className='*:data-[slot=field-separator-content]:bg-popover'>
                       {t('welcome.orContinueWith')}
                     </FieldSeparator>
                     <Field>

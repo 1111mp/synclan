@@ -7,7 +7,7 @@ function DeviceHeader({ device }: { device?: IDevice | null }) {
   return (
     <header
       data-tauri-drag-region={OS_PLATFORM !== 'win32'}
-      className='bg-background supports-backdrop-filter:bg-background/95 sticky top-0 z-20 flex h-14 w-full shrink-0 items-center justify-center gap-2 border-b px-4 backdrop-blur-2xl transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12'
+      className='bg-card border-border/50 sticky top-0 z-20 flex h-14 w-full shrink-0 items-center justify-center gap-2 border-b px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12'
     >
       <div
         data-tauri-drag-region={OS_PLATFORM !== 'win32'}
@@ -22,7 +22,7 @@ function DeviceHeader({ device }: { device?: IDevice | null }) {
             <User />
           </AvatarFallback>
         </Avatar>
-        {device?.name}
+        <span className='truncate text-sm font-medium'>{device?.name}</span>
       </div>
       <div />
     </header>

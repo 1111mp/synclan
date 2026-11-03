@@ -393,7 +393,7 @@ function DevicesPage() {
       <MessageScrollerProvider defaultScrollPosition='end'>
         <div
           id='synclan-device-message-list'
-          className='relative flex h-dvh flex-col overflow-hidden'
+          className='relative flex h-full min-h-0 flex-col overflow-hidden'
         >
           <MessageScroller>
             <MessageScrollerViewport
@@ -472,8 +472,8 @@ function DevicesPage() {
           <footer
             ref={footerRef}
             className={cn(
-              'footer-gradient w-full shrink-0 pr-4 pb-2 pl-2',
-              isMobile && 'pr-2',
+              'w-full shrink-0 bg-linear-to-b from-transparent to-card px-5 pt-3 pb-4',
+              isMobile && 'px-2 pb-2',
             )}
           >
             <Transmitter

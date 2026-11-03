@@ -91,7 +91,7 @@ export function NavDevices({
             <SidebarMenuItem key={conv.id}>
               <SidebarMenuButton
                 asChild
-                className='rounded-md'
+                className='data-[active=true]:bg-sidebar-accent/80 rounded-xl transition-[background-color,box-shadow] duration-150 data-[active=true]:shadow-xs motion-reduce:transition-none'
                 size='xl'
                 aria-label={name}
                 isActive={activeDeviceId === conv.id}

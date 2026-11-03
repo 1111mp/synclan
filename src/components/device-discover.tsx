@@ -89,7 +89,8 @@ export function DeviceDiscoverProvider({ children }: { children: ReactNode }) {
               {t('deviceDiscover.ensureSameNetwork')}
             </DialogDescription>
           </DialogHeader>
-          <div className='max-h-[60vh] overflow-y-auto sm:max-h-[70vh]'>
+          {/* Reserve list space so discovery and polling cannot recenter the dialog. */}
+          <div className='h-[min(18rem,50dvh)] overflow-y-auto'>
             {hasDevices ? (
               <ItemGroup className='gap-4'>
                 {devices.map((device) => (
@@ -134,8 +135,8 @@ export function DeviceDiscoverProvider({ children }: { children: ReactNode }) {
                   <Skeleton className='size-10 rounded-full' />
                 </ItemMedia>
                 <ItemContent>
-                  <Skeleton className='h-4 w-62.5' />
-                  <Skeleton className='h-4 w-50' />
+                  <Skeleton className='h-4 w-full max-w-62.5' />
+                  <Skeleton className='h-4 w-4/5 max-w-50' />
                 </ItemContent>
               </Item>
             )}

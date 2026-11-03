@@ -42,7 +42,7 @@ function AboutSettings() {
             </>
           )}
           <Item
-            variant='muted'
+            variant='default'
             size='sm'
             className='hover:bg-muted rounded-none py-3'
             onClick={async () => {
@@ -93,7 +93,7 @@ function CheckForUpdatesItem() {
 
   return (
     <Item
-      variant='muted'
+      variant='default'
       size='sm'
       className='hover:bg-muted rounded-none py-3'
       onClick={checkForUpdates}

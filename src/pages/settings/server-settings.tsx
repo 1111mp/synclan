@@ -84,7 +84,7 @@ function ServerSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel htmlFor='http_server_port'>
                   <Item
-                    variant='muted'
+                    variant='default'
                     size='sm'
                     className='hover:bg-muted rounded-none'
                   >
@@ -126,7 +126,7 @@ function ServerSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                   className='has-data-checked:bg-transparent dark:has-data-checked:bg-transparent'
                 >
                   <Item
-                    variant='muted'
+                    variant='default'
                     className='hover:bg-muted rounded-none py-3'
                   >
                     <ItemContent>
@@ -162,7 +162,7 @@ function ServerSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
           />
           <Separator />
           <Item
-            variant='muted'
+            variant='default'
             className='hover:bg-muted rounded-none py-3'
             onClick={handleExportCertificate}
           >

@@ -222,7 +222,7 @@ function Transmitter({
             }
           }}
           className={cn(
-            'rounded-lg border bg-card shadow-(--composer-shadow) transition-[border-color,box-shadow] duration-180 ease-in-out motion-reduce:transition-none',
+            'rounded-xl border border-border/60 bg-background shadow-[0_2px_4px_-2px_rgb(0_0_0/0.04),0_8px_24px_-12px_rgb(0_0_0/0.12)] focus-within:border-foreground/20 focus-within:shadow-[0_2px_8px_-4px_rgb(0_0_0/0.08),0_12px_28px_-12px_rgb(0_0_0/0.16)] transition-[border-color,box-shadow] duration-200 ease-in-out motion-reduce:transition-none',
             isLifted &&
               'absolute inset-x-0 bottom-0 max-h-[calc(100dvh-2rem)] overflow-hidden',
           )}

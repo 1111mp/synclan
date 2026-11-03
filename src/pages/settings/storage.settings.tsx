@@ -48,7 +48,7 @@ function StorageSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
                 <Item
-                  variant='muted'
+                  variant='default'
                   size='sm'
                   className='hover:bg-muted rounded-none py-3'
                   onClick={async (evt) => {
@@ -100,7 +100,7 @@ function StorageSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Item
-                      variant='muted'
+                      variant='default'
                       size='sm'
                       className='hover:bg-muted rounded-none py-3'
                     >

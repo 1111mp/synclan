@@ -58,7 +58,7 @@ function LoggerSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Item
-                      variant='muted'
+                      variant='default'
                       size='sm'
                       className='hover:bg-muted rounded-none py-3'
                     >
@@ -106,7 +106,7 @@ function LoggerSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Item
-                      variant='muted'
+                      variant='default'
                       size='sm'
                       className='hover:bg-muted rounded-none py-3'
                     >
@@ -153,7 +153,7 @@ function LoggerSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel htmlFor='app_log_max_size'>
                   <Item
-                    variant='muted'
+                    variant='default'
                     size='sm'
                     className='hover:bg-muted rounded-none'
                   >
@@ -193,7 +193,7 @@ function LoggerSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel htmlFor='app_log_max_count'>
                   <Item
-                    variant='muted'
+                    variant='default'
                     size='sm'
                     className='hover:bg-muted rounded-none'
                   >

@@ -41,12 +41,13 @@ export function SearchForm({
             <Label htmlFor='search' className='sr-only'>
               {t('search.search')}
             </Label>
+            {/* An inset focus ring stays rounded inside the collapse clipping container. */}
             <SidebarInput
               id='search'
               placeholder={t('search.searchDevices')}
-              className='pl-8'
+              className='focus-visible:border-foreground/35 focus-visible:ring-foreground/10 pl-8 focus-visible:ring-2 focus-visible:ring-inset'
             />
-            <Search className='pointer-events-none absolute top-1/2 left-2 size-4 -translate-y-1/2 opacity-50 select-none' />
+            <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-2 size-4 -translate-y-1/2 select-none' />
           </SidebarGroupContent>
         </SidebarGroup>
       </div>

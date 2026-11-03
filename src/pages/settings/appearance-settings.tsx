@@ -30,62 +30,64 @@ function AppearanceSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
       <FieldLegend className='text-muted-foreground pl-3'>
         {t('settings.appearance.title')}
       </FieldLegend>
-      <FieldGroup>
-        <Controller
-          name='theme'
-          control={form.control}
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Item
-                    variant='muted'
-                    size='sm'
-                    className='hover:bg-muted py-3'
-                  >
-                    <ItemContent>
-                      <ItemTitle>{t('settings.appearance.theme')}</ItemTitle>
-                      {fieldState.invalid && (
-                        <FieldError errors={[fieldState.error]} />
-                      )}
-                    </ItemContent>
-                    <ItemActions>
-                      <span
-                        className='text-muted-foreground'
-                        aria-invalid={fieldState.invalid}
-                      >
-                        {t(`settings.appearance.${field.value}`)}
-                      </span>
-                      <ChevronRightIcon className='size-4' />
-                    </ItemActions>
-                  </Item>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className='w-fit' align='end'>
-                  <DropdownMenuGroup>
-                    <DropdownMenuRadioGroup
-                      value={field.value}
-                      onValueChange={field.onChange}
+      <div className='overflow-hidden rounded-xl'>
+        <FieldGroup className='gap-0'>
+          <Controller
+            name='theme'
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Item
+                      variant='default'
+                      size='sm'
+                      className='hover:bg-muted rounded-none py-3'
                     >
-                      <DropdownMenuRadioItem value='system'>
-                        <SunMoon className='size-5' />
-                        {t('settings.appearance.system')}
-                      </DropdownMenuRadioItem>
-                      <DropdownMenuRadioItem value='dark'>
-                        <MoonStar className='size-5' />
-                        {t('settings.appearance.dark')}
-                      </DropdownMenuRadioItem>
-                      <DropdownMenuRadioItem value='light'>
-                        <Sun className='size-5' />
-                        {t('settings.appearance.light')}
-                      </DropdownMenuRadioItem>
-                    </DropdownMenuRadioGroup>
-                  </DropdownMenuGroup>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </Field>
-          )}
-        />
-      </FieldGroup>
+                      <ItemContent>
+                        <ItemTitle>{t('settings.appearance.theme')}</ItemTitle>
+                        {fieldState.invalid && (
+                          <FieldError errors={[fieldState.error]} />
+                        )}
+                      </ItemContent>
+                      <ItemActions>
+                        <span
+                          className='text-muted-foreground'
+                          aria-invalid={fieldState.invalid}
+                        >
+                          {t(`settings.appearance.${field.value}`)}
+                        </span>
+                        <ChevronRightIcon className='size-4' />
+                      </ItemActions>
+                    </Item>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className='w-fit' align='end'>
+                    <DropdownMenuGroup>
+                      <DropdownMenuRadioGroup
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <DropdownMenuRadioItem value='system'>
+                          <SunMoon className='size-5' />
+                          {t('settings.appearance.system')}
+                        </DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value='dark'>
+                          <MoonStar className='size-5' />
+                          {t('settings.appearance.dark')}
+                        </DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value='light'>
+                          <Sun className='size-5' />
+                          {t('settings.appearance.light')}
+                        </DropdownMenuRadioItem>
+                      </DropdownMenuRadioGroup>
+                    </DropdownMenuGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </Field>
+            )}
+          />
+        </FieldGroup>
+      </div>
     </FieldSet>
   );
 }

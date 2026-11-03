@@ -98,10 +98,10 @@ function ProfilePage() {
   const disabled = !isEdit;
 
   return (
-    <div className='h-dvh w-full overflow-y-auto'>
+    <div className='h-full min-h-0 w-full overflow-y-auto'>
       <header
         data-tauri-drag-region={OS_PLATFORM !== 'win32'}
-        className='bg-background/80 sticky top-0 z-20 flex h-14 w-full shrink-0 items-center justify-end gap-2 px-4 backdrop-blur-xl transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12'
+        className='bg-card sticky top-0 z-20 flex h-14 w-full shrink-0 items-center justify-end gap-2 px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12'
       >
         <Button variant='outline' onClick={onEdit}>
           {isEdit ? t('profile.done') : t('profile.edit')}
