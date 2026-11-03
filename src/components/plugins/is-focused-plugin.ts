@@ -15,6 +15,12 @@ function IsFocusedPlugin({ onFocusChange }: IsFocusedPluginProps) {
 
   useEffect(() => {
     return mergeRegister(
+      // AutoFocusExtension can focus the root before this effect subscribes.
+      editor.registerRootListener((root) => {
+        onChangeRef.current?.(
+          root !== null && root.contains(root.ownerDocument.activeElement),
+        );
+      }),
       editor.registerCommand(
         FOCUS_COMMAND,
         () => {

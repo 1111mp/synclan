@@ -97,6 +97,7 @@ export const shortcuts: ShortcutMap = {
 const OFFSET_X = 12;
 
 type TextFormatFloatingToolbarProps = {
+  className?: string;
   isText?: boolean;
   editor: LexicalEditor;
   isBold: boolean;
@@ -113,6 +114,7 @@ type TextFormatFloatingToolbarProps = {
 };
 
 function TextFormatToolbar({
+  className,
   editor,
   isBold,
   isStrikethrough,
@@ -129,7 +131,7 @@ function TextFormatToolbar({
   const { t } = useTranslation();
 
   return (
-    <div className='flex items-center p-2'>
+    <div className={cn('flex items-center p-2', className)}>
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
@@ -804,8 +806,10 @@ function useFormatToolbar(editor: LexicalEditor) {
 }
 
 function FixedTextFormatToolbar({
+  className,
   onSetIsLinkEditMode,
 }: {
+  className?: string;
   onSetIsLinkEditMode: Dispatch<boolean>;
 }) {
   const [editor] = useLexicalComposerContext();
@@ -825,6 +829,7 @@ function FixedTextFormatToolbar({
 
   return (
     <TextFormatToolbar
+      className={className}
       editor={editor}
       isBold={isBold}
       isStrikethrough={isStrikethrough}

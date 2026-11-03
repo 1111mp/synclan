@@ -200,6 +200,9 @@
   },
 
   "transmitter": {
+    "newLineHint": "Shift + Enter 换行",
+    "expand": "展开输入框",
+    "collapse": "收起输入框",
     "showFormattingToolbar": "显示格式工具栏",
     "send": "发送 (Enter)",
     "sendMessage": "发送消息"

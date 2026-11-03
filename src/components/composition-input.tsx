@@ -61,6 +61,7 @@ type SendData = {
 type CompositionInputProps = {
   ref?: Ref<CompositionInputRef>;
   isFixedTools?: boolean;
+  isExpanded?: boolean;
   onEmptyChange?: IsEmptyPluginProps['onChange'];
   onFocusChange?: IsFocusedPluginProps['onFocusChange'];
   onLineChange?: AutoLinePluginProps['onLineChange'];
@@ -75,6 +76,7 @@ type CompositionInputRef = {
 function CompositionInput({
   ref,
   isFixedTools = false,
+  isExpanded = false,
   onEmptyChange,
   onFocusChange,
   onLineChange,
@@ -119,12 +121,16 @@ function CompositionInput({
   return (
     <div
       id='synclan-composition-scroll-wrapper'
-      className='relative max-h-56 overflow-y-auto px-3'
+      className={cn(
+        'relative overflow-y-auto px-3',
+        isExpanded ? 'h-full' : 'max-h-56',
+      )}
     >
       <ContentEditable
         id='synclan-editor'
         className={cn(
           'w-full max-w-none text-sm leading-5.5 text-foreground outline-none focus:outline-none',
+          isExpanded && 'min-h-full',
         )}
         aria-placeholder='Enter Message'
         enterKeyHint='send'

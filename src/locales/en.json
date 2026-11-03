@@ -200,6 +200,9 @@
   },
 
   "transmitter": {
+    "newLineHint": "Shift + Enter for a new line",
+    "expand": "Expand composer",
+    "collapse": "Collapse composer",
     "showFormattingToolbar": "Show formatting toolbar",
     "send": "Send (Enter)",
     "sendMessage": "Send Message"
