@@ -38,25 +38,27 @@
 
 ### 桌面端体验
 
+浅色与深色模式下的欢迎页、富文本图片消息和文件传输。
+
 <p align="center">
-  <img src="./docs/screenshots/desktop-01.png" alt="桌面端截图 1" height="180" />
-  <img src="./docs/screenshots/desktop-02.png" alt="桌面端截图 2" height="180" />
-  <img src="./docs/screenshots/desktop-03.png" alt="桌面端截图 3" height="180" />
+  <img src="./docs/screenshots/desktop-01.png" alt="浅色模式欢迎页" width="49%" />
+  <img src="./docs/screenshots/desktop-02.png" alt="浅色模式聊天与文件传输" width="49%" />
 </p>
 
 <p align="center">
-  <img src="./docs/screenshots/desktop-04.png" alt="桌面端截图 4" height="180" />
-  <img src="./docs/screenshots/desktop-05.png" alt="桌面端截图 5" height="180" />
-  <img src="./docs/screenshots/desktop-06.png" alt="桌面端截图 6" height="180" />
+  <img src="./docs/screenshots/desktop-03.png" alt="深色模式欢迎页" width="49%" />
+  <img src="./docs/screenshots/desktop-04.png" alt="深色模式聊天与文件传输" width="49%" />
 </p>
 
 ### 移动端浏览器适配
 
+移动端浏览器中的欢迎页与聊天体验，同时支持浅色和深色模式。
+
 <p align="center">
-  <img src="./docs/screenshots/desktop-07.png" alt="移动端浏览器截图 1" height="320" />
-  <img src="./docs/screenshots/desktop-08.png" alt="移动端浏览器截图 2" height="320" />
-  <img src="./docs/screenshots/desktop-09.png" alt="移动端浏览器截图 3" height="320" />
-  <img src="./docs/screenshots/desktop-10.png" alt="移动端浏览器截图 4" height="320" />
+  <img src="./docs/screenshots/desktop-05.png" alt="移动端浅色模式欢迎页" height="320" />
+  <img src="./docs/screenshots/desktop-06.png" alt="移动端浅色模式聊天与文件传输" height="320" />
+  <img src="./docs/screenshots/desktop-07.png" alt="移动端深色模式欢迎页" height="320" />
+  <img src="./docs/screenshots/desktop-08.png" alt="移动端深色模式聊天与文件传输" height="320" />
 </p>
 
 ---

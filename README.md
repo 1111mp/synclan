@@ -38,25 +38,27 @@ The desktop client acts as a "communication hub" running locally, allowing other
 
 ### Desktop Interface
 
+Welcome screens, rich-text image messages, and file transfers in light and dark modes.
+
 <p align="center">
-  <img src="./docs/screenshots/desktop-01.png" alt="Desktop screenshot 1" height="180" />
-  <img src="./docs/screenshots/desktop-02.png" alt="Desktop screenshot 2" height="180" />
-  <img src="./docs/screenshots/desktop-03.png" alt="Desktop screenshot 3" height="180" />
+  <img src="./docs/screenshots/desktop-01.png" alt="Welcome screen in light mode" width="49%" />
+  <img src="./docs/screenshots/desktop-02.png" alt="Messaging and file transfer in light mode" width="49%" />
 </p>
 
 <p align="center">
-  <img src="./docs/screenshots/desktop-04.png" alt="Desktop screenshot 4" height="180" />
-  <img src="./docs/screenshots/desktop-05.png" alt="Desktop screenshot 5" height="180" />
-  <img src="./docs/screenshots/desktop-06.png" alt="Desktop screenshot 6" height="180" />
+  <img src="./docs/screenshots/desktop-03.png" alt="Welcome screen in dark mode" width="49%" />
+  <img src="./docs/screenshots/desktop-04.png" alt="Messaging and file transfer in dark mode" width="49%" />
 </p>
 
 ### Mobile Browser View
 
+Welcome screens and conversations in a mobile browser, with light and dark mode support.
+
 <p align="center">
-  <img src="./docs/screenshots/desktop-07.png" alt="Mobile browser screenshot 1" height="320" />
-  <img src="./docs/screenshots/desktop-08.png" alt="Mobile browser screenshot 2" height="320" />
-  <img src="./docs/screenshots/desktop-09.png" alt="Mobile browser screenshot 3" height="320" />
-  <img src="./docs/screenshots/desktop-10.png" alt="Mobile browser screenshot 4" height="320" />
+  <img src="./docs/screenshots/desktop-05.png" alt="Mobile welcome screen in light mode" height="320" />
+  <img src="./docs/screenshots/desktop-06.png" alt="Mobile messaging and file transfer in light mode" height="320" />
+  <img src="./docs/screenshots/desktop-07.png" alt="Mobile welcome screen in dark mode" height="320" />
+  <img src="./docs/screenshots/desktop-08.png" alt="Mobile messaging and file transfer in dark mode" height="320" />
 </p>
 
 ---
