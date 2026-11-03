@@ -20,6 +20,14 @@ mod message;
 
 pub type MessageBackend = SqliteStorage<Message>;
 
+const MESSAGE_WORKER_PREFIX: &str = "synclan-message-dispatcher";
+
+fn message_worker_name() -> String {
+    // SQLite retains worker heartbeats after shutdown. Each start (including a
+    // monitor restart) needs a fresh identity to avoid WORKER_ALREADY_EXISTS.
+    format!("{MESSAGE_WORKER_PREFIX}-{}", uuid::Uuid::new_v4())
+}
+
 pub struct WorkerMonitor {
     shutdown_token: Arc<Mutex<Option<CancellationToken>>>,
 }
@@ -47,7 +55,7 @@ impl WorkerMonitor {
 
         Monitor::new()
             .register(move |_run_id| {
-                WorkerBuilder::new("synclan-message-dispatcher")
+                WorkerBuilder::new(message_worker_name())
                     .backend(
                         message_backend.clone().poll_with_backoff(
                             Duration::from_millis(100),
@@ -84,7 +92,7 @@ impl WorkerMonitor {
             })
             // Define when a worker should restart
             .should_restart(|ctx, err| {
-                if ctx.name() == "synclan-message-dispatcher"
+                if ctx.name().starts_with(MESSAGE_WORKER_PREFIX)
                     && err.to_string().contains("Recoverable Error")
                     && ctx.restarts() < 5
                 {
@@ -129,21 +137,24 @@ mod tests {
             "updatedAt": null
         }))?;
         let expected = serde_json::to_value(&message)?;
-        backend.push(message).await?;
-
-        let (tx, mut rx) = tokio::sync::mpsc::channel(1);
-        let worker = WorkerBuilder::new("message-queue-test")
-            .backend(backend.poll_with_interval(Duration::from_millis(10)))
-            .build(move |message: Message, ctx: WorkerContext| {
-                let tx = tx.clone();
-                async move {
-                    tx.send(serde_json::to_value(message)?).await?;
-                    ctx.stop()?;
-                    Ok::<(), BoxDynError>(())
-                }
-            });
-        tokio::time::timeout(Duration::from_secs(5), worker.run()).await??;
-        assert_eq!(rx.recv().await.unwrap(), expected);
+        // Restart immediately against the same database while the previous
+        // worker's heartbeat is still fresh, as happens during local development.
+        for _ in 0..2 {
+            backend.push(message.clone()).await?;
+            let (tx, mut rx) = tokio::sync::mpsc::channel(1);
+            let worker = WorkerBuilder::new(message_worker_name())
+                .backend(backend.clone().poll_with_interval(Duration::from_millis(10)))
+                .build(move |message: Message, ctx: WorkerContext| {
+                    let tx = tx.clone();
+                    async move {
+                        tx.send(serde_json::to_value(message)?).await?;
+                        ctx.stop()?;
+                        Ok::<(), BoxDynError>(())
+                    }
+                });
+            tokio::time::timeout(Duration::from_secs(5), worker.run()).await??;
+            assert_eq!(rx.recv().await.unwrap(), expected);
+        }
         let (status,): (String,) = sqlx::query_as("SELECT status FROM Jobs WHERE job_type = 'default'")
             .fetch_one(&pool)
             .await?;
@@ -151,3 +162,6 @@ mod tests {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod integration_tests;
