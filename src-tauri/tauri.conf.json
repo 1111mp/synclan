@@ -42,8 +42,6 @@
     ],
     "resources": [
       "resources",
-      "resources/web/*",
-      "resources/migrations/*",
       "icons/icon.png"
     ],
     "publisher": "Synclan",
