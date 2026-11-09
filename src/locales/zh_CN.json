@@ -214,7 +214,8 @@
       "checkForUpdates": "检查更新",
       "checkNow": "立即检查更新",
       "version": "版本",
-      "versionCopied": "版本号已复制到剪贴板"
+      "versionCopied": "版本号已复制到剪贴板",
+      "versionCopyFailed": "复制版本号失败"
     }
   },
 

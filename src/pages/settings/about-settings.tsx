@@ -15,6 +15,7 @@ import {
   Spinner,
 } from '@/components/ui';
 import { isWeb } from '@/lib/constant';
+import { copyText } from '@/lib/utils/copy-text';
 import { getAppVersion } from '@/services/api';
 import { useUpdaterStore } from '@/stores';
 
@@ -46,8 +47,12 @@ function AboutSettings() {
           size='sm'
           className='hover:bg-muted/50 min-h-14 rounded-none px-5 py-3.5'
           onClick={async () => {
-            await navigator.clipboard.writeText(version);
-            toast.success(t('settings.about.versionCopied'));
+            try {
+              await copyText(version);
+              toast.success(t('settings.about.versionCopied'));
+            } catch {
+              toast.error(t('settings.about.versionCopyFailed'));
+            }
           }}
         >
           <button type='button' className='w-full text-left'>

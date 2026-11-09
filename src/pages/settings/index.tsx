@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 
 import { useConfirm } from '@/components';
+import { PageHeader } from '@/components/page-header';
 import { FieldGroup } from '@/components/ui';
 import { isWeb } from '@/lib/constant';
 import { applyPendingTheme } from '@/lib/utils';
@@ -133,17 +134,10 @@ function SettingsPage() {
 
   return (
     <div className='bg-background h-full min-h-0 w-full overflow-y-auto'>
-      <header
-        data-tauri-drag-region={OS_PLATFORM !== 'win32'}
-        className='bg-background/95 border-border/50 sticky top-0 z-20 flex h-14 items-center border-b px-6 backdrop-blur-sm'
-      >
-        <div className='mx-auto flex w-full max-w-4xl items-center justify-between gap-4 pl-8'>
-          <h1 className='text-sm font-medium'>{t('settings.title')}</h1>
-          <span className='text-muted-foreground hidden text-xs sm:block'>
-            {t('settings.autosave')}
-          </span>
-        </div>
-      </header>
+      <PageHeader
+        title={t('settings.title')}
+        description={t('settings.autosave')}
+      />
       <div className='@container mx-auto max-w-4xl px-5 py-8 sm:px-8 sm:py-10'>
         <div className='mb-10 flex items-start gap-4'>
           <span className='bg-muted border-border/60 flex size-11 shrink-0 items-center justify-center rounded-2xl border'>

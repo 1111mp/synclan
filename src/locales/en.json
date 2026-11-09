@@ -215,7 +215,8 @@
       "checkForUpdates": "Check for Updates",
       "checkNow": "Check Now",
       "version": "Version",
-      "versionCopied": "Version copied to clipboard"
+      "versionCopied": "Version copied to clipboard",
+      "versionCopyFailed": "Failed to copy version"
     }
   },
 

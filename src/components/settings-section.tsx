@@ -27,7 +27,7 @@ function SettingsSection({
             {description}
           </FieldDescription>
         </div>
-        <div className='bg-card border-border/60 min-w-0 overflow-hidden rounded-2xl border shadow-xs'>
+        <div className='bg-card border-border/60 min-w-0 self-start overflow-hidden rounded-2xl border shadow-xs'>
           {children}
         </div>
       </div>

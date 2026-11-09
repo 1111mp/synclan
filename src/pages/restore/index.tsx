@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
+import { PageHeader } from '@/components/page-header';
 import { SettingsSection } from '@/components/settings-section';
 import {
   Avatar,
@@ -85,14 +86,7 @@ function RestorePage() {
 
   return (
     <div className='bg-background h-full min-h-0 w-full overflow-y-auto'>
-      <header
-        data-tauri-drag-region={OS_PLATFORM !== 'win32'}
-        className='bg-background/95 border-border/50 sticky top-0 z-20 flex h-14 items-center border-b px-6 backdrop-blur-sm'
-      >
-        <div className='mx-auto flex w-full max-w-4xl items-center pl-8'>
-          <h1 className='text-sm font-medium'>{t('restoreDevice.title')}</h1>
-        </div>
-      </header>
+      <PageHeader title={t('restoreDevice.title')} />
       <div className='@container mx-auto max-w-4xl px-5 py-8 sm:px-8 sm:py-10'>
         <div className='mb-8 flex items-start gap-4'>
           <span className='bg-muted border-border/60 flex size-11 shrink-0 items-center justify-center rounded-2xl border'>

@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
 import { useImagePreview } from '@/components';
+import { PageHeader } from '@/components/page-header';
 import { SettingsSection } from '@/components/settings-section';
 import {
   Avatar,
@@ -127,12 +128,9 @@ function ProfilePage() {
 
   return (
     <div className='bg-background h-full min-h-0 w-full overflow-y-auto'>
-      <header
-        data-tauri-drag-region={OS_PLATFORM !== 'win32'}
-        className='bg-background/95 border-border/50 sticky top-0 z-20 flex h-14 items-center border-b px-6 backdrop-blur-sm'
-      >
-        <div className='mx-auto flex w-full max-w-4xl items-center justify-between gap-4 pl-8'>
-          <h1 className='text-sm font-medium'>{t('profile.profile')}</h1>
+      <PageHeader
+        title={t('profile.profile')}
+        actions={
           <Button
             variant={isEdit ? 'default' : 'outline'}
             onClick={onEdit}
@@ -140,8 +138,8 @@ function ProfilePage() {
           >
             {isEdit ? t('profile.done') : t('profile.edit')}
           </Button>
-        </div>
-      </header>
+        }
+      />
       <div className='@container mx-auto max-w-4xl px-5 py-8 sm:px-8 sm:py-10'>
         <form id='form-synclan-profile' aria-disabled={disabled}>
           <FieldGroup className='gap-8 pb-8'>
