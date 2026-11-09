@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { afterEach, expect, test, vi } from 'vitest';
 import { render, type RenderResult } from 'vitest-browser-react';
+import { page } from 'vitest/browser';
 
 import { Transmitter } from './transmitter';
 import { TooltipProvider } from './ui/tooltip';
@@ -47,6 +48,8 @@ vi.mock('@/components', () => ({
         value={text}
         style={{
           display: 'block',
+          background: 'transparent',
+          color: 'inherit',
           width: '100%',
           height: isExpanded ? '100%' : text.includes('\n') ? 120 : 24,
         }}
@@ -63,6 +66,7 @@ vi.mock('@/components', () => ({
 let view: RenderResult | undefined;
 afterEach(async () => {
   await view?.unmount();
+  document.documentElement.classList.remove('dark');
 });
 
 async function fixture() {
@@ -70,6 +74,7 @@ async function fixture() {
     <TooltipProvider>
       <div
         id='synclan-device-message-list'
+        className='bg-card text-card-foreground'
         style={{
           position: 'relative',
           display: 'flex',
@@ -197,3 +202,54 @@ test('keeps edited draft and layout stable across repeated cycles', async () => 
   );
   expect(ui.draft.value).toBe('Edited while expanded\nAnother line');
 });
+
+test('dismisses on the first backdrop press after opening with a pointer', async () => {
+  const ui = await fixture();
+  await view!.getByRole('textbox', { name: 'Draft' }).fill('Keep this draft');
+  const height = ui.messages.getBoundingClientRect().height;
+  // A real pointer opens with pointerdown before click; HTMLElement.click() omits it.
+  ui.expand().dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+  ui.expand().click();
+  await expect
+    .poll(() => document.querySelector('[data-composer-overlay]'))
+    .toBeTruthy();
+  document
+    .querySelector('[data-composer-overlay]')!
+    .dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+  await expect
+    .poll(() => document.querySelector('[data-composer-overlay]'))
+    .toBeNull();
+  await expect
+    .poll(() => ui.messages.getBoundingClientRect().height)
+    .toBeCloseTo(height, 0);
+  expect(ui.draft.value).toBe('Keep this draft');
+});
+
+test.each(['light', 'dark'])(
+  'composer appearance and focused backdrop dismissal in %s mode',
+  async (theme) => {
+    await page.viewport(1000, 800);
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+    const ui = await fixture();
+    await view!.getByRole('textbox', { name: 'Draft' }).fill('A draft message');
+    const panel = document.querySelector('[data-composer-panel]')!;
+    if (theme === 'light')
+      expect(getComputedStyle(panel).boxShadow).toBe('none');
+    else expect(getComputedStyle(panel).boxShadow).not.toBe('none');
+    await page.screenshot({
+      element: panel,
+      path: `.vitest/attachments/composer-${theme}.png`,
+    });
+    await view!.getByRole('button', { name: 'transmitter.expand' }).click();
+    await expect
+      .poll(() => ui.draft.getBoundingClientRect().height)
+      .toBeGreaterThan(200);
+    document
+      .querySelector('[data-composer-overlay]')!
+      .dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    await expect
+      .poll(() => document.querySelector('[data-composer-overlay]'))
+      .toBeNull();
+    expect(ui.draft.value).toBe('A draft message');
+  },
+);

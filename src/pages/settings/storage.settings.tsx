@@ -1,8 +1,9 @@
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
-import { ChevronRightIcon } from 'lucide-react';
+import { HardDrive, ChevronRightIcon } from 'lucide-react';
 import { Controller, type UseFormReturn } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 
+import { SettingsSection } from '@/components/settings-section';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,8 +14,6 @@ import {
   Field,
   FieldError,
   FieldGroup,
-  FieldLegend,
-  FieldSet,
   Item,
   ItemActions,
   ItemContent,
@@ -36,33 +35,35 @@ function StorageSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
   if (isWeb) return null;
 
   return (
-    <FieldSet>
-      <FieldLegend className='text-muted-foreground pl-3'>
-        {t('settings.storage.title')}
-      </FieldLegend>
-      <div className='overflow-hidden rounded-xl'>
-        <FieldGroup className='gap-0'>
-          <Controller
-            name='file_upload_dir'
-            control={form.control}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <Item
-                  variant='default'
-                  size='sm'
-                  className='hover:bg-muted rounded-none py-3'
-                  onClick={async (evt) => {
-                    evt.preventDefault();
-                    const path = await openDialog({
-                      title: t('Directory-Select'),
-                      directory: true,
-                    });
+    <SettingsSection
+      title={t('settings.storage.title')}
+      description={t('settings.storage.description')}
+      icon={HardDrive}
+    >
+      <FieldGroup className='gap-0'>
+        <Controller
+          name='file_upload_dir'
+          control={form.control}
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <Item
+                asChild
+                variant='default'
+                size='sm'
+                className='hover:bg-muted/50 min-h-14 rounded-none px-5 py-3.5'
+                onClick={async (evt) => {
+                  evt.preventDefault();
+                  const path = await openDialog({
+                    title: t('Directory-Select'),
+                    directory: true,
+                  });
 
-                    if (path) {
-                      field.onChange(path);
-                    }
-                  }}
-                >
+                  if (path) {
+                    field.onChange(path);
+                  }
+                }}
+              >
+                <button type='button' className='w-full text-left'>
                   <ItemContent>
                     <ItemTitle>
                       {t('settings.storage.uploadDirectory')}
@@ -75,7 +76,7 @@ function StorageSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <span
-                          className='text-muted-foreground max-w-52 truncate'
+                          className='text-muted-foreground max-w-32 truncate sm:max-w-52'
                           aria-invalid={fieldState.invalid}
                         >
                           {field.value}
@@ -87,23 +88,26 @@ function StorageSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                     </Tooltip>
                     <ChevronRightIcon className='size-4' />
                   </ItemActions>
-                </Item>
-              </Field>
-            )}
-          />
-          <Separator />
-          <Controller
-            name='auto_file_clean'
-            control={form.control}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Item
-                      variant='default'
-                      size='sm'
-                      className='hover:bg-muted rounded-none py-3'
-                    >
+                </button>
+              </Item>
+            </Field>
+          )}
+        />
+        <Separator />
+        <Controller
+          name='auto_file_clean'
+          control={form.control}
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Item
+                    variant='default'
+                    size='sm'
+                    className='hover:bg-muted/50 min-h-14 rounded-none px-5 py-3.5'
+                    asChild
+                  >
+                    <button type='button' className='w-full text-left'>
                       <ItemContent>
                         <ItemTitle>
                           {t('settings.storage.autoFileCleanup')}
@@ -121,29 +125,29 @@ function StorageSettings({ form }: { form: UseFormReturn<SettingsForm> }) {
                         </span>
                         <ChevronRightIcon className='size-4' />
                       </ItemActions>
-                    </Item>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className='w-fit' align='end'>
-                    <DropdownMenuGroup>
-                      <DropdownMenuRadioGroup
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
-                        {AUTO_FILE_CLEANUP.map((val) => (
-                          <DropdownMenuRadioItem key={val} value={val}>
-                            {t(`settings.log.autoClean.${val}`)}
-                          </DropdownMenuRadioItem>
-                        ))}
-                      </DropdownMenuRadioGroup>
-                    </DropdownMenuGroup>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </Field>
-            )}
-          />
-        </FieldGroup>
-      </div>
-    </FieldSet>
+                    </button>
+                  </Item>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className='w-fit' align='end'>
+                  <DropdownMenuGroup>
+                    <DropdownMenuRadioGroup
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
+                      {AUTO_FILE_CLEANUP.map((val) => (
+                        <DropdownMenuRadioItem key={val} value={val}>
+                          {t(`settings.log.autoClean.${val}`)}
+                        </DropdownMenuRadioItem>
+                      ))}
+                    </DropdownMenuRadioGroup>
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </Field>
+          )}
+        />
+      </FieldGroup>
+    </SettingsSection>
   );
 }
 

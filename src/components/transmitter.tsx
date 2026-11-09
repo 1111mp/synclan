@@ -68,6 +68,9 @@ function Transmitter({
     onOpenChange: setIsExpanded,
   });
   const dismiss = useDismiss(context, {
+    // Do not capture the opener's pointerdown while closed: its inside-press
+    // flag would otherwise suppress the first backdrop press after opening.
+    enabled: isExpanded,
     // Only the local backdrop dismisses: editor menus may render in their own portals.
     outsidePress: (event) =>
       event.target instanceof Element &&
@@ -204,6 +207,7 @@ function Transmitter({
         style={isLifted ? { height: collapsedHeight } : undefined}
       >
         <motion.div
+          data-composer-panel=''
           ref={refs.setFloating}
           {...getFloatingProps()}
           initial={false}
@@ -222,7 +226,7 @@ function Transmitter({
             }
           }}
           className={cn(
-            'rounded-xl border border-border/60 bg-background shadow-[0_2px_4px_-2px_rgb(0_0_0/0.04),0_8px_24px_-12px_rgb(0_0_0/0.12)] focus-within:border-foreground/20 focus-within:shadow-[0_2px_8px_-4px_rgb(0_0_0/0.08),0_12px_28px_-12px_rgb(0_0_0/0.16)] transition-[border-color,box-shadow] duration-200 ease-in-out motion-reduce:transition-none',
+            'rounded-xl border border-border/60 bg-background focus-within:border-foreground/20 dark:shadow-[0_2px_4px_-2px_rgb(0_0_0/0.04),0_8px_24px_-12px_rgb(0_0_0/0.12)] dark:focus-within:shadow-[0_2px_8px_-4px_rgb(0_0_0/0.08),0_12px_28px_-12px_rgb(0_0_0/0.16)] transition-[border-color,box-shadow] duration-200 ease-in-out motion-reduce:transition-none',
             isLifted &&
               'absolute inset-x-0 bottom-0 max-h-[calc(100dvh-2rem)] overflow-hidden',
           )}

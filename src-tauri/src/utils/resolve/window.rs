@@ -9,7 +9,8 @@ use anyhow::Result;
 use dark_light::{Mode as SystemTheme, detect as detect_system_theme};
 use tauri::{Theme, WebviewWindow, window::Color};
 
-const DARK_BACKGROUND_COLOR: Color = Color(0, 0, 0, 255); // #000000
+// Match the CSS dark background: oklch(0.205 0 0), rounded to 8-bit sRGB.
+const DARK_BACKGROUND_COLOR: Color = Color(23, 23, 23, 255); // #171717
 const LIGHT_BACKGROUND_COLOR: Color = Color(255, 255, 255, 255); // #ffffff
 
 #[cfg(target_os = "linux")]

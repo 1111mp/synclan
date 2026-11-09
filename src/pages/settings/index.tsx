@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Power } from 'lucide-react';
+import { Power, SlidersHorizontal } from 'lucide-react';
 import { useEffect, useEffectEvent } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useConfirm } from '@/components';
 import { FieldGroup } from '@/components/ui';
 import { isWeb } from '@/lib/constant';
-import { applyPendingTheme, cn } from '@/lib/utils';
+import { applyPendingTheme } from '@/lib/utils';
 import { restartApp } from '@/services/cmd';
 import { useSynclanStore } from '@/stores';
 
@@ -132,23 +132,36 @@ function SettingsPage() {
   });
 
   return (
-    <div className='[&_[data-slot=field-set]>div]:bg-card h-full min-h-0 w-full overflow-y-auto [&_[data-slot=field-legend]]:text-xs [&_[data-slot=field-legend]]:font-medium [&_[data-slot=field-legend]]:tracking-wide [&_[data-slot=field-set]>div]:border'>
+    <div className='bg-background h-full min-h-0 w-full overflow-y-auto'>
       <header
         data-tauri-drag-region={OS_PLATFORM !== 'win32'}
-        className='bg-card sticky top-0 z-20 flex h-14 w-full shrink-0 items-center justify-center gap-2 px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12'
+        className='bg-background/95 border-border/50 sticky top-0 z-20 flex h-14 items-center border-b px-6 backdrop-blur-sm'
       >
-        {t('settings.title')}
+        <div className='mx-auto flex w-full max-w-4xl items-center justify-between gap-4 pl-8'>
+          <h1 className='text-sm font-medium'>{t('settings.title')}</h1>
+          <span className='text-muted-foreground hidden text-xs sm:block'>
+            {t('settings.autosave')}
+          </span>
+        </div>
       </header>
-      <div
-        className={cn(
-          'mx-auto max-w-2xl px-6 pt-6',
-          OS_PLATFORM === 'darwin' && 'min-h-full',
-        )}
-      >
+      <div className='@container mx-auto max-w-4xl px-5 py-8 sm:px-8 sm:py-10'>
+        <div className='mb-10 flex items-start gap-4'>
+          <span className='bg-muted border-border/60 flex size-11 shrink-0 items-center justify-center rounded-2xl border'>
+            <SlidersHorizontal className='size-5' aria-hidden='true' />
+          </span>
+          <div className='flex flex-col gap-1.5'>
+            <p className='text-xl font-semibold tracking-tight'>
+              {t('settings.preferences')}
+            </p>
+            <p className='text-muted-foreground text-sm leading-relaxed'>
+              {t('settings.description')}
+            </p>
+          </div>
+        </div>
         <form id='form-synclan-settings'>
-          <FieldGroup className='pb-6'>
-            <GeneralSettings form={form} />
+          <FieldGroup className='[&>fieldset+fieldset]:border-border/50 gap-8 pb-8 [&>fieldset+fieldset]:border-t [&>fieldset+fieldset]:pt-8'>
             <AppearanceSettings form={form} />
+            <GeneralSettings form={form} />
             <ServerSettings form={form} />
             <StorageSettings form={form} />
             <LoggerSettings form={form} />

@@ -1,13 +1,12 @@
 import { check } from '@tauri-apps/plugin-updater';
-import { ChevronRightIcon } from 'lucide-react';
+import { Info, ChevronRightIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
+import { SettingsSection } from '@/components/settings-section';
 import {
   FieldGroup,
-  FieldLegend,
-  FieldSet,
   Item,
   ItemActions,
   ItemContent,
@@ -29,27 +28,29 @@ function AboutSettings() {
   }, []);
 
   return (
-    <FieldSet>
-      <FieldLegend className='text-muted-foreground pl-3'>
-        {t('settings.about.title')}
-      </FieldLegend>
-      <div className='overflow-hidden rounded-xl'>
-        <FieldGroup className='gap-0'>
-          {!isWeb && (
-            <>
-              <CheckForUpdatesItem />
-              <Separator />
-            </>
-          )}
-          <Item
-            variant='default'
-            size='sm'
-            className='hover:bg-muted rounded-none py-3'
-            onClick={async () => {
-              await navigator.clipboard.writeText(version);
-              toast.success(t('settings.about.versionCopied'));
-            }}
-          >
+    <SettingsSection
+      title={t('settings.about.title')}
+      description={t('settings.about.description')}
+      icon={Info}
+    >
+      <FieldGroup className='gap-0'>
+        {!isWeb && (
+          <>
+            <CheckForUpdatesItem />
+            <Separator />
+          </>
+        )}
+        <Item
+          asChild
+          variant='default'
+          size='sm'
+          className='hover:bg-muted/50 min-h-14 rounded-none px-5 py-3.5'
+          onClick={async () => {
+            await navigator.clipboard.writeText(version);
+            toast.success(t('settings.about.versionCopied'));
+          }}
+        >
+          <button type='button' className='w-full text-left'>
             <ItemContent>
               <ItemTitle>Synclan {t('settings.about.version')}</ItemTitle>
             </ItemContent>
@@ -57,10 +58,10 @@ function AboutSettings() {
               <span className='text-muted-foreground'>v{version}</span>
               <ChevronRightIcon className='size-4' />
             </ItemActions>
-          </Item>
-        </FieldGroup>
-      </div>
-    </FieldSet>
+          </button>
+        </Item>
+      </FieldGroup>
+    </SettingsSection>
   );
 }
 
@@ -93,20 +94,23 @@ function CheckForUpdatesItem() {
 
   return (
     <Item
+      asChild
       variant='default'
       size='sm'
-      className='hover:bg-muted rounded-none py-3'
+      className='hover:bg-muted/50 min-h-14 rounded-none px-5 py-3.5'
       onClick={checkForUpdates}
     >
-      <ItemContent>
-        <ItemTitle>{t('settings.about.checkForUpdates')}</ItemTitle>
-      </ItemContent>
-      <ItemActions>
-        <span className='text-muted-foreground'>
-          {t('settings.about.checkNow')}
-        </span>
-        {loading ? <Spinner /> : <ChevronRightIcon className='size-4' />}
-      </ItemActions>
+      <button type='button' className='w-full text-left'>
+        <ItemContent>
+          <ItemTitle>{t('settings.about.checkForUpdates')}</ItemTitle>
+        </ItemContent>
+        <ItemActions>
+          <span className='text-muted-foreground'>
+            {t('settings.about.checkNow')}
+          </span>
+          {loading ? <Spinner /> : <ChevronRightIcon className='size-4' />}
+        </ItemActions>
+      </button>
     </Item>
   );
 }

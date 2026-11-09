@@ -41,12 +41,27 @@ vi.mock('@/services/cmd', () => ({
   updateDeviceProfile: mocks.updateDeviceProfile,
 }));
 vi.mock('sonner', () => ({ toast: { error: mocks.error } }));
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (key: string, options?: { number: number }) =>
-      options ? `${key} ${options.number}` : key,
-  }),
-}));
+vi.mock('react-i18next', async () => {
+  const { default: translations } = await import('@/locales/en.json');
+  return {
+    useTranslation: () => ({
+      t: (key: string, options?: { number: number }) => {
+        const value = key
+          .split('.')
+          .reduce<unknown>(
+            (current, part) =>
+              typeof current === 'object' && current !== null
+                ? (current as Record<string, unknown>)[part]
+                : undefined,
+            translations,
+          );
+        return typeof value === 'string'
+          ? value.replace('{{number}}', String(options?.number ?? ''))
+          : key;
+      },
+    }),
+  };
+});
 
 beforeEach(() => {
   mocks.current.avatar = '';
@@ -68,8 +83,12 @@ test.each([
   async ({ width, dark }) => {
     await page.viewport(width, 900);
     document.documentElement.classList.toggle('dark', dark);
-    const { container } = render(<ProfilePage />);
-    await page.getByRole('button', { name: 'profile.edit' }).click();
+    const { container } = render(
+      <div className='h-screen'>
+        <ProfilePage />
+      </div>,
+    );
+    await page.getByRole('button', { name: 'Edit' }).click();
     await waitFor(() => {
       const transition = container.querySelector('fieldset[style]')!;
       expect(transition.getBoundingClientRect().height).toBeGreaterThan(200);
@@ -100,17 +119,17 @@ test.each([
         labels[0].getBoundingClientRect().top,
       );
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(width);
-    await page.getByRole('radio', { name: /^profile.avatarOption 1$/ }).click();
+    await page.getByRole('radio', { name: /^Avatar 1$/ }).click();
     await userEvent.keyboard('{ArrowRight}');
     expect(
       screen.getByRole('radio', {
-        name: /^profile.avatarOption 2$/,
+        name: /^Avatar 2$/,
       }),
     ).toBeChecked();
     await page.screenshot({
       path: `.vitest/attachments/profile-audit-${width}.png`,
     });
-    await page.getByRole('button', { name: 'profile.done' }).click();
+    await page.getByRole('button', { name: 'Done' }).click();
     await expect.poll(() => screen.queryByRole('radiogroup')).toBeNull();
   },
 );
