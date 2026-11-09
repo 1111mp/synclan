@@ -145,7 +145,7 @@
     "husky": "^9.1.7",
     "jsdom": "^30.1.3",
     "lint-staged": "^17.4.1",
-    "oxfmt": "^0.76.0",
+    "oxfmt": "^0.77.0",
     "oxlint": "^1.81.0",
     "oxlint-tsgolint": "^7.0.2001",
     "playwright": "^1.62.1",
@@ -157,7 +157,7 @@
     "vite-plugin-static-copy": "^4.1.1",
     "vitest": "^5.0.0",
     "vitest-browser-react": "^2.3.0",
-    "webdriverio": "10.1.0"
+    "webdriverio": "10.2.0"
   },
   "packageManager": "pnpm@11.25.0"
 }
