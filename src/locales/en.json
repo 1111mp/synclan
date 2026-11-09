@@ -82,6 +82,10 @@
   },
 
   "profile": {
+    "chooseAvatar": "Choose an avatar",
+    "avatarOption": "Avatar {{number}}",
+    "uploadAvatar": "Upload custom image",
+    "uploading": "Uploading…",
     "done": "Done",
     "edit": "Edit",
     "profile": "Profile",

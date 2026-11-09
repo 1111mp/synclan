@@ -188,7 +188,9 @@ function ManagePage() {
                       <TableCell>
                         <div className='flex items-center gap-3'>
                           <Avatar>
-                            <AvatarImage src={device.avatar} />
+                            <AvatarImage
+                              src={resolveResourceUrl(device.avatar)}
+                            />
                             <AvatarFallback>
                               <User />
                             </AvatarFallback>

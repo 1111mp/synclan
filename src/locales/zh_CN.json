@@ -82,6 +82,10 @@
   },
 
   "profile": {
+    "chooseAvatar": "选择头像",
+    "avatarOption": "头像 {{number}}",
+    "uploadAvatar": "上传自定义头像",
+    "uploading": "正在上传…",
     "done": "完成",
     "edit": "编辑",
     "profile": "个人资料",

@@ -1,6 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Camera, ChevronRightIcon, User } from 'lucide-react';
-import { useState } from 'react';
+import { Camera, Check, ChevronRightIcon, User } from 'lucide-react';
+import {
+  AnimatePresence,
+  motion,
+  useIsPresent,
+  useReducedMotion,
+} from 'motion/react';
+import { useState, type ReactNode } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -23,7 +29,10 @@ import {
   ItemActions,
   ItemContent,
   ItemTitle,
+  RadioGroup,
+  RadioGroupItem,
 } from '@/components/ui';
+import { PROFILE_AVATAR_GROUPS } from '@/lib/avatar';
 import { cn, resolveResourceUrl } from '@/lib/utils';
 import { z } from '@/lib/zod';
 import {
@@ -40,8 +49,30 @@ const formSchema = z.object({
   name: z.string().min(1).max(24),
 });
 
+function AvatarPickerTransition({ children }: { children: ReactNode }) {
+  const reduceMotion = useReducedMotion();
+  const isPresent = useIsPresent();
+
+  return (
+    <motion.fieldset
+      className='w-full min-w-0 overflow-hidden'
+      initial={{ height: 0, opacity: 0 }}
+      animate={{ height: 'auto', opacity: 1 }}
+      exit={{ height: 0, opacity: 0 }}
+      transition={{ duration: reduceMotion ? 0 : 0.22, ease: 'easeInOut' }}
+      // AnimatePresence retains exiting content; prevent edits during the collapse.
+      disabled={!isPresent}
+      inert={!isPresent}
+      aria-hidden={!isPresent}
+    >
+      {children}
+    </motion.fieldset>
+  );
+}
+
 function ProfilePage() {
   const [isEdit, setIsEdit] = useState<boolean>(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const current = useDeviceStore((s) => s.current);
   const updateCurrent = useDeviceStore((s) => s.updateCurrent);
@@ -59,6 +90,7 @@ function ProfilePage() {
 
   const onEdit = async () => {
     if (!isEdit) {
+      form.reset({ avatar: current?.avatar, name: current?.name });
       setIsEdit(true);
       return;
     }
@@ -103,78 +135,187 @@ function ProfilePage() {
         data-tauri-drag-region={OS_PLATFORM !== 'win32'}
         className='bg-card sticky top-0 z-20 flex h-14 w-full shrink-0 items-center justify-end gap-2 px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12'
       >
-        <Button variant='outline' onClick={onEdit}>
+        <Button
+          variant='outline'
+          onClick={onEdit}
+          disabled={isUploading || form.formState.isSubmitting}
+        >
           {isEdit ? t('profile.done') : t('profile.edit')}
         </Button>
       </header>
       <div
         className={cn(
-          'mx-auto max-w-2xl px-4',
+          'mx-auto max-w-2xl px-4 pt-4',
           OS_PLATFORM === 'darwin' && 'min-h-full',
         )}
       >
         <form id='form-synclan-profile' aria-disabled={disabled}>
           <FieldGroup className='pb-6'>
-            <FieldGroup className='items-center'>
+            <FieldGroup className='items-center gap-4'>
               <Controller
                 name='avatar'
                 disabled={disabled}
                 control={form.control}
                 render={({ field }) => {
-                  const avatarUrl = resolveResourceUrl(field.value);
+                  const avatarUrl = resolveResourceUrl(
+                    isEdit ? field.value : current?.avatar,
+                  );
                   return (
-                    <Avatar
-                      className='relative size-32 overflow-hidden'
-                      onClick={() => {
-                        openPreview([avatarUrl], 0);
-                      }}
-                    >
-                      <AvatarImage
-                        className='rounded-full'
-                        src={avatarUrl}
-                        alt='shadcn'
-                      />
-                      <AvatarFallback className='rounded-full'>
-                        <User />
-                      </AvatarFallback>
-                      {!disabled && (
-                        <span
-                          className='group bg-primary-foreground/50 absolute z-10 flex size-full items-center justify-center'
-                          onClick={async (evt) => {
-                            evt.stopPropagation();
-                            try {
-                              const url = await onPickImage();
-                              if (url) {
-                                field.onChange(url);
+                    <FieldGroup className='items-center gap-4'>
+                      <Avatar
+                        className='size-24 cursor-pointer overflow-hidden'
+                        onClick={() => openPreview([avatarUrl], 0)}
+                      >
+                        <AvatarImage
+                          src={avatarUrl}
+                          alt={current?.name ?? t('profile.profile')}
+                        />
+                        <AvatarFallback>
+                          <User />
+                        </AvatarFallback>
+                      </Avatar>
+                      <p
+                        className='text-muted-foreground max-w-full cursor-pointer text-center text-xs break-all'
+                        onClick={async () => {
+                          if (current?.id) {
+                            await navigator.clipboard.writeText(current?.id);
+                            toast.success(t('profile.idCopied'));
+                          }
+                        }}
+                      >
+                        ID: {current?.id}
+                      </p>
+                      <AnimatePresence initial={false}>
+                        {!disabled && (
+                          <AvatarPickerTransition key='avatar-picker'>
+                            <FieldSet
+                              disabled={
+                                isUploading || form.formState.isSubmitting
                               }
-                            } catch (error) {
-                              toast.error(
-                                error.message ?? 'Failed to upload avatar',
-                              );
-                            }
-                          }}
-                        >
-                          <Camera
-                            className='size-8 transition-colors duration-300 group-hover:text-blue-400'
-                            strokeWidth={1}
-                          />
-                        </span>
-                      )}
-                    </Avatar>
+                              className='w-full gap-2 pt-4'
+                            >
+                              <FieldLegend
+                                className='text-muted-foreground pl-3'
+                                id='profile-avatar-label'
+                              >
+                                {t('profile.chooseAvatar')}
+                              </FieldLegend>
+                              <div className='bg-muted/50 @container overflow-hidden rounded-xl'>
+                                <RadioGroup
+                                  aria-labelledby='profile-avatar-label'
+                                  value={
+                                    PROFILE_AVATAR_GROUPS.map((group) =>
+                                      group.avatars.find(
+                                        (avatar) => avatar.url === avatarUrl,
+                                      ),
+                                    ).find(Boolean)?.value ?? ''
+                                  }
+                                  onValueChange={field.onChange}
+                                  className='gap-5 p-4'
+                                  disabled={
+                                    isUploading || form.formState.isSubmitting
+                                  }
+                                >
+                                  {PROFILE_AVATAR_GROUPS.map(
+                                    (group, groupIndex) => (
+                                      <FieldSet
+                                        key={group.id}
+                                        className='gap-3'
+                                      >
+                                        <FieldLegend
+                                          variant='label'
+                                          className='text-muted-foreground'
+                                        >
+                                          {group.label}
+                                        </FieldLegend>
+                                        <div className='grid grid-cols-4 justify-items-center gap-4 @min-[36rem]:grid-cols-8 @min-[36rem]:gap-3'>
+                                          {group.avatars.map(
+                                            (avatar, index) => (
+                                              <div
+                                                data-avatar-option
+                                                key={avatar.value}
+                                                className='group/avatar-option has-data-[state=checked]:ring-primary has-focus-visible:outline-ring relative flex cursor-pointer items-center justify-center rounded-full p-1 ring-2 ring-transparent transition-shadow has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-4'
+                                              >
+                                                <Avatar className='size-12 overflow-hidden transition-transform group-hover/avatar-option:scale-105'>
+                                                  <AvatarImage
+                                                    src={avatar.url}
+                                                    alt=''
+                                                  />
+                                                  <AvatarFallback>
+                                                    <User />
+                                                  </AvatarFallback>
+                                                </Avatar>
+                                                <RadioGroupItem
+                                                  className='absolute inset-0 size-full cursor-pointer opacity-0 after:hidden'
+                                                  value={avatar.value}
+                                                  aria-label={t(
+                                                    'profile.avatarOption',
+                                                    {
+                                                      number:
+                                                        groupIndex * 8 +
+                                                        index +
+                                                        1,
+                                                    },
+                                                  )}
+                                                />
+                                                {avatar.url === avatarUrl && (
+                                                  <span
+                                                    className='bg-primary text-primary-foreground ring-background pointer-events-none absolute right-0 bottom-0 flex size-4 items-center justify-center rounded-full ring-2'
+                                                    aria-hidden='true'
+                                                  >
+                                                    <Check
+                                                      className='size-3'
+                                                      strokeWidth={3}
+                                                    />
+                                                  </span>
+                                                )}
+                                              </div>
+                                            ),
+                                          )}
+                                        </div>
+                                      </FieldSet>
+                                    ),
+                                  )}
+                                </RadioGroup>
+                                <Button
+                                  type='button'
+                                  variant='ghost'
+                                  className='border-border/50 w-full rounded-none border-t py-5'
+                                  disabled={
+                                    isUploading || form.formState.isSubmitting
+                                  }
+                                  onClick={async () => {
+                                    setIsUploading(true);
+                                    try {
+                                      const url = await onPickImage();
+                                      if (url) field.onChange(url);
+                                    } catch (error) {
+                                      toast.error(
+                                        error instanceof Error
+                                          ? error.message
+                                          : t('profile.uploadFailed'),
+                                      );
+                                    } finally {
+                                      setIsUploading(false);
+                                    }
+                                  }}
+                                >
+                                  <Camera data-icon='inline-start' />
+                                  {t(
+                                    isUploading
+                                      ? 'profile.uploading'
+                                      : 'profile.uploadAvatar',
+                                  )}
+                                </Button>
+                              </div>
+                            </FieldSet>
+                          </AvatarPickerTransition>
+                        )}
+                      </AnimatePresence>
+                    </FieldGroup>
                   );
                 }}
               />
-              <p
-                className='text-muted-foreground text-sm'
-                onClick={async () => {
-                  if (current?.id) {
-                    await navigator.clipboard.writeText(current?.id);
-                    toast.success(t('profile.idCopied'));
-                  }
-                }}
-              >
-                ID: {current?.id}
-              </p>
             </FieldGroup>
 
             <FieldSet>
@@ -207,8 +348,16 @@ function ProfilePage() {
                             <ItemActions>
                               <Input
                                 {...field}
+                                value={
+                                  isEdit
+                                    ? (field.value ?? '')
+                                    : (current?.name ?? '')
+                                }
+                                disabled={
+                                  disabled || form.formState.isSubmitting
+                                }
                                 id='synclan-profile-name'
-                                // aria-invalid={fieldState.invalid}
+                                aria-invalid={fieldState.invalid}
                                 placeholder='name'
                                 autoComplete='username'
                                 className='text-muted-foreground border-none bg-transparent! pr-0 text-right outline-none focus-visible:border-none focus-visible:ring-0 disabled:opacity-100'
