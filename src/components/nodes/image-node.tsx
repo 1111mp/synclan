@@ -175,14 +175,19 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
     if (className !== undefined) {
       span.className = className;
     }
+    if (!editor.isEditable()) {
+      span.style.maxWidth = '100%';
+      span.style.verticalAlign = 'bottom';
+    }
     if (
       !editor.isEditable() &&
       typeof this.__width === 'number' &&
       typeof this.__height === 'number'
     ) {
       span.style.display = 'inline-block';
-      span.style.width = `${this.__width}px`;
-      span.style.height = `${this.__height}px`;
+      // Saved dimensions reserve space; the message width controls the final size.
+      span.style.width = `${Math.min(this.__width, this.__maxWidth)}px`;
+      span.style.aspectRatio = `${this.__width} / ${this.__height}`;
       span.style.padding = `0`;
     }
     return span;

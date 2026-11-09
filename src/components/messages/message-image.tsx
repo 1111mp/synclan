@@ -38,7 +38,9 @@ function ImageMessage({ message }: Props) {
   };
 
   return (
-    <div style={{ width, height }}>
+    <div
+      style={{ width, maxWidth: '100%', aspectRatio: `${width} / ${height}` }}
+    >
       <img
         loading='lazy'
         draggable='false'
