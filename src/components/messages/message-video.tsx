@@ -1,6 +1,10 @@
+import { useTranslation } from 'react-i18next';
+
 import { useIsMobile } from '@/hooks';
 import { calculateMediaSize, getMediaUrl } from '@/lib/media';
 
+import { MessageMediaFrame } from './message-media-frame';
+import { useMediaLoadState } from './use-media-load-state';
 import { parseMessageExtra } from './util';
 
 type Props = {
@@ -9,6 +13,8 @@ type Props = {
 
 function VideoMessage({ message }: Props) {
   const isMobile = useIsMobile();
+  const { t } = useTranslation();
+  const { status, attempt, retry, onLoad, onError } = useMediaLoadState();
 
   const extra = parseMessageExtra<MediaMessageExtra>(message.extra);
 
@@ -19,16 +25,26 @@ function VideoMessage({ message }: Props) {
   });
 
   return (
-    <div style={{ width, height }}>
+    <MessageMediaFrame
+      width={width}
+      height={height}
+      status={status}
+      onRetry={retry}
+      mediaType='video'
+      name={extra?.name}
+    >
       <video
         src={getMediaUrl(message.content)}
-        poster='/clapperboard.svg'
+        key={`${message.content}-${attempt}`}
+        aria-label={extra?.name || t('message.video')}
+        onLoadedMetadata={onLoad}
+        onError={onError}
         controls
         playsInline
         preload='metadata'
-        className='size-full rounded-md object-contain'
+        className='size-full object-contain'
       />
-    </div>
+    </MessageMediaFrame>
   );
 }
 

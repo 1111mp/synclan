@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import 'dayjs/locale/en';
 import 'dayjs/locale/zh-cn';
-import type { EditorState } from 'lexical';
+import type { SerializedEditorState } from 'lexical';
 
 import type { EditorStateJSON } from '@/lib/attachment';
 
@@ -73,7 +73,7 @@ export function parseTextMessageContent(content?: string) {
   if (!content) return '';
 
   try {
-    return JSON.parse(content) as EditorState;
+    return JSON.parse(content) as SerializedEditorState;
   } catch {
     return content;
   }

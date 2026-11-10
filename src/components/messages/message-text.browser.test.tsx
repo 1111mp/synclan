@@ -373,3 +373,152 @@ test('preserves rich HTML and plain text copying for readonly highlighted messag
   expect(html).toContain('<pre');
   expect(html).toContain('color:');
 });
+
+function orderedList(
+  start: number,
+  labels: string[],
+  nested = false,
+): Record<string, unknown> {
+  return {
+    type: 'simple-list',
+    version: 1,
+    listType: 'number',
+    tag: 'ol',
+    start,
+    children: labels.map((text, index) => ({
+      type: 'simple-list-item',
+      version: 1,
+      value: 1,
+      children:
+        nested && index === 1
+          ? [orderedList(1, ['Nested one', 'Nested two'])]
+          : [
+              {
+                type: 'text',
+                version: 1,
+                text,
+                format: 0,
+                style: '',
+                detail: 0,
+                mode: 'normal',
+              },
+            ],
+    })),
+  };
+}
+
+test.each([1, 4])(
+  'restores ordered message numbering starting at %i on mount and remount',
+  async (start) => {
+    const message = {
+      ...codeMessage(1),
+      content: JSON.stringify({
+        root: {
+          type: 'root',
+          version: 1,
+          children: [orderedList(start, ['First', 'Second', 'Third'])],
+        },
+      }),
+    };
+    for (let mount = 0; mount < 2; mount++) {
+      const view = render(<TextMessage message={message} />);
+      await expect
+        .poll(() =>
+          Array.from(view.container.querySelectorAll('li')).map(
+            (li) => li.value,
+          ),
+        )
+        .toEqual([start, start + 1, start + 2]);
+      view.unmount();
+    }
+  },
+);
+
+test('restores nested list numbering without advancing the outer sequence for a nested-only item', async () => {
+  const message = {
+    ...codeMessage(2),
+    content: JSON.stringify({
+      root: {
+        type: 'root',
+        version: 1,
+        children: [orderedList(1, ['First', 'Nested', 'Second'], true)],
+      },
+    }),
+  };
+  const { container } = render(<TextMessage message={message} />);
+  await expect
+    .poll(() =>
+      Array.from(container.querySelectorAll('ol > li')).map(
+        (li) => (li as HTMLLIElement).value,
+      ),
+    )
+    .toEqual([1, 2, 1, 2, 2]);
+});
+
+test('preserves unordered lists when restoring readonly messages', async () => {
+  const list = {
+    ...orderedList(1, ['One', 'Two']),
+    listType: 'bullet',
+    tag: 'ul',
+  };
+  const message = {
+    ...codeMessage(3),
+    content: JSON.stringify({
+      root: { type: 'root', version: 1, children: [list] },
+    }),
+  };
+  const { container } = render(<TextMessage message={message} />);
+  await expect.poll(() => container.querySelectorAll('ul > li').length).toBe(2);
+  expect(container.querySelector('ol')).toBeNull();
+});
+
+test('message URLs fill the available line before wrapping without changing the URL', async () => {
+  const { Bubble, BubbleContent } = await import('@/components/ui/bubble');
+  const { MessageExpandable } = await import('./message-expandable');
+  const url =
+    'https://haowallpaper.com/headImgView?page=19&search=%E8%9C%98%E8%9B%9B%E4%BE%A0&sortType=4&wpType=1';
+  const message = {
+    ...codeMessage(7),
+    content: JSON.stringify({
+      root: {
+        type: 'root',
+        version: 1,
+        children: [
+          {
+            type: 'paragraph',
+            version: 1,
+            children: [
+              {
+                type: 'link',
+                version: 1,
+                url,
+                children: [{ type: 'text', version: 1, text: url }],
+              },
+            ],
+          },
+        ],
+      },
+    }),
+  };
+  const { container } = render(
+    <div style={{ width: 800 }}>
+      <Bubble variant='muted' className='max-w-[90%]'>
+        <BubbleContent>
+          <MessageExpandable>
+            <TextMessage message={message} />
+          </MessageExpandable>
+        </BubbleContent>
+      </Bubble>
+    </div>,
+  );
+  await expect.poll(() => container.querySelector('a')).toBeTruthy();
+  const link = container.querySelector('a')!;
+  const bubble = container.querySelector('[data-slot="bubble-content"]')!;
+  const available = bubble.clientWidth - 24;
+  const lines = Array.from(link.getClientRects());
+  expect(lines.length).toBeGreaterThan(1);
+  expect(lines[0].width).toBeGreaterThan(available * 0.95);
+  expect(bubble.scrollWidth).toBeLessThanOrEqual(bubble.clientWidth + 1);
+  expect(link.textContent).toBe(url);
+  expect(link.getAttribute('href')).toBe(url);
+});

@@ -1,8 +1,10 @@
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { LexicalExtensionComposer } from '@lexical/react/LexicalExtensionComposer';
 import { RichTextExtension } from '@lexical/rich-text';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { cleanup, render } from '@testing-library/react';
 import { $createParagraphNode, $getRoot, defineExtension } from 'lexical';
+import { useRef } from 'react';
 import { afterEach, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
@@ -15,6 +17,10 @@ import {
 } from '@/components/ui/message';
 
 import { ImageMessage } from './message-image';
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({ t: (key: string) => key }),
+}));
 
 const mocks = vi.hoisted(() => ({ preview: vi.fn() }));
 vi.mock('@/components', () => ({
@@ -160,6 +166,9 @@ test('standalone image respects actual bubble width even outside the mobile brea
     </Frame>,
   );
   const image = container.querySelector('img')!;
+  await expect.poll(() => image.complete && image.naturalWidth > 0).toBe(true);
+  await page.getByRole('button', { name: 'message.previewImage' }).click();
+  expect(mocks.preview).toHaveBeenCalledWith([src], 0);
   const bubble = container.querySelector('[data-slot="bubble-content"]')!;
   expect(bubble.scrollWidth).toBeLessThanOrEqual(bubble.clientWidth + 1);
   const rect = image.getBoundingClientRect();
@@ -186,4 +195,77 @@ test('editable images keep their saved resize dimensions', async () => {
   )!;
   expect(image.style.width).toBe('320px');
   expect(image.style.height).toBe('180px');
+});
+
+function VirtualMediaList() {
+  const viewport = useRef<HTMLDivElement>(null);
+  const virtualizer = useVirtualizer({
+    count: 40,
+    overscan: 3,
+    estimateSize: () => 220,
+    getScrollElement: () => viewport.current,
+    getItemKey: (index) => `image-${index}`,
+  });
+  return (
+    <div
+      id='synclan-device-message-list'
+      ref={viewport}
+      style={{ height: 440, width: 300, overflow: 'auto' }}
+    >
+      <div style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
+        {virtualizer.getVirtualItems().map((item) => (
+          <div
+            key={item.key}
+            data-media-row={item.index}
+            style={{
+              position: 'absolute',
+              top: item.start,
+              width: '100%',
+              height: 220,
+            }}
+          >
+            <ImageMessage
+              message={
+                {
+                  type: 'image',
+                  uuid: `image-${item.index}`,
+                  content: src,
+                  extra: JSON.stringify({ width: 240, height: 160 }),
+                } as ImageMessage
+              }
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+test('virtual media rows load, unmount offscreen, and load again on return', async () => {
+  await page.viewport(390, 800);
+  const { container } = render(<VirtualMediaList />);
+  const first = () => container.querySelector('[data-media-row="0"]');
+  await expect
+    .poll(() =>
+      first()?.querySelector('[aria-busy]')?.getAttribute('aria-busy'),
+    )
+    .toBe('false');
+  expect(container.querySelector('[data-media-row="39"]')).toBeNull();
+  const viewport = container.querySelector('#synclan-device-message-list')!;
+  viewport.scrollTop = 35 * 220;
+  await expect.poll(() => first()).toBeNull();
+  await expect
+    .poll(() =>
+      container
+        .querySelector('[data-media-row="35"] [aria-busy]')
+        ?.getAttribute('aria-busy'),
+    )
+    .toBe('false');
+  viewport.scrollTop = 0;
+  await expect
+    .poll(() =>
+      first()?.querySelector('[aria-busy]')?.getAttribute('aria-busy'),
+    )
+    .toBe('false');
+  expect(first()?.querySelector('[role="status"]')).toBeNull();
 });

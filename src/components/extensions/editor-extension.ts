@@ -89,18 +89,19 @@ export const SynclanEditorExtension = defineExtension({
   theme: {
     code: 'block relative pt-7 pb-4 pl-[72px] pr-2 my-2 border rounded-md indent-0 before:box-border before:absolute before:top-0 before:left-0 before:content-[attr(data-gutter)] before:w-14 before:pt-[29px] before:px-2 before:pb-0 before:font-thin before:text-right',
     paragraph: 'mt-0 mb-0',
-    link: 'font-light text-blue-500 no-underline cursor-pointer hover:underline',
+    link: 'text-link underline underline-offset-2 cursor-pointer hover:decoration-2',
     list: {
-      ul: 'mt-0 mb-0 pl-0 list-outside marker:text-blue-500',
+      ul: 'mt-0 mb-0 pl-0 list-outside marker:text-link',
       ulDepth: ['list-disc', 'list-[circle]', 'list-[square]'],
-      ol: 'mt-0 mb-0 pl-0 list-outside marker:text-blue-500 ',
+      ol: 'mt-0 mb-0 pl-0 list-outside marker:text-link ',
       olDepth: ['list-decimal', 'list-[lower-alpha]', 'list-[lower-roman]'],
       listitem: 'mt-0 mb-0 ml-4 pl-2',
       nested: {
         listitem: 'ml-6 list-none',
       },
     },
-    quote: 'm-0 pl-2 text-gray-400 border-l-2 border-input overflow-hidden',
+    quote:
+      'm-0 pl-2 text-muted-foreground border-l-2 border-input overflow-hidden',
     text: {
       bold: 'font-bold',
       strikethrough: 'line-through',

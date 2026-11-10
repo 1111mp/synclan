@@ -4,8 +4,9 @@ import { EditorRefPlugin } from '@lexical/react/LexicalEditorRefPlugin';
 import { LexicalExtensionComposer } from '@lexical/react/LexicalExtensionComposer';
 import {
   $getRoot,
+  $nodesOfType,
   defineExtension,
-  type EditorState,
+  type SerializedEditorState,
   type LexicalEditor,
 } from 'lexical';
 import { useImperativeHandle, useMemo, useRef, type Ref } from 'react';
@@ -13,6 +14,10 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
 import { SynclanEditorExtension } from '@/components/extensions';
+import {
+  SimpleListNode,
+  updateChildrenListItemValue,
+} from '@/components/nodes/simple-list-node';
 
 import { parseTextMessageContent } from './util';
 
@@ -52,7 +57,11 @@ function TextMessage({ ref, message }: Props) {
   };
 
   if (typeof initialState === 'string') {
-    return <p className='wrap-break-word select-text'>{content}</p>;
+    return (
+      <p className='wrap-break-word whitespace-pre-wrap select-text'>
+        {content}
+      </p>
+    );
   }
 
   return <LexicalMessage ref={lexicalMessageRef} initialState={initialState} />;
@@ -63,7 +72,7 @@ function LexicalMessage({
   initialState,
 }: {
   ref?: Ref<MessageContextMenuRef>;
-  initialState: EditorState | ((editor: LexicalEditor) => void);
+  initialState: SerializedEditorState;
 }) {
   const editorRef = useRef<LexicalEditor>(null);
 
@@ -97,7 +106,14 @@ function LexicalMessage({
     () =>
       defineExtension({
         dependencies: [SynclanEditorExtension],
-        $initialEditorState: initialState,
+        $initialEditorState: (editor: LexicalEditor) => {
+          const state = editor.parseEditorState(initialState, () => {
+            // JSON import skips transforms and list item values are derived,
+            // so restore numbering before the readonly message creates its DOM.
+            $nodesOfType(SimpleListNode).forEach(updateChildrenListItemValue);
+          });
+          editor.setEditorState(state);
+        },
         name: 'synclan-editor/message-extension',
         editable: false,
         theme: {
@@ -109,7 +125,7 @@ function LexicalMessage({
 
   return (
     <LexicalExtensionComposer extension={extension} contentEditable={null}>
-      <ContentEditable className='wrap-break-word outline-none select-text' />
+      <ContentEditable className='wrap-break-word outline-none select-text [&_a]:break-all' />
       <EditorRefPlugin editorRef={editorRef} />
     </LexicalExtensionComposer>
   );

@@ -21,7 +21,9 @@ export class SimpleListNode extends ListNode {
         updateChildrenListItemValue(node);
       },
       extends: ElementNode,
-      importDOM: super.$config().importDOM as DOMConversionMap,
+      // Keep ListNode's JSON fields while opting out of its sibling-merge transform.
+      json: super.$config().list?.json,
+      importDOM: super.$config().list?.importDOM as DOMConversionMap,
     });
   }
 

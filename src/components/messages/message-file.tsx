@@ -1,4 +1,6 @@
-import { DownloadIcon, FileTextIcon } from 'lucide-react';
+import { DownloadIcon, FileTextIcon, LoaderCircleIcon } from 'lucide-react';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
 import {
@@ -25,24 +27,31 @@ type Props = {
 };
 
 function FileMessage({ message }: Props) {
+  const { t } = useTranslation();
+  const [downloading, setDownloading] = useState(false);
   const extra = parseMessageExtra<FileMessageExtra>(message.extra);
 
   return (
-    <Attachment>
+    <Attachment className='w-72' aria-busy={downloading}>
       <AttachmentMedia>
         <FileTextIcon />
       </AttachmentMedia>
       <AttachmentContent>
-        <AttachmentTitle>{extra?.name ?? '-'}</AttachmentTitle>
+        <AttachmentTitle title={extra?.name}>
+          {extra?.name || t('message.file')}
+        </AttachmentTitle>
         <AttachmentDescription>
-          {getFileDescription(extra)}
+          {getFileDescription(extra, t('message.file'))}
         </AttachmentDescription>
       </AttachmentContent>
       <AttachmentActions>
         <AttachmentAction
           type='button'
-          title='Download'
-          aria-label='Download'
+          title={t(downloading ? 'message.downloading' : 'message.download')}
+          aria-label={t(
+            downloading ? 'message.downloading' : 'message.download',
+          )}
+          disabled={downloading || !message.content || !extra?.name}
           size='icon-sm'
           variant='secondary'
           onClick={async () => {
@@ -50,31 +59,43 @@ function FileMessage({ message }: Props) {
               return;
             }
 
+            setDownloading(true);
             try {
               const url = getMediaUrl(message.content);
 
-              await downloadFile(url, extra.name);
-              toast.success('File downloaded');
+              const saved = await downloadFile(url, extra.name);
+              if (saved) toast.success(t('message.downloaded'));
             } catch {
-              toast.error('Unable to download the file');
+              toast.error(t('message.downloadFailed'));
+            } finally {
+              setDownloading(false);
             }
           }}
         >
-          <DownloadIcon />
+          {downloading ? (
+            <LoaderCircleIcon className='animate-spin motion-reduce:animate-none' />
+          ) : (
+            <DownloadIcon />
+          )}
         </AttachmentAction>
       </AttachmentActions>
     </Attachment>
   );
 }
 
-function getFileDescription(extra?: FileMessageExtra) {
-  if (!extra) {
-    return 'FILE · ';
+function getFileDescription(
+  extra: FileMessageExtra | undefined,
+  fallback: string,
+) {
+  if (!extra?.name) {
+    return fallback;
   }
 
-  const ext = extra.name.split('.').pop()?.toUpperCase();
+  const ext = extra.name.includes('.')
+    ? extra.name.split('.').pop()?.toUpperCase()
+    : undefined;
 
-  return `${ext ?? 'FILE'} · ${formatFileSize(extra.size)}`;
+  return `${ext || fallback} · ${formatFileSize(extra.size)}`;
 }
 
 function formatFileSize(size: number) {

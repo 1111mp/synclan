@@ -150,8 +150,9 @@ export function getMediaUrl(content?: string) {
 export async function downloadFile(url: string, fileName?: string) {
   if (isWeb) {
     await downloadInWeb(url, fileName);
+    return true;
   } else {
-    await downloadInTauri(url, fileName);
+    return downloadInTauri(url, fileName);
   }
 }
 
@@ -198,7 +199,7 @@ async function downloadInTauri(url: string, fileName?: string) {
       },
     ],
   });
-  if (!filePath) return;
+  if (!filePath) return false;
 
   const response = await fetch(url);
   if (!response.ok) {
@@ -209,4 +210,5 @@ async function downloadInTauri(url: string, fileName?: string) {
   const uint8Array = new Uint8Array(arrayBuffer);
 
   await writeFile(filePath, uint8Array);
+  return true;
 }
