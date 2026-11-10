@@ -40,6 +40,7 @@ import {
 } from '@/stores';
 
 import { DeviceHeader } from './header';
+import { getMessageOverscan } from './message-overscan';
 import { useInitialConversationScroll } from './use-initial-conversation-scroll';
 
 function loader() {}
@@ -133,9 +134,11 @@ function DevicesPage() {
     }),
   );
 
+  const overscan = useMemo(() => getMessageOverscan(messages), [messages]);
+
   const virtualizer = useVirtualizer({
     count: messages.length,
-    overscan: 8,
+    overscan,
     // paddingStart: 12,
     paddingEnd: 16,
     // Include the bottom spacing when aligning the final message.

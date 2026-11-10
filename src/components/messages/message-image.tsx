@@ -1,7 +1,11 @@
+import { useTranslation } from 'react-i18next';
+
 import { useImagePreview } from '@/components';
 import { useIsMobile } from '@/hooks';
 import { calculateMediaSize, getMediaUrl } from '@/lib/media';
 
+import { MessageMediaFrame } from './message-media-frame';
+import { useMediaLoadState } from './use-media-load-state';
 import { parseMessageExtra } from './util';
 
 type Props = {
@@ -10,6 +14,8 @@ type Props = {
 
 function ImageMessage({ message }: Props) {
   const isMobile = useIsMobile();
+  const { t } = useTranslation();
+  const { status, attempt, retry, onLoad, onError } = useMediaLoadState();
   const { openPreview } = useImagePreview();
 
   const extra = parseMessageExtra<MediaMessageExtra>(message.extra);
@@ -38,16 +44,35 @@ function ImageMessage({ message }: Props) {
   };
 
   return (
-    <div style={{ width, height }}>
-      <img
-        loading='lazy'
-        draggable='false'
-        data-synclan-preview-image
-        src={getMediaUrl(message.content)}
-        className='h-full w-full rounded-md object-contain'
+    <MessageMediaFrame
+      width={width}
+      height={height}
+      status={status}
+      onRetry={retry}
+      mediaType='image'
+      name={extra?.name}
+    >
+      <button
+        type='button'
+        className='focus-visible:ring-ring block size-full cursor-zoom-in outline-none focus-visible:ring-2 focus-visible:ring-inset'
+        aria-label={t('message.previewImage')}
+        disabled={status !== 'ready'}
         onClick={onImagePreview}
-      />
-    </div>
+      >
+        <img
+          key={`${message.content}-${attempt}`}
+          loading={attempt > 0 ? 'eager' : 'lazy'}
+          draggable='false'
+          data-synclan-preview-image
+          alt={extra?.name || t('message.image')}
+          src={getMediaUrl(message.content)}
+          className='h-full w-full object-contain'
+          style={{ visibility: status === 'ready' ? 'visible' : 'hidden' }}
+          onLoad={onLoad}
+          onError={onError}
+        />
+      </button>
+    </MessageMediaFrame>
   );
 }
 

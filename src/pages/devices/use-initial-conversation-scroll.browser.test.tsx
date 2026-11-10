@@ -9,12 +9,13 @@ import { useInitialConversationScroll } from './use-initial-conversation-scroll'
 type Conversation = { id: string; heights: number[] };
 let view: RenderResult | undefined;
 let strictMode = false;
+let overscan = 8;
 
 function Fixture({ id, heights }: Conversation) {
   const viewport = useRef<HTMLDivElement>(null);
   const virtualizer = useVirtualizer({
     count: heights.length,
-    overscan: 8,
+    overscan,
     paddingEnd: 16,
     scrollPaddingEnd: 16,
     estimateSize: () => 160,
@@ -113,9 +114,15 @@ beforeEach(() => {
   view = undefined;
 });
 
-describe.each([false, true])('StrictMode=%s', (strict) => {
+describe.each([
+  { strict: false, buffer: 8 },
+  { strict: true, buffer: 8 },
+  { strict: false, buffer: 3 },
+  { strict: true, buffer: 3 },
+])('StrictMode=$strict overscan=$buffer', ({ strict, buffer }) => {
   beforeEach(() => {
     strictMode = strict;
+    overscan = buffer;
   });
 
   test('switches from scrolled-up text to tall media and back without remounting', async () => {

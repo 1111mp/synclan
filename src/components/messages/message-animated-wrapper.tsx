@@ -121,11 +121,11 @@ function MessageAnimatedRow({
     }
 
     if (message.type === 'image') {
-      return <ImageMessage message={message} />;
+      return <ImageMessage key={message.content} message={message} />;
     }
 
     if (message.type === 'video') {
-      return <VideoMessage message={message} />;
+      return <VideoMessage key={message.content} message={message} />;
     }
 
     if (message.type === 'file') {
@@ -182,13 +182,19 @@ function MessageAnimatedRow({
           <ContextMenu>
             <ContextMenuTrigger asChild>
               <Bubble
-                className='max-w-[90%]'
-                variant={isUserMessage ? userVariant : assistantVariant}
+                className='max-w-[90%] sm:max-w-[min(90%,48rem)]'
+                variant={
+                  message.type === 'text'
+                    ? isUserMessage
+                      ? userVariant
+                      : assistantVariant
+                    : 'outline'
+                }
               >
                 <BubbleContent
                   className={cn(
                     'editor-shell overflow-x-auto',
-                    message.type === 'file' && 'p-0 border-none',
+                    message.type !== 'text' && 'p-0 border-none bg-transparent',
                   )}
                 >
                   {message.type === 'text' ? (
@@ -200,19 +206,21 @@ function MessageAnimatedRow({
               </Bubble>
             </ContextMenuTrigger>
             <ContextMenuContent>
-              <ContextMenuGroup>
-                <ContextMenuItem
-                  onSelect={async () => {
-                    if (message.type === 'text' && textMessageRef.current) {
-                      await textMessageRef.current.onCopy();
-                    }
-                  }}
-                >
-                  <CopyIcon />
-                  {t('message.copy')}
-                </ContextMenuItem>
-              </ContextMenuGroup>
-              <ContextMenuSeparator />
+              {message.type === 'text' && (
+                <ContextMenuGroup>
+                  <ContextMenuItem
+                    onSelect={async () => {
+                      if (message.type === 'text' && textMessageRef.current) {
+                        await textMessageRef.current.onCopy();
+                      }
+                    }}
+                  >
+                    <CopyIcon />
+                    {t('message.copy')}
+                  </ContextMenuItem>
+                </ContextMenuGroup>
+              )}
+              {message.type === 'text' && <ContextMenuSeparator />}
               <ContextMenuGroup>
                 <ContextMenuItem
                   variant='destructive'
@@ -252,7 +260,7 @@ function MessageAnimatedRow({
         </MessageContent>
         <p
           className={cn(
-            'pointer-events-none absolute opacity-0 transition-opacity duration-150 group-hover/message:opacity-100 text-xs text-muted-foreground whitespace-nowrap',
+            'pointer-events-none absolute opacity-0 transition-opacity duration-150 group-hover/message:opacity-100 group-focus-within/message:opacity-100 [@media(hover:none)]:opacity-100 text-xs text-muted-foreground whitespace-nowrap',
             isNewGroup
               ? align === 'start'
                 ? 'top-0 left-0 ml-16'

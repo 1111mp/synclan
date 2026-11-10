@@ -1,21 +1,21 @@
 import {
-  BadgeCheckIcon,
+  MonitorSmartphone,
+  MessageSquare,
+  Radar,
   ChevronRightIcon,
   FolderOpenIcon,
   Info,
-  MoonStar,
-  Sun,
-  SunMoon,
   User,
   X,
 } from 'lucide-react';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { useShallow } from 'zustand/react/shallow';
 
 import { useDeviceDiscover } from '@/components';
+import { ThemeSelector } from '@/components/theme-selector';
 import {
   Avatar,
   AvatarFallback,
@@ -36,21 +36,14 @@ import {
   Field,
   FieldGroup,
   FieldLabel,
-  FieldSeparator,
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemMedia,
-  ItemTitle,
-  Label,
-  ToggleGroup,
-  ToggleGroupItem,
+  Separator,
 } from '@/components/ui';
 import { isWeb } from '@/lib/constant';
 import { resolveResourceUrl } from '@/lib/utils';
 import { useConversationList, useIMStore, useSynclanStore } from '@/stores';
 
 function WelcomePage() {
+  const reduceMotion = useReducedMotion();
   const [showCard, setShowCard] = useState<boolean>(true);
 
   const needAnimation = useRef<boolean>(false);
@@ -68,15 +61,19 @@ function WelcomePage() {
   const hasDevices = conversations.length > 0;
 
   return (
-    <div className='bg-card flex min-h-0 flex-1 flex-col overflow-y-auto'>
+    <div className='bg-background @container/welcome flex min-h-0 flex-1 flex-col overflow-y-auto'>
       {(isWeb || OS_PLATFORM !== 'win32') && (
         <header
           data-tauri-drag-region
-          className='flex h-14 w-full items-center justify-end px-4'
+          className='bg-background/95 sticky top-0 z-20 flex h-14 w-full shrink-0 items-center justify-end px-6 backdrop-blur-sm'
         >
           <Button
-            variant='outline'
+            variant='ghost'
             size='icon-lg'
+            aria-label={t(
+              showCard ? 'welcome.hideWelcome' : 'welcome.showWelcome',
+            )}
+            aria-expanded={showCard}
             className='relative overflow-hidden'
             onClick={() => {
               needAnimation.current = true;
@@ -89,7 +86,7 @@ function WelcomePage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
+                transition={{ duration: reduceMotion ? 0 : 0.15 }}
               >
                 {showCard ? (
                   <X className='size-5' />
@@ -101,7 +98,7 @@ function WelcomePage() {
           </Button>
         </header>
       )}
-      <div className='flex flex-1 items-center justify-center px-5 py-8'>
+      <div className='flex flex-1 items-center justify-center px-6 py-8 sm:px-8 sm:py-10 @max-[30rem]/welcome:px-4 @max-[30rem]/welcome:py-6'>
         <AnimatePresence mode='popLayout'>
           {showCard ? (
             <motion.div
@@ -111,107 +108,48 @@ function WelcomePage() {
                 needAnimation.current
                   ? {
                       opacity: 0,
-                      scale: 0.6,
+                      y: reduceMotion ? 0 : 12,
                     }
                   : false
               }
-              animate={{
-                opacity: 1,
-                scale: 1,
-                transition: {
-                  type: 'spring',
-                  stiffness: 350,
-                  damping: 22,
-                  mass: 0.8,
-                },
-              }}
-              exit={{
-                opacity: 0,
-                scale: 0.6,
-                transition: {
-                  duration: 0.15,
-                  ease: 'easeOut',
-                },
-              }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: reduceMotion ? 0 : 8 }}
+              transition={{ duration: reduceMotion ? 0 : 0.2, ease: 'easeOut' }}
               onAnimationComplete={() => {
                 needAnimation.current = false;
               }}
             >
-              <Card className='border-border bg-popover w-full max-w-sm rounded-2xl shadow-[0_4px_12px_-4px_rgb(0_0_0/0.08),0_24px_64px_-20px_rgb(0_0_0/0.18)] [--card-spacing:1.75rem] max-[400px]:max-w-[94%]'>
-                <CardHeader className='gap-2 text-center'>
-                  <CardTitle className='text-[1.375rem] font-semibold tracking-[-0.035em]'>
+              <Card className='border-border/60 bg-card w-full max-w-lg gap-6 rounded-2xl shadow-(--surface-shadow) [--card-spacing:1.5rem] @max-[30rem]/welcome:gap-5 @max-[30rem]/welcome:[--card-spacing:1rem]'>
+                <CardHeader className='gap-3 @max-[30rem]/welcome:gap-2'>
+                  <span className='bg-muted border-border/60 mb-1 flex size-11 items-center justify-center rounded-2xl border @max-[30rem]/welcome:hidden'>
+                    <MessageSquare className='size-5' aria-hidden='true' />
+                  </span>
+                  <CardTitle className='text-xl font-semibold tracking-tight'>
                     {t('welcome.welcomeBack')}
                   </CardTitle>
-                  <CardDescription className='leading-[1.7]'>
+                  <CardDescription className='leading-relaxed'>
                     {t('welcome.selectExistingOrDiscover')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <FieldGroup className='gap-8'>
-                    <Field className='gap-3'>
-                      <FieldLabel className='justify-center'>
-                        {t('settings.appearance.title')}
-                      </FieldLabel>
-                      <ToggleGroup
-                        type='single'
-                        variant='selection'
-                        value={config?.theme}
-                        className='flex items-center gap-3'
-                        onValueChange={async (val) => {
-                          if (val) {
-                            await updateTheme(val as AppTheme);
-                          }
-                        }}
-                      >
-                        <ToggleGroupItem
-                          value='system'
-                          aria-label='System'
-                          className='group/toggle flex-1'
-                        >
-                          <SunMoon className='size-5 group-data-[state=on]/toggle:fill-current' />
-                          <Label>{t('settings.appearance.system')}</Label>
-                        </ToggleGroupItem>
-                        <ToggleGroupItem
-                          value='dark'
-                          aria-label='Dark'
-                          className='group/toggle flex-1'
-                        >
-                          <MoonStar className='size-5 group-data-[state=on]/toggle:fill-current' />
-                          <Label>{t('settings.appearance.dark')}</Label>
-                        </ToggleGroupItem>
-                        <ToggleGroupItem
-                          value='light'
-                          aria-label='Light'
-                          className='group/toggle flex-1'
-                        >
-                          <Sun className='size-5 group-data-[state=on]/toggle:fill-current' />
-                          <Label>{t('settings.appearance.light')}</Label>
-                        </ToggleGroupItem>
-                      </ToggleGroup>
-                    </Field>
-                    <FieldSeparator className='*:data-[slot=field-separator-content]:bg-popover'>
-                      {t('welcome.orContinueWith')}
-                    </FieldSeparator>
+                  <FieldGroup className='gap-6 @max-[30rem]/welcome:gap-5'>
                     <Field>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Item
+                          <Button
+                            type='button'
                             variant='outline'
-                            size='sm'
-                            className='hover:bg-muted transition-colors'
+                            size='xl'
+                            className='w-full justify-between'
                           >
-                            <ItemMedia>
-                              <BadgeCheckIcon className='size-5' />
-                            </ItemMedia>
-                            <ItemContent>
-                              <ItemTitle>
+                            <span className='flex min-w-0 items-center gap-2'>
+                              <MonitorSmartphone className='size-4 shrink-0' />
+                              <span className='truncate'>
                                 {t('welcome.selectDeviceToStart')}
-                              </ItemTitle>
-                            </ItemContent>
-                            <ItemActions>
-                              <ChevronRightIcon className='size-4' />
-                            </ItemActions>
-                          </Item>
+                              </span>
+                            </span>
+                            <ChevronRightIcon data-icon='inline-end' />
+                          </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
                           <DropdownMenuGroup>
@@ -258,7 +196,7 @@ function WelcomePage() {
                             ) : (
                               <div className='flex flex-col items-center justify-center gap-2 p-6 text-center'>
                                 <FolderOpenIcon className='text-muted-foreground/50 size-6' />
-                                <div className='space-y-1'>
+                                <div className='flex flex-col gap-1'>
                                   <p className='text-sm font-medium'>
                                     {t('welcome.noDevicesYet')}
                                   </p>
@@ -278,15 +216,29 @@ function WelcomePage() {
                           openDiscover();
                         }}
                       >
+                        <Radar data-icon='inline-start' />
                         {t('welcome.discoverDevices')}
                       </Button>
+                    </Field>
+                    <Separator />
+                    <Field className='gap-3'>
+                      <FieldLabel id='welcome-appearance-label'>
+                        {t('settings.appearance.title')}
+                      </FieldLabel>
+                      <ThemeSelector
+                        variant='compact'
+                        value={config?.theme}
+                        onValueChange={updateTheme}
+                      />
                     </Field>
                   </FieldGroup>
                 </CardContent>
               </Card>
             </motion.div>
           ) : (
-            <p>{t('welcome.selectDeviceToStartMessaging')}</p>
+            <p className='text-muted-foreground text-center text-sm'>
+              {t('welcome.selectDeviceToStartMessaging')}
+            </p>
           )}
         </AnimatePresence>
       </div>

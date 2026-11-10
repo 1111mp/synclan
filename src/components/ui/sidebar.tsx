@@ -24,8 +24,7 @@ import {
 import { useIsMobile } from '@/hooks';
 import { cn } from '@/lib/utils/index';
 
-const SIDEBAR_COOKIE_NAME = 'sidebar_state';
-const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
+const SIDEBAR_STORAGE_KEY = '__SYNCLAN_SIDEBAR_OPEN__';
 const SIDEBAR_WIDTH = '18rem';
 const SIDEBAR_WIDTH_MOBILE = '18rem';
 const SIDEBAR_WIDTH_ICON = '4rem';
@@ -46,6 +45,23 @@ const sidebarDetailsClassName =
   'visible translate-x-0 opacity-100 [transition:opacity_160ms_ease_80ms,translate_220ms_var(--sidebar-motion-ease)_60ms,visibility_0s] group-data-[collapsible=icon]:invisible group-data-[collapsible=icon]:-translate-x-1.5 group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:[transition:opacity_90ms_ease,translate_140ms_var(--sidebar-motion-ease),visibility_0s_140ms] motion-reduce:transition-none!';
 
 const SidebarContext = React.createContext<SidebarContextProps | null>(null);
+
+function readSidebarOpen(defaultOpen: boolean): boolean {
+  try {
+    const stored = localStorage.getItem(SIDEBAR_STORAGE_KEY);
+    if (stored === 'true' || stored === 'false') return stored === 'true';
+
+    // Older versions wrote this cookie without restoring it on startup.
+    const legacy = document.cookie
+      .split('; ')
+      .find((cookie) => cookie.startsWith('sidebar_state='))
+      ?.split('=')[1];
+    if (legacy === 'true' || legacy === 'false') return legacy === 'true';
+  } catch {
+    // Storage restrictions must not prevent the sidebar from rendering.
+  }
+  return defaultOpen;
+}
 
 function useSidebar() {
   const context = React.useContext(SidebarContext);
@@ -74,8 +90,17 @@ function SidebarProvider({
 
   // This is the internal state of the sidebar.
   // We use openProp and setOpenProp for control from outside the component.
-  const [_open, _setOpen] = React.useState(defaultOpen);
+  const [_open, _setOpen] = React.useState(() => readSidebarOpen(defaultOpen));
   const open = openProp ?? _open;
+
+  React.useEffect(() => {
+    try {
+      localStorage.setItem(SIDEBAR_STORAGE_KEY, String(open));
+    } catch {
+      // Toggling still works when local storage is unavailable.
+    }
+  }, [open]);
+
   const setOpen = React.useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {
       const openState = typeof value === 'function' ? value(open) : value;
@@ -84,9 +109,6 @@ function SidebarProvider({
       } else {
         _setOpen(openState);
       }
-
-      // This sets the cookie to keep the sidebar state.
-      document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
     },
     [setOpenProp, open],
   );

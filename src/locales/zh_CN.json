@@ -24,6 +24,8 @@
   },
 
   "welcome": {
+    "hideWelcome": "收起欢迎卡片",
+    "showWelcome": "显示欢迎卡片",
     "welcomeBack": "欢迎回来",
     "selectExistingOrDiscover": "选择已有设备或发现新设备，开始聊天。",
     "orContinueWith": "或者继续使用",
@@ -42,6 +44,7 @@
   },
 
   "navDevices": {
+    "deviceUnread": "{{name}}，{{count}} 条未读消息",
     "deleteDevice": "删除设备？",
     "deleteDescription": "此操作将永久删除该聊天会话。所有相关聊天记录将从数据库中永久删除，而不仅仅是从缓存中移除，并且无法恢复。",
     "delete": "删除"
@@ -66,9 +69,23 @@
   },
 
   "manage": {
+    "title": "设备管理",
+    "heading": "你的设备",
+    "description": "查看本机信息，管理 Synclan 已知的设备。",
+    "idCopied": "设备 ID 已复制",
+    "copyFailed": "复制设备 ID 失败",
+    "removeTitle": "移除「{{name}}」？",
+    "removeDescription": "该设备将从已知设备列表中移除。",
+    "removed": "设备已移除",
+    "removeFailed": "移除设备失败",
+    "loadFailed": "无法加载设备",
+    "retry": "重试",
+    "emptyDescription": "设备连接 Synclan 后，将显示在这里。",
+    "deviceActions": "{{name}} 的操作",
+    "roles": { "host": "主机", "client": "客户端" },
     "thisDevice": "此设备",
-    "currentHostInfo": "当前主机的信息。",
-    "discoveredDevices": "已发现的设备",
+    "currentHostInfo": "你当前正在使用的设备。",
+    "discoveredDevices": "已知设备",
     "knownDevicesInfo": "Synclan 当前已知的所有设备。",
     "device": "设备",
     "role": "角色",
@@ -82,6 +99,11 @@
   },
 
   "profile": {
+    "description": "这是你在这台设备上的身份，让它更有你的风格。",
+    "avatarDescription": "选择预设头像或上传照片，点击「完成」后保存。",
+    "details": "设备信息",
+    "detailsDescription": "设置其他设备看到的名称，最多 24 个字符。",
+    "previewAvatar": "预览头像",
     "chooseAvatar": "选择头像",
     "avatarOption": "头像 {{number}}",
     "uploadAvatar": "上传自定义头像",
@@ -96,6 +118,14 @@
   },
 
   "restoreDevice": {
+    "heading": "找回之前的设备",
+    "steps": "设备恢复步骤",
+    "searchStep": "查找设备",
+    "selectStep": "选择并恢复",
+    "searchTitle": "查找设备",
+    "selectTitle": "选择你的设备",
+    "search": "搜索设备",
+    "restoreFailed": "无法恢复此设备，请重试。",
     "title": "恢复设备",
     "description": "查找并恢复之前的设备。你可以使用个人资料页面中的设备 ID，或者通过设备名称搜索。",
     "keywordLabel": "设备 ID 或名称",
@@ -112,12 +142,16 @@
   },
 
   "settings": {
+    "preferences": "偏好设置",
+    "description": "让 Synclan 更合你的习惯，自由调整应用的外观与使用方式。",
+    "autosave": "更改自动保存",
     "title": "设置",
     "restartSynclan": "重启 Synclan？",
     "restartDescription": "部分更改需要重启后才能生效。Synclan 将立即重启。",
     "restart": "重启",
 
     "general": {
+      "description": "设置语言、更新与应用启动方式。",
       "title": "通用",
       "language": "语言",
       "autoCheckForUpdates": "自动检查更新",
@@ -126,6 +160,7 @@
     },
 
     "appearance": {
+      "description": "选择你喜欢的外观，让每次使用都更舒适。",
       "title": "外观",
       "theme": "主题",
       "system": "跟随系统",
@@ -134,6 +169,7 @@
     },
 
     "server": {
+      "description": "管理其他设备连接本机的方式。",
       "title": "服务",
       "httpServerPort": "HTTP 服务端口",
       "enableHttps": "启用 HTTPS",
@@ -149,12 +185,14 @@
     },
 
     "storage": {
+      "description": "设置文件保存位置与保留时间。",
       "title": "存储",
       "uploadDirectory": "上传目录",
       "autoFileCleanup": "自动清理文件"
     },
 
     "log": {
+      "description": "管理诊断日志及其存储空间。",
       "title": "日志",
       "level": "日志级别",
       "cleanup": "日志清理",
@@ -171,11 +209,13 @@
     },
 
     "about": {
+      "description": "查看应用信息，获取最新版本。",
       "title": "关于",
       "checkForUpdates": "检查更新",
       "checkNow": "立即检查更新",
       "version": "版本",
-      "versionCopied": "版本号已复制到剪贴板"
+      "versionCopied": "版本号已复制到剪贴板",
+      "versionCopyFailed": "复制版本号失败"
     }
   },
 
@@ -248,6 +288,20 @@
   },
 
   "message": {
+    "imageFailed": "图片暂时无法显示",
+    "videoFailed": "视频暂时无法播放",
+    "mediaRecoveryHint": "请检查网络后重试。如果仍无法加载，请让发送方重新发送文件。",
+    "retrying": "重试中…",
+    "image": "图片",
+    "previewImage": "查看大图",
+    "mediaFailed": "媒体加载失败",
+    "retry": "重试",
+    "download": "下载",
+    "downloading": "下载中…",
+    "downloaded": "文件已下载",
+    "downloadFailed": "文件下载失败",
+    "file": "文件",
+    "video": "视频",
     "expand": "展开",
     "collapse": "收起",
     "copy": "复制",

@@ -191,7 +191,15 @@ function LazyImage({
     }
   };
 
-  const imageStyle = calculateDimensions();
+  const dimensions = calculateDimensions();
+  const imageStyle = isEditable
+    ? dimensions
+    : {
+        ...dimensions,
+        // Scale the saved size to the actual message width without stretching.
+        maxWidth: `min(100%, ${maxWidth}px)`,
+        height: 'auto',
+      };
 
   return (
     <img
