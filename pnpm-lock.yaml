@@ -66,11 +66,11 @@ importers:
         specifier: ^0.53.0
         version: 0.53.0(typescript@7.0.2)
       '@lottiefiles/dotlottie-react':
-        specifier: ^0.21.0
-        version: 0.21.0(react@19.3.1)
+        specifier: ^0.22.0
+        version: 0.22.0(react@19.3.1)
       '@lottiefiles/dotlottie-web':
-        specifier: ^0.82.0
-        version: 0.82.0
+        specifier: ^0.83.0
+        version: 0.83.0
       '@shadcn/react':
         specifier: ^0.3.1
         version: 0.3.1(@types/react@19.3.0)(react@19.3.1)
@@ -1280,14 +1280,14 @@ packages:
       typescript:
         optional: true
 
-  '@lottiefiles/dotlottie-react@0.21.0':
-    resolution: {integrity: sha512-ccacY0zPQNwKEbokVZujydBq1InfIY3xYfoV50AW1bMfTSWynZRag7aW8TU8ImncqMrlh/wvPI38sGPj8Nf54Q==}
+  '@lottiefiles/dotlottie-react@0.22.0':
+    resolution: {integrity: sha512-Z2aQrPZ4D4E+Bm0ev0+ZnOqhqYcCOa4+UeTWO+zrrcHfUWJn/zn2Df8QYJ+WFAYT/390ZcRZi4RxBpeHUx/cRQ==}
     engines: {node: '>=18.17.0', npm: '>=9.5.0'}
     peerDependencies:
       react: ^17 || ^18 || ^19
 
-  '@lottiefiles/dotlottie-web@0.82.0':
-    resolution: {integrity: sha512-Gp0rKaBAWHs3KXO69oNu7tgh+9VYVaJqv6NDYvH0YdUJR4JxDujvX1kE03yp6o9NgeQiYnvUgHZgnZisw1Mr+Q==}
+  '@lottiefiles/dotlottie-web@0.83.0':
+    resolution: {integrity: sha512-z4CVlyv0L/ROcG0N3z1ZPLt4x2sbgCJPimmNMCZ98cKQBiMeJj1p3njCK1VtpzNKc3h6BV0xIj7BZtWCjHkOkg==}
     engines: {node: '>=18.17.0', npm: '>=9.5.0'}
 
   '@modelcontextprotocol/core@2.4.0':
@@ -5926,6 +5926,7 @@ packages:
 
   tldts-core@7.4.20:
     resolution: {integrity: sha512-C630TWXZCZmLq0F2bW4QqwnaaxCQ/svpAqvJwnC4JvgEM5ohhBnGsEzTLSOXcN+xjz+kEaHS5uoWIw2klnqd0A==}
+    deprecated: Partial release, see https://github.com/remusao/tldts/issues/2735. Use >=7.4.22.
 
   tldts@7.4.19:
     resolution: {integrity: sha512-48dH6aSpQnpbzDUc4vIQZ1VjB8tkK+e8c1yx05/SZK+rkssgjEOlxDd/yU8/a4vGYQ9vRgJr9dwMq9TJ0b3X2Q==}
@@ -7335,12 +7336,12 @@ snapshots:
     optionalDependencies:
       typescript: 7.0.2
 
-  '@lottiefiles/dotlottie-react@0.21.0(react@19.3.1)':
+  '@lottiefiles/dotlottie-react@0.22.0(react@19.3.1)':
     dependencies:
-      '@lottiefiles/dotlottie-web': 0.82.0
+      '@lottiefiles/dotlottie-web': 0.83.0
       react: 19.3.1
 
-  '@lottiefiles/dotlottie-web@0.82.0': {}
+  '@lottiefiles/dotlottie-web@0.83.0': {}
 
   '@modelcontextprotocol/core@2.4.0':
     dependencies:
