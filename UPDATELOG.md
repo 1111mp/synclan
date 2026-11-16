@@ -1,3 +1,27 @@
+## v0.1.5
+
+### Features & Improvements
+
+- Add grouped avatar selection with DiceBear Avataaars and Marbles styles.
+- Unify the design of settings, profile, welcome, device management, and data restoration pages, with improved responsive layouts and theme controls.
+- Remember the sidebar's expanded or collapsed state and show unread message counts in both states.
+- Improve syntax highlighting and message list rendering performance for conversations with large amounts of code.
+- Add loading placeholders, error messages, and retry actions for images and videos. Improve media sizing and long-message expansion and collapse.
+- Improve file download states and feedback, prevent duplicate downloads, and refine English and Chinese text.
+
+### Bug Fixes
+
+- Fix the expanded message composer failing to close on the first backdrop click.
+- Fix window dragging from page headers and align the desktop launch background with the app's dark theme.
+- Fix copying web version information over HTTP on local networks.
+- Fix message images failing to scale to the available width.
+- Fix duplicate resource entries in desktop bundles.
+
+### Other Updates
+
+- Add regression coverage for page interactions, message rendering, and media loading, along with code rendering performance fixtures.
+- Update frontend and Rust dependencies and upgrade the Node.js version used in CI.
+
 ## v0.1.4
 
 ### 新增与优化
