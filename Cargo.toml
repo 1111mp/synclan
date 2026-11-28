@@ -5,7 +5,7 @@ members = ["src-tauri"]
 [workspace.dependencies]
 anyhow = "1.0.104"
 bitflags = { version = "2.13.1" }
-flexi_logger = "0.31.10"
+flexi_logger = "0.32.0"
 log = "0.4.34"
 parking_lot = { version = "0.13.0" }
 serde = { version = "1.0.229" }
